@@ -23,7 +23,7 @@ from amb82_camera import AMB82Camera  # noqa: E402
 class CameraThread(QThread):
     frame_ready = pyqtSignal(object, object)
     fire_confirmed = pyqtSignal(object)
-    status_changed = pyqtSignal(bool, str, float)
+    status_changed = pyqtSignal(bool, str, float, object)
 
     def __init__(
         self,
@@ -79,12 +79,33 @@ class CameraThread(QThread):
                         message = f"{mode} · {correction} · {camera.url}"
                     else:
                         message = camera.last_error or "正在搜索 AMB82-Mini"
-                    self.status_changed.emit(camera.connected, message, camera.fps)
+                    diagnostics = {
+                        "source_kind": camera.source_kind,
+                        "frame_age_ms": camera.frame_age_ms,
+                        "reconnect_count": camera.reconnect_count,
+                        "last_error": camera.last_error,
+                    }
+                    self.status_changed.emit(
+                        camera.connected,
+                        message,
+                        camera.fps,
+                        diagnostics,
+                    )
                     last_status_time = now
                 self.msleep(20)
         finally:
             camera.release()
-            self.status_changed.emit(False, "相机服务已停止", 0.0)
+            self.status_changed.emit(
+                False,
+                "相机服务已停止",
+                0.0,
+                {
+                    "source_kind": "stopped",
+                    "frame_age_ms": -1,
+                    "reconnect_count": camera.reconnect_count,
+                    "last_error": camera.last_error,
+                },
+            )
 
     def stop(self) -> None:
         self._stop_requested = True

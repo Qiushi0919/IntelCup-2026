@@ -30,11 +30,13 @@ from models import (
     DetectionEvent,
     DroneState,
     FireDetection,
+    SelectionState,
 )
 from simulator import DroneSimulator
 from styles import APP_STYLE, LARGE_DISPLAY_STYLE
 from widgets import (
     CommandBar,
+    CompactStatusBar,
     DevicePanel,
     EventTable,
     GazePanel,
@@ -67,6 +69,8 @@ class GroundStationWindow(QMainWindow):
         self._right_sidebar_user_hidden = False
         self._last_responsive_mode = ""
         self._large_display = False
+        self._camera_connecting = False
+        self.selection_state: SelectionState | None = None
 
         self.simulator = DroneSimulator(self)
         self.simulator.state_changed.connect(self._on_state_changed)
@@ -85,6 +89,7 @@ class GroundStationWindow(QMainWindow):
     def _build_menu(self) -> None:
         file_menu = self.menuBar().addMenu("文件")
         snapshot_action = QAction("保存当前截图", self)
+        snapshot_action.setShortcut("Ctrl+S")
         snapshot_action.triggered.connect(self.save_snapshot)
         file_menu.addAction(snapshot_action)
         file_menu.addSeparator()
@@ -106,6 +111,31 @@ class GroundStationWindow(QMainWindow):
         )
         help_menu.addAction(about)
 
+        shortcuts = [
+            ("连接相机", "C", lambda: self.connect_camera("auto")),
+            ("全屏", "F", self._toggle_fullscreen),
+            ("全屏 F11", "F11", self._toggle_fullscreen),
+            (
+                "暂停并悬停",
+                "Space",
+                lambda: self._button_command("HOLD", "暂停 / 悬停"),
+            ),
+            (
+                "取消候选",
+                "Escape",
+                lambda: self._button_command(
+                    "CANCEL_SELECTION", "取消目标选择"
+                ),
+            ),
+            ("状态与地图", "M", lambda: self._toggle_right_sidebar(True)),
+        ]
+        for text, shortcut, callback in shortcuts:
+            action = QAction(text, self)
+            action.setShortcut(shortcut)
+            action.setShortcutContext(Qt.ApplicationShortcut)
+            action.triggered.connect(callback)
+            self.addAction(action)
+
     def _build_central_ui(self) -> None:
         root = QWidget()
         root.setObjectName("root")
@@ -114,6 +144,12 @@ class GroundStationWindow(QMainWindow):
         root_layout.setSpacing(6)
 
         root_layout.addWidget(self._build_header())
+        self.compact_status = CompactStatusBar()
+        self.compact_status.details_requested.connect(
+            lambda: self._toggle_right_sidebar(True)
+        )
+        self.compact_status.setVisible(False)
+        root_layout.addWidget(self.compact_status)
 
         self.vertical_splitter = QSplitter(Qt.Vertical)
         self.vertical_splitter.setChildrenCollapsible(False)
@@ -141,6 +177,9 @@ class GroundStationWindow(QMainWindow):
         )
         self.video_panel.demo_requested.connect(self._load_fire_demo)
         self.video_panel.target_selected.connect(self._select_target)
+        self.video_panel.target_missed.connect(
+            lambda message: self.statusBar().showMessage(message, 3500)
+        )
         self.video_panel.lens_correction_toggled.connect(
             self._toggle_lens_correction
         )
@@ -192,18 +231,14 @@ class GroundStationWindow(QMainWindow):
         header_layout.addLayout(title_box)
         header_layout.addStretch(1)
 
-        self.flight_chip = QPushButton("● 飞控 在线")
-        self.flight_chip.setObjectName("statusGood")
-        self.flight_chip.clicked.connect(lambda: self._toggle_right_sidebar(True))
-        self.camera_chip = QPushButton("● 相机 模拟")
-        self.camera_chip.setObjectName("statusInfo")
-        self.camera_chip.clicked.connect(lambda: self.connect_camera("auto"))
-        self.telemetry_chip = QPushButton("● 数传 在线")
-        self.telemetry_chip.setObjectName("statusGood")
-        self.telemetry_chip.clicked.connect(lambda: self._show_dock("device"))
-        self.ai_chip = QPushButton("● AI 就绪")
-        self.ai_chip.setObjectName("statusGood")
-        self.ai_chip.clicked.connect(lambda: self._show_dock("events"))
+        self.flight_chip = QLabel("● 飞控 在线")
+        self.flight_chip.setObjectName("chipGood")
+        self.camera_chip = QLabel("● 相机 离线")
+        self.camera_chip.setObjectName("chipInfo")
+        self.telemetry_chip = QLabel("● 数传 在线")
+        self.telemetry_chip.setObjectName("chipGood")
+        self.ai_chip = QLabel("● AI 就绪")
+        self.ai_chip.setObjectName("chipGood")
         for chip in [
             self.flight_chip,
             self.camera_chip,
@@ -214,12 +249,20 @@ class GroundStationWindow(QMainWindow):
 
         self.layout_mode_button = QPushButton("布局")
         self.layout_mode_button.clicked.connect(self._reset_layout)
+        self.connect_camera_button = QPushButton("连接相机")
+        self.connect_camera_button.clicked.connect(
+            lambda: self.connect_camera("auto")
+        )
         device_button = QPushButton("设备")
         device_button.clicked.connect(lambda: self._show_dock("device"))
+        events_button = QPushButton("事件")
+        events_button.clicked.connect(lambda: self._show_dock("events"))
         fullscreen_button = QPushButton("全屏")
         fullscreen_button.clicked.connect(self._toggle_fullscreen)
         header_layout.addWidget(self.layout_mode_button)
+        header_layout.addWidget(self.connect_camera_button)
         header_layout.addWidget(device_button)
+        header_layout.addWidget(events_button)
         header_layout.addWidget(fullscreen_button)
         return header
 
@@ -350,11 +393,56 @@ class GroundStationWindow(QMainWindow):
         self.drone_state = state
         self.video_panel.set_state(state)
         self.right_sidebar.set_state(state, self.camera_state)
+        self.compact_status.set_state(state, self.camera_state)
+        self._update_header_status()
         self.recent_events.update_task_summary(state)
         self.status_message.setText(
             f"{state.flight_phase}  ·  坐标 ({state.x:.1f}, {state.y:.1f})  ·  "
             f"高度 {state.altitude:.2f} m  ·  电量 {state.battery_percent:.0f}%"
         )
+
+    def _update_header_status(self) -> None:
+        statuses = [
+            (
+                self.flight_chip,
+                "● 飞控 在线"
+                if self.drone_state.connected
+                else "● 飞控 离线",
+                "chipGood" if self.drone_state.connected else "chipWarn",
+            ),
+            (
+                self.telemetry_chip,
+                "● 数传 在线"
+                if self.drone_state.telemetry_connected
+                else "● 数传 离线",
+                "chipGood"
+                if self.drone_state.telemetry_connected
+                else "chipWarn",
+            ),
+            (
+                self.ai_chip,
+                "● AI 就绪"
+                if self.drone_state.ai_ready
+                else "● AI 离线",
+                "chipGood" if self.drone_state.ai_ready else "chipWarn",
+            ),
+        ]
+        if self.camera_state.connected:
+            camera_text = f"● 图传 {self.camera_state.fps:.1f} FPS"
+            camera_style = "chipGood"
+        elif self._camera_connecting:
+            camera_text = "● 图传 重连中"
+            camera_style = "chipWarn"
+        else:
+            camera_text = "● 图传 离线"
+            camera_style = (
+                "chipWarn" if self.camera_state.last_error else "chipInfo"
+            )
+        statuses.append((self.camera_chip, camera_text, camera_style))
+        for chip, text, object_name in statuses:
+            chip.setText(text)
+            chip.setObjectName(object_name)
+            self._refresh_style(chip)
 
     def _on_event(self, event: DetectionEvent) -> None:
         self.event_table.add_event(event)
@@ -389,20 +477,104 @@ class GroundStationWindow(QMainWindow):
             return
 
         if intent.action == "SELECT_TARGET":
+            target_id = intent.parameters.get("target_id", "")
+            detection = self.video_panel.canvas.get_detection(target_id)
+            if detection is None:
+                message = f"当前画面中不存在可验证目标 {target_id}"
+                self._append_log("WARNING", f"{intent.source}：{message}")
+                self.statusBar().showMessage(message, 4500)
+                return
+            selection = SelectionState(
+                target_id=target_id,
+                source=intent.source,
+                confidence=detection.confidence,
+                bbox=detection.bbox,
+                command_id=intent.command_id,
+            )
+            event = DetectionEvent(
+                target_type=f"候选火源 {target_id}",
+                confidence=detection.confidence,
+                x=self.drone_state.x,
+                y=self.drone_state.y,
+                altitude=self.drone_state.altitude,
+                source=intent.source,
+                review_state="待确认",
+                command_id=intent.command_id,
+                bbox=detection.bbox,
+            )
+            selection.event_id = event.event_id
+            self.selection_state = selection
+            self.video_panel.canvas.select_target(target_id)
+            self.command_bar.set_candidate(
+                target_id,
+                detection.confidence,
+                intent.source,
+                selection.review_state,
+            )
+            self.event_table.add_event(event)
             self._append_log(
                 "COMMAND",
-                f"{intent.source}选择候选目标 "
-                f"{intent.parameters.get('target_id', '')}",
+                f"{intent.source}选择候选目标 {target_id}，等待确认",
             )
             self.recent_events.add_system_event(
                 "候选目标",
-                f"{intent.parameters.get('target_id', '')} · 等待确认",
+                f"{target_id} · {detection.confidence:.0%} · 等待确认",
                 "info",
             )
             return
 
-        if intent.action in {"CANCEL_SELECTION", "CONFIRM_CANDIDATE"}:
+        if intent.action == "CANCEL_SELECTION":
+            if self.selection_state is None:
+                self.statusBar().showMessage("当前没有可取消的候选目标", 3500)
+                return
+            self.selection_state.review_state = "已取消"
+            self.event_table.update_review_state(
+                self.selection_state.event_id, "已取消"
+            )
+            self.command_bar.set_candidate(
+                self.selection_state.target_id,
+                self.selection_state.confidence,
+                self.selection_state.source,
+                "已取消",
+            )
+            self.video_panel.canvas.clear_selection()
+            self.recent_events.add_system_event(
+                "候选已取消",
+                f"{self.selection_state.target_id} · 来源 {intent.source}",
+                "info",
+            )
             self._append_log("COMMAND", f"{intent.source}：{intent.label}")
+            return
+
+        if intent.action == "CONFIRM_CANDIDATE":
+            if self.selection_state is None:
+                self.statusBar().showMessage("当前没有可确认的候选目标", 3500)
+                return
+            if self.selection_state.review_state != "待确认":
+                self.statusBar().showMessage(
+                    f"候选目标已处于{self.selection_state.review_state}状态",
+                    3500,
+                )
+                return
+            self.selection_state.review_state = "已确认"
+            self.event_table.update_review_state(
+                self.selection_state.event_id, "已确认"
+            )
+            self.command_bar.set_candidate(
+                self.selection_state.target_id,
+                self.selection_state.confidence,
+                self.selection_state.source,
+                "已确认",
+            )
+            self.recent_events.add_system_event(
+                "目标已确认",
+                f"{self.selection_state.target_id} · 操作来源 {intent.source}",
+                "good",
+            )
+            self._append_log(
+                "COMMAND",
+                f"{intent.source}确认候选 {self.selection_state.target_id}",
+            )
             return
 
         if intent.requires_confirmation:
@@ -413,14 +585,26 @@ class GroundStationWindow(QMainWindow):
                 f"当前状态：{self.drone_state.flight_phase}\n\n"
                 "确认执行此高风险操作吗？"
             )
-            answer = QMessageBox.question(
-                self,
-                "安全确认",
-                message,
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.No,
+            dialog = QMessageBox(self)
+            dialog.setWindowTitle("高风险命令确认")
+            dialog.setIcon(QMessageBox.Warning)
+            dialog.setText(f"准备执行：{intent.label}")
+            dialog.setInformativeText(message)
+            dialog.setDetailedText(
+                f"命令 ID：{intent.command_id}\n"
+                f"风险等级：{intent.risk_level}\n"
+                "此操作会写入任务日志；执行后请持续观察飞行状态。"
             )
-            if answer != QMessageBox.Yes:
+            execute_button = dialog.addButton(
+                "确认执行", QMessageBox.AcceptRole
+            )
+            cancel_button = dialog.addButton(
+                "取消", QMessageBox.RejectRole
+            )
+            dialog.setDefaultButton(cancel_button)
+            dialog.setEscapeButton(cancel_button)
+            dialog.exec_()
+            if dialog.clickedButton() is not execute_button:
                 self._append_log(
                     "WARNING", f"用户取消 {intent.source} 指令：{intent.label}"
                 )
@@ -434,13 +618,19 @@ class GroundStationWindow(QMainWindow):
         else:
             QMessageBox.warning(self, "命令未执行", message)
 
-    def _select_target(self, target_id: str) -> None:
+    def _select_target(
+        self, target_id: str, detection: FireDetection
+    ) -> None:
         self._propose_command(
             CommandIntent(
                 action="SELECT_TARGET",
                 source="视频画面",
                 label=f"选择目标 {target_id}",
-                parameters={"target_id": target_id},
+                confidence=detection.confidence,
+                parameters={
+                    "target_id": target_id,
+                    "bbox": detection.bbox,
+                },
             )
         )
 
@@ -454,9 +644,12 @@ class GroundStationWindow(QMainWindow):
             self._append_log("WARNING", message)
             self.statusBar().showMessage(message, 4000)
             return
+        self._camera_connecting = True
         self.camera_chip.setText("● 相机 连接中")
-        self.camera_chip.setObjectName("statusWarn")
+        self.camera_chip.setObjectName("chipWarn")
         self._refresh_style(self.camera_chip)
+        self.connect_camera_button.setEnabled(False)
+        self.connect_camera_button.setText("连接中…")
         self._append_log("INFO", f"正在连接 AMB82-Mini：{url}")
         self.recent_events.add_system_event("相机连接", "正在搜索 AMB82", "info")
         self.camera_thread = CameraThread(
@@ -529,6 +722,7 @@ class GroundStationWindow(QMainWindow):
     ) -> None:
         self.video_panel.canvas.set_frame(frame)
         self.video_panel.canvas.set_detections(detections)
+        self.video_panel.show_live_mode()
         height, width = frame.shape[:2]
         self.camera_state.resolution = f"{width} × {height}"
 
@@ -554,24 +748,65 @@ class GroundStationWindow(QMainWindow):
             f"发现火源：置信度 {detection.confidence:.0%}", 8000
         )
 
-    def _on_camera_status(self, connected: bool, message: str, fps: float) -> None:
+    def _on_camera_status(
+        self,
+        connected: bool,
+        message: str,
+        fps: float,
+        diagnostics: dict,
+    ) -> None:
         was_connected = self.camera_state.connected
+        previous_error = self.camera_state.last_error
         self.camera_state.connected = connected
-        self.camera_state.source = message if connected else "模拟画面"
-        self.camera_state.fps = fps if connected else 20.0
+        self.camera_state.source = message if connected else "未连接图传"
+        self.camera_state.fps = fps if connected else 0.0
+        self.camera_state.frame_age_ms = int(
+            diagnostics.get("frame_age_ms", -1)
+        )
+        self.camera_state.reconnect_count = int(
+            diagnostics.get("reconnect_count", 0)
+        )
+        self.camera_state.last_error = str(
+            diagnostics.get("last_error", "")
+        )
+        self.camera_state.source_kind = str(
+            diagnostics.get("source_kind", "none")
+        )
+        self._camera_connecting = (
+            not connected
+            and bool(self.camera_thread)
+            and self.camera_thread.isRunning()
+            and diagnostics.get("source_kind") != "stopped"
+        )
         self.video_panel.set_camera_state(self.camera_state)
         self.right_sidebar.health_panel.set_state(self.drone_state, self.camera_state)
+        self.compact_status.set_state(self.drone_state, self.camera_state)
+        thread_active = bool(
+            self.camera_thread and self.camera_thread.isRunning()
+        )
+        self.connect_camera_button.setEnabled(not thread_active)
+        self.connect_camera_button.setText(
+            "相机已连接"
+            if connected
+            else "重连中…"
+            if thread_active
+            else "重新连接"
+        )
         if connected:
-            self.camera_chip.setText(f"● 火源识别 {fps:.1f} FPS")
-            self.camera_chip.setObjectName("statusGood")
             if not was_connected:
                 self.recent_events.add_system_event(
                     "相机在线", f"{fps:.1f} FPS · {message}", "good"
                 )
-        else:
-            self.camera_chip.setText("● 相机 模拟")
-            self.camera_chip.setObjectName("statusInfo")
-        self._refresh_style(self.camera_chip)
+        elif (
+            self.camera_state.last_error
+            and self.camera_state.last_error != previous_error
+        ):
+            self.recent_events.add_system_event(
+                "图传重连",
+                self.camera_state.last_error,
+                "warn",
+            )
+        self._update_header_status()
 
     def save_snapshot(self) -> None:
         CAPTURE_DIR.mkdir(exist_ok=True)
@@ -618,6 +853,8 @@ class GroundStationWindow(QMainWindow):
             [1100, 680] if self._large_display else [930, 320]
         )
         self.recent_events.setVisible(True)
+        self.recent_events.set_compact(False)
+        self.compact_status.setVisible(False)
         self.vertical_splitter.setSizes(
             [720, 300] if self._large_display else [650, 148]
         )
@@ -637,16 +874,19 @@ class GroundStationWindow(QMainWindow):
         if width < 1200:
             mode = "narrow"
             self.side_nav.collapse()
+            self.compact_status.setVisible(True)
             if not self._right_sidebar_user_hidden:
                 self.right_sidebar.setVisible(False)
         elif width < 1550:
             mode = "medium"
+            self.compact_status.setVisible(False)
             if not self._right_sidebar_user_hidden:
                 self.right_sidebar.setVisible(True)
                 self.right_sidebar.setMaximumWidth(330)
                 self.horizontal_splitter.setSizes([max(700, width - 400), 300])
         else:
             mode = "wide"
+            self.compact_status.setVisible(False)
             if not self._right_sidebar_user_hidden:
                 self.right_sidebar.setVisible(True)
                 sidebar_width = 680 if large_display else 340
@@ -658,10 +898,12 @@ class GroundStationWindow(QMainWindow):
         compact_height = height < (1500 if large_display else 930)
         self.right_sidebar.set_compact(compact_height)
         if height < 710:
-            self.recent_events.setVisible(False)
-            self.vertical_splitter.setSizes([height - 58, 58])
+            self.recent_events.setVisible(True)
+            self.recent_events.set_compact(True)
+            self.vertical_splitter.setSizes([max(430, height - 128), 128])
         else:
             self.recent_events.setVisible(True)
+            self.recent_events.set_compact(compact_height)
             if large_display:
                 bottom_height = 260 if compact_height else 310
             else:

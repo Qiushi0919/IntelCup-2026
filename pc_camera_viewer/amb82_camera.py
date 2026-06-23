@@ -40,6 +40,7 @@ class AMB82Camera:
         self._last_read_sequence = 0
         self._last_success = 0.0
         self._last_error = ""
+        self._reconnect_count = 0
         self._frame_times: deque[float] = deque(maxlen=45)
 
         if auto_start:
@@ -113,6 +114,16 @@ class AMB82Camera:
     def last_error(self) -> str:
         return self._last_error
 
+    @property
+    def frame_age_ms(self) -> int:
+        if self._last_success <= 0:
+            return -1
+        return max(0, round((time.monotonic() - self._last_success) * 1000))
+
+    @property
+    def reconnect_count(self) -> int:
+        return self._reconnect_count
+
     def release(self) -> None:
         self._stop_event.set()
         with self._condition:
@@ -141,6 +152,8 @@ class AMB82Camera:
                     self._stop_event.wait(self.poll_interval)
             except Exception as error:
                 self._last_error = f"{type(error).__name__}: {error}"
+                if self._last_success > 0:
+                    self._reconnect_count += 1
                 if self.auto_discover:
                     self.url = ""
                 self._stop_event.wait(self.reconnect_delay)

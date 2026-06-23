@@ -38,6 +38,51 @@ QFrame#videoCard {
     border: 1px solid rgba(64, 101, 132, 0.24);
     border-radius: 10px;
 }
+QFrame#compactStatusBar {
+    background: #0b1b2b;
+    border: 1px solid rgba(67, 102, 133, 0.34);
+    border-radius: 8px;
+}
+QLabel#compactMetrics {
+    color: #c4d7e8;
+    font-weight: 600;
+}
+QFrame#candidateIdle, QFrame#candidatePending, QFrame#candidateConfirmed,
+QFrame#candidateCancelled {
+    background: rgba(8, 24, 38, 0.88);
+    border: 1px solid rgba(69, 105, 135, 0.45);
+    border-radius: 8px;
+}
+QFrame#candidatePending {
+    background: rgba(69, 46, 12, 0.88);
+    border-color: #c08a35;
+}
+QFrame#candidateConfirmed {
+    background: rgba(12, 61, 48, 0.88);
+    border-color: #2ebd86;
+}
+QFrame#candidateCancelled {
+    background: rgba(62, 27, 34, 0.88);
+    border-color: #a64a56;
+}
+QLabel#candidateText {
+    color: #e6f2fd;
+    font-size: 12px;
+    font-weight: 700;
+}
+QLabel#compactAlert, QLabel#compactAlertDanger {
+    min-height: 28px;
+    padding: 0 10px;
+    color: #cfe2f3;
+    background: rgba(14, 38, 58, 0.92);
+    border-radius: 6px;
+    font-weight: 700;
+}
+QLabel#compactAlertDanger {
+    color: #ffe1a3;
+    background: rgba(106, 38, 28, 0.96);
+    border: 1px solid #ef6a54;
+}
 QFrame#sideNav {
     background: #091827;
     border-right: 1px solid rgba(71, 105, 136, 0.28);
@@ -128,6 +173,10 @@ QPushButton:hover {
 QPushButton:pressed {
     background: #0d2032;
 }
+QPushButton:focus, QToolButton:focus, QLineEdit:focus, QComboBox:focus,
+QCheckBox:focus, QSlider:focus, QTableWidget:focus {
+    border: 2px solid #66c2ff;
+}
 QPushButton#primaryButton {
     color: white;
     background: #1677d8;
@@ -171,12 +220,14 @@ QToolButton#navButton:hover {
     background: rgba(29, 72, 106, 0.62);
 }
 QProgressBar {
-    height: 9px;
-    border: 0;
+    min-height: 15px;
+    border: 1px solid rgba(63, 99, 128, 0.65);
     border-radius: 4px;
     background: #14283d;
     text-align: center;
-    color: transparent;
+    color: #eaf6ff;
+    font-size: 10px;
+    font-weight: 700;
 }
 QProgressBar::chunk {
     border-radius: 4px;
@@ -352,7 +403,8 @@ QToolButton#navToggle, QToolButton#navButton {
     font-size: 30px;
 }
 QProgressBar {
-    height: 22px;
+    min-height: 28px;
+    font-size: 22px;
 }
 QLabel#eventTitle {
     font-size: 30px;

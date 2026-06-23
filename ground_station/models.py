@@ -47,6 +47,7 @@ class CameraState:
     frame_age_ms: int = 0
     reconnect_count: int = 0
     last_error: str = ""
+    source_kind: str = "none"
 
 
 @dataclass
@@ -73,6 +74,7 @@ class DetectionEvent:
     altitude: float = 0.0
     source: str = "视觉检测"
     review_state: str = "待确认"
+    command_id: str = ""
     bbox: tuple[int, int, int, int] | None = None
     created_at: datetime = field(default_factory=datetime.now)
 
@@ -87,4 +89,16 @@ class CommandIntent:
     requires_confirmation: bool = False
     parameters: dict[str, Any] = field(default_factory=dict)
     command_id: str = field(default_factory=lambda: uuid4().hex[:8].upper())
+    created_at: datetime = field(default_factory=datetime.now)
+
+
+@dataclass
+class SelectionState:
+    target_id: str
+    source: str
+    confidence: float
+    bbox: tuple[int, int, int, int] | None = None
+    review_state: str = "待确认"
+    command_id: str = field(default_factory=lambda: uuid4().hex[:8].upper())
+    event_id: str = ""
     created_at: datetime = field(default_factory=datetime.now)

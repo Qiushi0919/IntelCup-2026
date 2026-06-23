@@ -22,6 +22,7 @@ from PyQt5.QtWidgets import (
     QFormLayout,
     QFrame,
     QGridLayout,
+    QHeaderView,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -54,7 +55,8 @@ def card_frame() -> QFrame:
 
 
 class VideoCanvas(QWidget):
-    target_clicked = pyqtSignal(str)
+    target_clicked = pyqtSignal(str, object)
+    target_missed = pyqtSignal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -65,17 +67,26 @@ class VideoCanvas(QWidget):
         self._state = DroneState()
         self._camera = CameraState()
         self._synthetic_time = 0.0
-        self._last_detection = True
+        self._demo_mode = False
         self._detections: list[FireDetection] = []
         self._detections_hold_until = 0.0
         self._confirmed_until = 0.0
         self._frame_size = (1280, 720)
         self._display_scale = 1.0
+        self._display_detection_boxes: list[
+            tuple[str, QRectF, FireDetection]
+        ] = []
+        self._view_offset = QPointF()
+        self._selected_target_id = ""
+        self._hover_target_id = ""
+        self._interaction_message = ""
+        self._interaction_message_until = 0.0
         self._detection_timer = QTimer(self)
         self._detection_timer.setInterval(200)
         self._detection_timer.timeout.connect(self._expire_detections)
         self._detection_timer.start()
         self.setCursor(Qt.CrossCursor)
+        self.setMouseTracking(True)
 
     def set_display_scale(self, large: bool) -> None:
         self._display_scale = 2.56 if large else 1.0
@@ -90,6 +101,28 @@ class VideoCanvas(QWidget):
         ).copy()
         self._pixmap = QPixmap.fromImage(self._frame)
         self.update()
+
+    def set_demo_mode(self, enabled: bool) -> None:
+        self._demo_mode = enabled
+        self.update()
+
+    def clear_selection(self) -> None:
+        self._selected_target_id = ""
+        self._hover_target_id = ""
+        self.update()
+
+    def select_target(self, target_id: str) -> None:
+        self._selected_target_id = target_id
+        self.update()
+
+    def get_detection(self, target_id: str) -> FireDetection | None:
+        try:
+            index = int(target_id.rsplit("-", 1)[1]) - 1
+        except (IndexError, ValueError):
+            return None
+        if 0 <= index < len(self._detections):
+            return self._detections[index]
+        return None
 
     def set_detections(self, detections: list[FireDetection]) -> None:
         now = time.monotonic()
@@ -139,6 +172,8 @@ class VideoCanvas(QWidget):
         view_left = (outer_rect.width() - view_width) // 2
         view_top = (outer_rect.height() - view_height) // 2
         rect = QRect(0, 0, view_width, view_height)
+        self._view_offset = QPointF(view_left, view_top)
+        self._display_detection_boxes = []
 
         painter.save()
         painter.translate(view_left, view_top)
@@ -194,13 +229,6 @@ class VideoCanvas(QWidget):
         for block in blocks:
             painter.drawRoundedRect(block, 6, 6)
 
-        if self._last_detection:
-            target_x = rect.width() * 0.58 + math.sin(self._synthetic_time) * 14
-            target_y = rect.height() * 0.61 + math.cos(self._synthetic_time * 0.7) * 7
-            painter.setBrush(QColor("#ff4a4a"))
-            painter.setPen(Qt.NoPen)
-            painter.drawEllipse(QPointF(target_x, target_y), 8, 8)
-
     def _draw_overlay(
         self, painter: QPainter, rect: QRect, content_rect: QRectF
     ) -> None:
@@ -218,7 +246,14 @@ class VideoCanvas(QWidget):
         painter.setFont(QFont("Microsoft YaHei UI", round(10 * scale), QFont.Bold))
         painter.setPen(QColor("#d8f4ff"))
         source = self._camera.source
-        status = "ONLINE" if self._camera.connected else "SIMULATION"
+        if self._demo_mode:
+            status = "DEMO"
+            source = "离线识别示例 · 非实时图传"
+        elif self._camera.connected:
+            status = "ONLINE"
+        else:
+            status = "NO SIGNAL"
+            source = "未连接图传"
         painter.drawText(margin, int(26 * scale), f"{status}  |  {source}")
         painter.setFont(QFont("Microsoft YaHei UI", round(9 * scale)))
         painter.setPen(QColor("#91b7ca"))
@@ -231,42 +266,44 @@ class VideoCanvas(QWidget):
 
         if self._pixmap is not None and not self._pixmap.isNull():
             self._draw_fire_detections(painter, content_rect)
-        elif self._last_detection:
-            box_width = 178 * scale
-            box_height = 105 * scale
-            label_height = 25 * scale
-            box_x = min(rect.width() * 0.49, rect.width() - box_width - 3)
-            box_y = min(
-                rect.height() * 0.49,
-                rect.height() - box_height - 3,
+
+        if self._demo_mode:
+            banner_width = min(rect.width() * 0.46, 310 * scale)
+            banner_height = 28 * scale
+            banner = QRectF(
+                rect.right() - banner_width - margin,
+                margin,
+                banner_width,
+                banner_height,
             )
-            box_y = max(label_height + 3, box_y)
-            box = QRectF(
-                box_x,
-                box_y,
-                box_width,
-                box_height,
-            )
-            painter.setBrush(Qt.NoBrush)
-            painter.setPen(QPen(QColor("#ff6161"), max(2, round(2 * scale))))
-            painter.drawRect(box)
-            painter.fillRect(
-                QRectF(box.left(), box.top() - label_height, box_width, label_height),
-                QColor(190, 42, 51, 210),
-            )
-            painter.setPen(Qt.white)
+            painter.fillRect(banner, QColor(128, 74, 13, 225))
+            painter.setPen(QColor("#ffe0a3"))
             painter.setFont(
                 QFont("Microsoft YaHei UI", round(9 * scale), QFont.Bold)
             )
             painter.drawText(
-                QRectF(
-                    box.left() + 8 * scale,
-                    box.top() - label_height,
-                    box_width - 12 * scale,
-                    label_height,
-                ),
+                banner.adjusted(8 * scale, 0, -8 * scale, 0),
+                Qt.AlignVCenter | Qt.AlignRight,
+                "离线 DEMO · 结果仅用于演示",
+            )
+
+        if (
+            self._interaction_message
+            and time.monotonic() < self._interaction_message_until
+        ):
+            message_rect = QRectF(
+                margin,
+                rect.bottom() - 42 * scale,
+                min(rect.width() - margin * 2, 360 * scale),
+                30 * scale,
+            )
+            painter.fillRect(message_rect, QColor(10, 27, 43, 225))
+            painter.setPen(QColor("#dbeeff"))
+            painter.setFont(QFont("Microsoft YaHei UI", round(9 * scale)))
+            painter.drawText(
+                message_rect.adjusted(9 * scale, 0, -9 * scale, 0),
                 Qt.AlignVCenter,
-                "模拟火源  93%",
+                self._interaction_message,
             )
 
         painter.setPen(QPen(QColor(255, 255, 255, 35), 1))
@@ -284,7 +321,8 @@ class VideoCanvas(QWidget):
         ui_scale = self._display_scale
         confirmed = time.monotonic() < self._confirmed_until
 
-        for detection in self._detections[:5]:
+        for index, detection in enumerate(self._detections[:5], start=1):
+            target_id = f"FIRE-{index:02d}"
             x, y, width, height = detection.bbox
             raw_box = QRectF(
                 rect.left() + x * scale_x,
@@ -302,12 +340,31 @@ class VideoCanvas(QWidget):
                 box_height,
             )
             box = box.intersected(rect)
+            self._display_detection_boxes.append(
+                (
+                    target_id,
+                    box.translated(self._view_offset),
+                    detection,
+                )
+            )
             label_height = max(25.0, 25.0 * ui_scale)
+            selected = target_id == self._selected_target_id
+            hovered = target_id == self._hover_target_id
+            box_color = (
+                QColor("#53d7ff")
+                if selected
+                else QColor("#ffbd52")
+                if hovered
+                else QColor("#ff303d" if confirmed else "#ff5454")
+            )
             painter.setBrush(Qt.NoBrush)
             painter.setPen(
                 QPen(
-                    QColor("#ff303d" if confirmed else "#ff5454"),
-                    max(4 if confirmed else 2, round((3 if confirmed else 2) * ui_scale)),
+                    box_color,
+                    max(
+                        4 if confirmed or selected else 2,
+                        round((3 if confirmed or selected else 2) * ui_scale),
+                    ),
                 )
             )
             painter.drawRect(box)
@@ -321,9 +378,9 @@ class VideoCanvas(QWidget):
                 painter.drawEllipse(box.adjusted(-7, -7, 7, 7))
 
             label = (
-                f"已确认火源  {detection.confidence:.0%}"
+                f"{target_id} · 已确认  {detection.confidence:.0%}"
                 if confirmed
-                else f"火源  {detection.confidence:.0%}"
+                else f"{target_id} · 火源  {detection.confidence:.0%}"
             )
             label_width = max(
                 box.width(),
@@ -341,7 +398,14 @@ class VideoCanvas(QWidget):
                     label_width,
                     label_height,
                 ),
-                QColor(196, 28, 42, 235 if confirmed else 220),
+                QColor(
+                    25,
+                    112,
+                    145,
+                    235,
+                )
+                if selected
+                else QColor(196, 28, 42, 235 if confirmed else 220),
             )
             painter.setPen(Qt.white)
             painter.setFont(
@@ -359,15 +423,51 @@ class VideoCanvas(QWidget):
             )
 
     def mouseDoubleClickEvent(self, event) -> None:
-        self.target_clicked.emit("FIRE-03")
+        for target_id, box, detection in reversed(
+            self._display_detection_boxes
+        ):
+            if box.contains(event.pos()):
+                self._selected_target_id = target_id
+                self._interaction_message = (
+                    f"已选择 {target_id}，请在下方候选卡确认或取消"
+                )
+                self._interaction_message_until = time.monotonic() + 3.0
+                self.target_clicked.emit(target_id, detection)
+                self.update()
+                event.accept()
+                return
+        self._interaction_message = "未命中检测框，请双击红色目标框"
+        self._interaction_message_until = time.monotonic() + 2.5
+        self.target_missed.emit(self._interaction_message)
+        self.update()
         event.accept()
+
+    def mouseMoveEvent(self, event) -> None:
+        hovered = ""
+        for target_id, box, _detection in reversed(
+            self._display_detection_boxes
+        ):
+            if box.contains(event.pos()):
+                hovered = target_id
+                break
+        if hovered != self._hover_target_id:
+            self._hover_target_id = hovered
+            self.update()
+        event.accept()
+
+    def leaveEvent(self, event) -> None:
+        if self._hover_target_id:
+            self._hover_target_id = ""
+            self.update()
+        super().leaveEvent(event)
 
 
 class VideoPanel(QFrame):
     snapshot_requested = pyqtSignal()
     connect_camera_requested = pyqtSignal()
     demo_requested = pyqtSignal()
-    target_selected = pyqtSignal(str)
+    target_selected = pyqtSignal(str, object)
+    target_missed = pyqtSignal(str)
     lens_correction_toggled = pyqtSignal(bool)
 
     def __init__(self, parent: QWidget | None = None) -> None:
@@ -404,6 +504,7 @@ class VideoPanel(QFrame):
 
         self.canvas = VideoCanvas()
         self.canvas.target_clicked.connect(self.target_selected)
+        self.canvas.target_missed.connect(self.target_missed)
         layout.addWidget(self.canvas, 1)
 
         footer = QHBoxLayout()
@@ -432,24 +533,42 @@ class VideoPanel(QFrame):
     def set_camera_state(self, state: CameraState) -> None:
         self.canvas.set_camera_state(state)
         if state.connected:
-            self.camera_status.setText(f"● AMB82 在线  {state.fps:.1f} FPS")
+            age_text = (
+                f" · 帧龄 {state.frame_age_ms} ms"
+                if state.frame_age_ms >= 0
+                else ""
+            )
+            self.camera_status.setText(
+                f"● AMB82 在线  {state.fps:.1f} FPS{age_text}"
+            )
             self.camera_status.setObjectName("chipGood")
             self.mode_label.setText("火源识别 ON")
         else:
-            self.camera_status.setText("● 模拟画面")
-            self.camera_status.setObjectName("chipInfo")
-            self.mode_label.setText("模拟视觉链")
+            error = f" · {state.last_error}" if state.last_error else ""
+            self.camera_status.setText(
+                f"● 图传离线 · 重连 {state.reconnect_count} 次{error}"
+            )
+            self.camera_status.setObjectName(
+                "chipWarn" if state.last_error else "chipInfo"
+            )
+            self.mode_label.setText("等待真实图传")
         self.camera_status.style().unpolish(self.camera_status)
         self.camera_status.style().polish(self.camera_status)
 
     def show_demo_mode(self, detection_count: int) -> None:
+        self.canvas.set_demo_mode(True)
         self.mode_label.setText("火源识别示例")
-        self.camera_status.setText(f"● 算法运行正常 · {detection_count} 个候选")
+        self.camera_status.setText(
+            f"● 离线 DEMO · {detection_count} 个候选 · 非实时图传"
+        )
         self.camera_status.setObjectName(
             "chipGood" if detection_count else "chipWarn"
         )
         self.camera_status.style().unpolish(self.camera_status)
         self.camera_status.style().polish(self.camera_status)
+
+    def show_live_mode(self) -> None:
+        self.canvas.set_demo_mode(False)
 
 
 class MetricBox(QFrame):
@@ -522,6 +641,8 @@ class StatusPanel(QFrame):
         self.battery = QProgressBar()
         self.battery.setRange(0, 100)
         self.battery.setValue(92)
+        self.battery.setTextVisible(True)
+        self.battery.setFormat("92%")
         layout.addWidget(self.battery)
 
         detail = QGridLayout()
@@ -587,6 +708,7 @@ class StatusPanel(QFrame):
         self.position.set_value(f"{state.x:.1f}, {state.y:.1f}")
         self.attitude.set_value(f"{state.roll:.1f} / {state.pitch:.1f}")
         self.battery.setValue(int(state.battery_percent))
+        self.battery.setFormat(f"{state.battery_percent:.0f}%")
         self.battery_text.setText(
             f"{state.battery_percent:.0f}%  ·  {state.battery_voltage:.1f} V"
         )
@@ -735,29 +857,46 @@ class MapPanel(QFrame):
 
 class EventTable(QTableWidget):
     def __init__(self, parent=None) -> None:
-        super().__init__(0, 6, parent)
+        super().__init__(0, 8, parent)
         self.setHorizontalHeaderLabels(
-            ["时间", "事件", "置信度", "位置", "来源", "状态"]
+            ["事件 ID", "时间", "事件", "置信度", "位置 / 高度", "来源", "审核状态", "命令 ID"]
         )
         self.verticalHeader().setVisible(False)
         self.setAlternatingRowColors(False)
         self.setSelectionBehavior(QTableWidget.SelectRows)
         self.setEditTriggers(QTableWidget.NoEditTriggers)
-        self.horizontalHeader().setStretchLastSection(True)
+        header = self.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.Interactive)
+        header.setSectionResizeMode(2, QHeaderView.Stretch)
+        header.setSectionResizeMode(5, QHeaderView.Stretch)
+        self.setColumnWidth(0, 92)
+        self.setColumnWidth(1, 82)
+        self.setColumnWidth(3, 78)
+        self.setColumnWidth(4, 150)
+        self.setColumnWidth(6, 92)
+        self.setColumnWidth(7, 92)
 
     def add_event(self, event: DetectionEvent) -> None:
         self.insertRow(0)
         values = [
+            event.event_id,
             event.created_at.strftime("%H:%M:%S"),
             event.target_type,
             f"{event.confidence:.0%}",
-            f"({event.x:.1f}, {event.y:.1f})",
+            f"({event.x:.1f}, {event.y:.1f}) · {event.altitude:.1f} m",
             event.source,
             event.review_state,
+            event.command_id or "—",
         ]
         for column, value in enumerate(values):
             self.setItem(0, column, QTableWidgetItem(value))
-        self.resizeColumnsToContents()
+
+    def update_review_state(self, event_id: str, state: str) -> None:
+        for row in range(self.rowCount()):
+            identifier = self.item(row, 0)
+            if identifier and identifier.text() == event_id:
+                self.setItem(row, 6, QTableWidgetItem(state))
+                return
 
 
 class VoicePanel(QWidget):
@@ -766,6 +905,12 @@ class VoicePanel(QWidget):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         layout = QVBoxLayout(self)
+        self.enabled = QCheckBox("启用语音输入")
+        self.enabled.setChecked(True)
+        layout.addWidget(self.enabled)
+        self.health = QLabel("来源正常 · 尚无输入")
+        self.health.setObjectName("chipGood")
+        layout.addWidget(self.health)
         note = QLabel("语音只生成候选指令，高风险动作仍需屏幕确认。")
         note.setWordWrap(True)
         note.setObjectName("muted")
@@ -784,6 +929,12 @@ class VoicePanel(QWidget):
         layout.addStretch()
 
     def _parse(self) -> None:
+        if not self.enabled.isChecked():
+            self.health.setText("语音输入已禁用")
+            self.health.setObjectName("chipWarn")
+            self.health.style().unpolish(self.health)
+            self.health.style().polish(self.health)
+            return
         text = self.input.text().strip()
         mappings = [
             (("返航", "返回起点"), "RTL", "返回起点", "high", True),
@@ -798,6 +949,9 @@ class VoicePanel(QWidget):
             if any(keyword in text for keyword in keywords):
                 self.result.setText(
                     f"识别文本：{text}\n候选动作：{label}\n置信度：96%"
+                )
+                self.health.setText(
+                    f"来源正常 · 最近输入 {datetime.now().strftime('%H:%M:%S')} · 96%"
                 )
                 self.command_proposed.emit(
                     CommandIntent(
@@ -819,6 +973,9 @@ class GesturePanel(QWidget):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         layout = QVBoxLayout(self)
+        self.enabled = QCheckBox("启用手势输入")
+        self.enabled.setChecked(True)
+        layout.addWidget(self.enabled)
         preview = QLabel("操作员摄像头预览\n\n手部关键点与骨架将在此显示")
         preview.setAlignment(Qt.AlignCenter)
         preview.setMinimumHeight(150)
@@ -840,6 +997,12 @@ class GesturePanel(QWidget):
         layout.addStretch()
 
     def _submit(self) -> None:
+        if not self.enabled.isChecked():
+            self.confidence.setText("手势输入已禁用")
+            self.confidence.setObjectName("chipWarn")
+            self.confidence.style().unpolish(self.confidence)
+            self.confidence.style().polish(self.confidence)
+            return
         index = self.combo.currentIndex()
         data = [
             ("HOLD", "暂停并悬停", "medium", False),
@@ -856,6 +1019,9 @@ class GesturePanel(QWidget):
                 requires_confirmation=data[3],
             )
         )
+        self.confidence.setText(
+            f"来源正常 · 最近输入 {datetime.now().strftime('%H:%M:%S')} · 94%"
+        )
 
 
 class GazePanel(QWidget):
@@ -864,10 +1030,13 @@ class GazePanel(QWidget):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         layout = QVBoxLayout(self)
-        calibration = QLabel("视线校准：良好 · 误差 1.4°")
-        calibration.setObjectName("chipGood")
-        layout.addWidget(calibration)
-        preview = QLabel("注视点预览\n\n当前注视：视频目标 FIRE-03")
+        self.enabled = QCheckBox("启用视线输入")
+        self.enabled.setChecked(True)
+        layout.addWidget(self.enabled)
+        self.calibration = QLabel("视线校准：良好 · 误差 1.4°")
+        self.calibration.setObjectName("chipGood")
+        layout.addWidget(self.calibration)
+        preview = QLabel("注视点预览\n\n当前注视：视频目标 FIRE-01")
         preview.setAlignment(Qt.AlignCenter)
         preview.setMinimumHeight(150)
         preview.setStyleSheet(
@@ -886,14 +1055,23 @@ class GazePanel(QWidget):
         layout.addStretch()
 
     def _submit(self) -> None:
+        if not self.enabled.isChecked():
+            self.calibration.setText("视线输入已禁用")
+            self.calibration.setObjectName("chipWarn")
+            self.calibration.style().unpolish(self.calibration)
+            self.calibration.style().polish(self.calibration)
+            return
+        self.calibration.setText(
+            f"校准良好 · 最近输入 {datetime.now().strftime('%H:%M:%S')} · 89%"
+        )
         self.command_proposed.emit(
             CommandIntent(
                 action="SELECT_TARGET",
                 source="视线",
-                label="选择目标 FIRE-03",
+                label="选择目标 FIRE-01",
                 confidence=0.89,
                 risk_level="low",
-                parameters={"target_id": "FIRE-03"},
+                parameters={"target_id": "FIRE-01"},
             )
         )
 
@@ -993,6 +1171,32 @@ class CommandBar(QFrame):
         title = QLabel("安全命令中心")
         title.setObjectName("sectionTitle")
         layout.addWidget(title)
+        self.candidate = QFrame()
+        self.candidate.setObjectName("candidateIdle")
+        candidate_layout = QHBoxLayout(self.candidate)
+        candidate_layout.setContentsMargins(9, 4, 6, 4)
+        candidate_layout.setSpacing(6)
+        self.candidate_text = QLabel("当前候选：无")
+        self.candidate_text.setObjectName("candidateText")
+        self.confirm_candidate = QPushButton("确认目标")
+        self.confirm_candidate.setObjectName("primaryButton")
+        self.confirm_candidate.setEnabled(False)
+        self.confirm_candidate.clicked.connect(
+            lambda: self.command_requested.emit(
+                "CONFIRM_CANDIDATE", "确认候选目标"
+            )
+        )
+        self.cancel_candidate = QPushButton("取消")
+        self.cancel_candidate.setEnabled(False)
+        self.cancel_candidate.clicked.connect(
+            lambda: self.command_requested.emit(
+                "CANCEL_SELECTION", "取消目标选择"
+            )
+        )
+        candidate_layout.addWidget(self.candidate_text)
+        candidate_layout.addWidget(self.confirm_candidate)
+        candidate_layout.addWidget(self.cancel_candidate)
+        layout.addWidget(self.candidate)
         layout.addStretch()
         buttons = [
             ("自动起飞", "TAKEOFF", "primaryButton"),
@@ -1012,6 +1216,37 @@ class CommandBar(QFrame):
                 )
             )
             layout.addWidget(button)
+
+    def set_candidate(
+        self,
+        target_id: str,
+        confidence: float,
+        source: str,
+        state: str,
+    ) -> None:
+        self.candidate_text.setText(
+            f"候选 {target_id} · {confidence:.0%} · {source} · {state}"
+        )
+        pending = state == "待确认"
+        self.confirm_candidate.setEnabled(pending)
+        self.cancel_candidate.setEnabled(pending)
+        self.candidate.setObjectName(
+            "candidatePending"
+            if pending
+            else "candidateConfirmed"
+            if state == "已确认"
+            else "candidateCancelled"
+        )
+        self.candidate.style().unpolish(self.candidate)
+        self.candidate.style().polish(self.candidate)
+
+    def clear_candidate(self) -> None:
+        self.candidate_text.setText("当前候选：无")
+        self.confirm_candidate.setEnabled(False)
+        self.cancel_candidate.setEnabled(False)
+        self.candidate.setObjectName("candidateIdle")
+        self.candidate.style().unpolish(self.candidate)
+        self.candidate.style().polish(self.candidate)
 
 
 class LogPanel(QPlainTextEdit):
@@ -1063,6 +1298,12 @@ class HealthPanel(QFrame):
             self.chips[key] = chip
             row.addWidget(chip)
         layout.addLayout(row)
+        self.camera_diagnostics = QLabel(
+            "图传诊断：未连接 · 无实时画面"
+        )
+        self.camera_diagnostics.setObjectName("muted")
+        self.camera_diagnostics.setWordWrap(True)
+        layout.addWidget(self.camera_diagnostics)
 
     def set_state(self, state: DroneState, camera: CameraState) -> None:
         self._set_chip("flight", "飞控 在线" if state.connected else "飞控 离线", state.connected)
@@ -1084,6 +1325,16 @@ class HealthPanel(QFrame):
             "定位 良好" if positioning_ok else "定位 降级",
             positioning_ok,
         )
+        if camera.connected:
+            self.camera_diagnostics.setText(
+                f"图传诊断：{camera.source_kind.upper()} · {camera.fps:.1f} FPS · "
+                f"帧龄 {camera.frame_age_ms} ms · 重连 {camera.reconnect_count} 次"
+            )
+        else:
+            error = camera.last_error or "等待连接 AMB82"
+            self.camera_diagnostics.setText(
+                f"图传诊断：离线 · 重连 {camera.reconnect_count} 次 · {error}"
+            )
 
     def _set_chip(self, key: str, text: str, good: bool, info: bool = False) -> None:
         chip = self.chips[key]
@@ -1128,6 +1379,72 @@ class RightSidebar(QWidget):
         self.map_panel.map.setMinimumHeight(100 if compact else 190)
 
 
+class CompactStatusBar(QFrame):
+    details_requested = pyqtSignal()
+
+    def __init__(self, parent=None) -> None:
+        super().__init__(parent)
+        self.setObjectName("compactStatusBar")
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(10, 5, 8, 5)
+        layout.setSpacing(8)
+        self.phase = QLabel("待命")
+        self.phase.setObjectName("chipInfo")
+        self.flight = QLabel("飞控 在线")
+        self.flight.setObjectName("miniChipGood")
+        self.camera = QLabel("图传 离线")
+        self.camera.setObjectName("miniChipInfo")
+        self.telemetry = QLabel("数传 在线")
+        self.telemetry.setObjectName("miniChipGood")
+        self.metrics = QLabel("高度 0.00 m · 电量 92% · 链路 26 ms")
+        self.metrics.setObjectName("compactMetrics")
+        details = QPushButton("状态 / 地图")
+        details.setObjectName("ghostButton")
+        details.clicked.connect(self.details_requested)
+        for widget in (
+            self.phase,
+            self.flight,
+            self.camera,
+            self.telemetry,
+            self.metrics,
+        ):
+            layout.addWidget(widget)
+        layout.addStretch()
+        layout.addWidget(details)
+
+    def set_state(self, state: DroneState, camera: CameraState) -> None:
+        self.phase.setText(state.flight_phase)
+        self.flight.setText(
+            "飞控 在线" if state.connected else "飞控 离线"
+        )
+        self.flight.setObjectName(
+            "miniChipGood" if state.connected else "miniChipWarn"
+        )
+        self.camera.setText(
+            f"图传 {camera.fps:.0f} FPS" if camera.connected else "图传 离线"
+        )
+        self.camera.setObjectName(
+            "miniChipGood"
+            if camera.connected
+            else "miniChipWarn"
+            if camera.last_error
+            else "miniChipInfo"
+        )
+        self.telemetry.setText(
+            "数传 在线" if state.telemetry_connected else "数传 离线"
+        )
+        self.telemetry.setObjectName(
+            "miniChipGood" if state.telemetry_connected else "miniChipWarn"
+        )
+        self.metrics.setText(
+            f"高度 {state.altitude:.2f} m · 电量 {state.battery_percent:.0f}% · "
+            f"链路 {state.link_latency_ms} ms"
+        )
+        for chip in (self.flight, self.camera, self.telemetry):
+            chip.style().unpolish(chip)
+            chip.style().polish(chip)
+
+
 class RecentEventsPanel(QFrame):
     open_full_requested = pyqtSignal()
     clear_requested = pyqtSignal()
@@ -1136,6 +1453,7 @@ class RecentEventsPanel(QFrame):
         super().__init__(parent)
         self.setObjectName("recentEvents")
         self._items: list[dict] = []
+        self._compact = False
         self._flash_remaining = 0
         self._flash_on = False
         self._flash_timer = QTimer(self)
@@ -1162,9 +1480,17 @@ class RecentEventsPanel(QFrame):
         header.addWidget(clear_button)
         layout.addLayout(header)
 
-        self.rows = QHBoxLayout()
+        self.compact_alert = QLabel("暂无关键告警")
+        self.compact_alert.setObjectName("compactAlert")
+        self.compact_alert.setWordWrap(False)
+        self.compact_alert.setVisible(False)
+        layout.addWidget(self.compact_alert)
+
+        self.rows_widget = QWidget()
+        self.rows = QHBoxLayout(self.rows_widget)
+        self.rows.setContentsMargins(0, 0, 0, 0)
         self.rows.setSpacing(7)
-        layout.addLayout(self.rows)
+        layout.addWidget(self.rows_widget)
         self.add_system_event("系统就绪", "模拟遥测已启动", "good")
         self.add_system_event("相机状态", "等待连接 AMB82", "info")
         self.add_system_event("任务状态", "待命 · 航点 0/10", "info")
@@ -1233,6 +1559,14 @@ class RecentEventsPanel(QFrame):
         else:
             self._render()
 
+    def set_compact(self, compact: bool) -> None:
+        if self._compact == compact:
+            return
+        self._compact = compact
+        self.rows_widget.setVisible(not compact)
+        self.compact_alert.setVisible(compact)
+        self._render()
+
     def _render(self) -> None:
         while self.rows.count():
             item = self.rows.takeAt(0)
@@ -1258,6 +1592,26 @@ class RecentEventsPanel(QFrame):
             card_layout.addLayout(top)
             card_layout.addWidget(detail)
             self.rows.addWidget(card, 1)
+        if self._items:
+            important = next(
+                (
+                    item
+                    for item in self._items
+                    if item["level"] in {"fire", "error", "warn"}
+                ),
+                self._items[0],
+            )
+            prefix = "⚠" if important["level"] in {"fire", "error", "warn"} else "●"
+            self.compact_alert.setText(
+                f"{prefix} {important['time']}  {important['title']}：{important['detail']}"
+            )
+            self.compact_alert.setObjectName(
+                "compactAlertDanger"
+                if important["level"] in {"fire", "error", "warn"}
+                else "compactAlert"
+            )
+            self.compact_alert.style().unpolish(self.compact_alert)
+            self.compact_alert.style().polish(self.compact_alert)
 
 
 class SideNavigation(QFrame):
