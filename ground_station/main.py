@@ -582,19 +582,16 @@ class GroundStationWindow(QMainWindow):
                 f"指令来源：{intent.source}\n"
                 f"候选动作：{intent.label}\n"
                 f"置信度：{intent.confidence:.0%}\n"
-                f"当前状态：{self.drone_state.flight_phase}\n\n"
-                "确认执行此高风险操作吗？"
+                f"当前状态：{self.drone_state.flight_phase}\n"
+                f"风险等级：{intent.risk_level}\n\n"
+                "确认执行此高风险操作吗？\n"
+                "执行后会写入任务日志，请持续观察飞行状态。"
             )
             dialog = QMessageBox(self)
             dialog.setWindowTitle("高风险命令确认")
             dialog.setIcon(QMessageBox.Warning)
             dialog.setText(f"准备执行：{intent.label}")
             dialog.setInformativeText(message)
-            dialog.setDetailedText(
-                f"命令 ID：{intent.command_id}\n"
-                f"风险等级：{intent.risk_level}\n"
-                "此操作会写入任务日志；执行后请持续观察飞行状态。"
-            )
             execute_button = dialog.addButton(
                 "确认执行", QMessageBox.AcceptRole
             )

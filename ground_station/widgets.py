@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import math
+import re
+import sys
 import time
 from datetime import datetime
+from pathlib import Path
 
 import cv2
-from PyQt5.QtCore import QPointF, QRect, QRectF, Qt, QTimer, pyqtSignal
+from PyQt5.QtCore import QProcess, QPointF, QRect, QRectF, Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import (
     QColor,
     QFont,
@@ -904,6 +907,13 @@ class VoicePanel(QWidget):
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
+        self._asr_process: QProcess | None = None
+        self._asr_script = (
+            Path(__file__).resolve().parents[1]
+            / "voice_asr"
+            / "asr_realtime_openvino.py"
+        )
+        self._asr_python = self._find_asr_python()
         layout = QVBoxLayout(self)
         self.enabled = QCheckBox("启用语音输入")
         self.enabled.setChecked(True)
@@ -926,14 +936,31 @@ class VoicePanel(QWidget):
         parse.setObjectName("primaryButton")
         parse.clicked.connect(self._parse)
         layout.addWidget(parse)
+        asr_controls = QHBoxLayout()
+        self.asr_start = QPushButton("启动实时识别")
+        self.asr_start.clicked.connect(self._start_asr)
+        asr_controls.addWidget(self.asr_start)
+        self.asr_stop = QPushButton("停止识别")
+        self.asr_stop.setEnabled(False)
+        self.asr_stop.clicked.connect(self._stop_asr)
+        asr_controls.addWidget(self.asr_stop)
+        layout.addLayout(asr_controls)
+        self.asr_log = QPlainTextEdit()
+        self.asr_log.setReadOnly(True)
+        self.asr_log.setMaximumHeight(120)
+        self.asr_log.setPlaceholderText("实时语音识别状态会显示在这里")
+        layout.addWidget(self.asr_log)
         layout.addStretch()
+
+    def _set_health(self, text: str, object_name: str) -> None:
+        self.health.setText(text)
+        self.health.setObjectName(object_name)
+        self.health.style().unpolish(self.health)
+        self.health.style().polish(self.health)
 
     def _parse(self) -> None:
         if not self.enabled.isChecked():
-            self.health.setText("语音输入已禁用")
-            self.health.setObjectName("chipWarn")
-            self.health.style().unpolish(self.health)
-            self.health.style().polish(self.health)
+            self._set_health("语音输入已禁用", "chipWarn")
             return
         text = self.input.text().strip()
         mappings = [
@@ -965,6 +992,108 @@ class VoicePanel(QWidget):
                 )
                 return
         self.result.setText(f"无法解析：{text}\n请使用受支持的安全命令")
+
+    def _start_asr(self) -> None:
+        if self._asr_process is not None:
+            return
+        if not self._asr_script.exists():
+            self.asr_log.appendPlainText("未找到语音识别脚本，请确认 voice_asr 目录存在。")
+            self._set_health("实时语音识别不可用", "chipWarn")
+            return
+        process = QProcess(self)
+        process.setProgram(str(self._asr_python))
+        process.setArguments(
+            [
+                str(self._asr_script),
+                "--ov-device",
+                "GPU",
+                "--language",
+                "zh",
+                "--task",
+                "transcribe",
+            ]
+        )
+        process.setWorkingDirectory(str(self._asr_script.parent))
+        process.readyReadStandardOutput.connect(self._read_asr_stdout)
+        process.readyReadStandardError.connect(self._read_asr_stderr)
+        process.errorOccurred.connect(self._asr_error)
+        process.finished.connect(self._asr_finished)
+        self._asr_process = process
+        self.asr_log.clear()
+        self.asr_log.appendPlainText(
+            f"正在启动实时语音识别：{self._asr_python}"
+        )
+        self.asr_log.appendPlainText("首次加载模型可能较慢。")
+        self._set_health("实时语音识别启动中", "chipInfo")
+        self.asr_start.setEnabled(False)
+        self.asr_stop.setEnabled(True)
+        process.start()
+
+    def _stop_asr(self) -> None:
+        if self._asr_process is None:
+            return
+        self.asr_log.appendPlainText("正在停止实时语音识别...")
+        self._asr_process.terminate()
+        if not self._asr_process.waitForFinished(1500):
+            self._asr_process.kill()
+
+    def _read_asr_stdout(self) -> None:
+        if self._asr_process is None:
+            return
+        data = bytes(self._asr_process.readAllStandardOutput()).decode(
+            "utf-8", errors="replace"
+        )
+        for line in data.splitlines():
+            if not line.strip():
+                continue
+            self.asr_log.appendPlainText(line)
+            text = self._extract_asr_text(line)
+            if text:
+                self.input.setText(text)
+                self._parse()
+
+    def _read_asr_stderr(self) -> None:
+        if self._asr_process is None:
+            return
+        data = bytes(self._asr_process.readAllStandardError()).decode(
+            "utf-8", errors="replace"
+        )
+        for line in data.splitlines():
+            if line.strip():
+                self.asr_log.appendPlainText(f"提示：{line}")
+
+    def _asr_error(self, _error) -> None:
+        self.asr_log.appendPlainText(
+            "实时识别启动失败。请先双击 install_voice_asr_deps.bat 安装语音依赖。"
+        )
+        self._set_health("实时语音识别启动失败", "chipWarn")
+
+    def _asr_finished(self, exit_code: int, _exit_status) -> None:
+        self._asr_process = None
+        self.asr_start.setEnabled(True)
+        self.asr_stop.setEnabled(False)
+        if exit_code == 0:
+            self._set_health("实时语音识别已停止", "chipInfo")
+        else:
+            self._set_health("实时语音识别已退出，请查看日志", "chipWarn")
+
+    def _extract_asr_text(self, line: str) -> str:
+        if not line.startswith("[segment="):
+            return ""
+        match = re.search(r"\]\s*([^\[\]]+)$", line)
+        if not match:
+            return ""
+        return match.group(1).strip()
+
+    def _find_asr_python(self) -> Path:
+        candidates = [
+            Path.home() / ".conda" / "envs" / "gluon" / "python.exe",
+            Path("C:/ProgramData/anaconda3/envs/gluon/python.exe"),
+        ]
+        for candidate in candidates:
+            if candidate.exists():
+                return candidate
+        return Path(sys.executable)
 
 
 class GesturePanel(QWidget):

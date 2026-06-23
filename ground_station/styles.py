@@ -337,6 +337,33 @@ QToolTip {
     background: #10263b;
     border: 1px solid #386280;
 }
+QMessageBox {
+    background: #f3f7fb;
+}
+QMessageBox QLabel {
+    color: #102033;
+    background: transparent;
+    font-size: 14px;
+    font-weight: 600;
+}
+QMessageBox QPushButton {
+    min-height: 34px;
+    padding: 0 14px;
+    color: #ffffff;
+    background: #123a60;
+    border: 1px solid #2f6d9f;
+    border-radius: 7px;
+    font-weight: 700;
+}
+QMessageBox QPushButton:hover {
+    background: #18517f;
+}
+QMessageBox QTextEdit {
+    color: #102033;
+    background: #ffffff;
+    border: 1px solid #b8c7d6;
+    border-radius: 6px;
+}
 QScrollBar:vertical {
     width: 8px;
     background: #071321;
