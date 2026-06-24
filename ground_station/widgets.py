@@ -37,6 +37,7 @@ from PyQt5.QtWidgets import (
     QSizePolicy,
     QTableWidget,
     QTableWidgetItem,
+    QTabWidget,
     QToolButton,
     QVBoxLayout,
     QWidget,
@@ -1205,6 +1206,37 @@ class GazePanel(QWidget):
         )
 
 
+class MultimodalPanel(QWidget):
+    def __init__(
+        self,
+        voice_panel: VoicePanel,
+        gesture_panel: GesturePanel,
+        gaze_panel: GazePanel,
+        parent=None,
+    ) -> None:
+        super().__init__(parent)
+        self.voice_panel = voice_panel
+        self.gesture_panel = gesture_panel
+        self.gaze_panel = gaze_panel
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(6)
+        layout.addWidget(self.voice_panel, 0)
+
+        self.tabs = QTabWidget()
+        self.tabs.setTabPosition(QTabWidget.South)
+        self.tabs.addTab(self.gesture_panel, "手势交互")
+        self.tabs.addTab(self.gaze_panel, "视线交互")
+        layout.addWidget(self.tabs, 1)
+
+    def show_section(self, name: str) -> None:
+        if name == "gesture":
+            self.tabs.setCurrentWidget(self.gesture_panel)
+        elif name == "gaze":
+            self.tabs.setCurrentWidget(self.gaze_panel)
+
+
 class DevicePanel(QWidget):
     connect_camera = pyqtSignal(str)
     lens_correction_changed = pyqtSignal(bool, int)
@@ -1745,7 +1777,6 @@ class RecentEventsPanel(QFrame):
 
 class SideNavigation(QFrame):
     navigation_requested = pyqtSignal(str)
-    expanded_changed = pyqtSignal(bool)
 
     ITEMS = [
         ("mission", "任", "任务"),
@@ -1761,17 +1792,11 @@ class SideNavigation(QFrame):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.setObjectName("sideNav")
-        self._expanded = False
         self._large_display = False
         self._buttons: list[tuple[QToolButton, str, str]] = []
         layout = QVBoxLayout(self)
         layout.setContentsMargins(6, 8, 6, 8)
         layout.setSpacing(5)
-        self.toggle_button = QToolButton()
-        self.toggle_button.setObjectName("navToggle")
-        self.toggle_button.setText("☰")
-        self.toggle_button.clicked.connect(self.toggle)
-        layout.addWidget(self.toggle_button)
         for key, icon, label in self.ITEMS:
             button = QToolButton()
             button.setObjectName("navButton")
@@ -1786,21 +1811,6 @@ class SideNavigation(QFrame):
         layout.addStretch()
         self._apply_width()
 
-    @property
-    def expanded(self) -> bool:
-        return self._expanded
-
-    def toggle(self) -> None:
-        self._expanded = not self._expanded
-        self._apply_width()
-        self.expanded_changed.emit(self._expanded)
-
-    def collapse(self) -> None:
-        if self._expanded:
-            self._expanded = False
-            self._apply_width()
-            self.expanded_changed.emit(False)
-
     def set_display_scale(self, large: bool) -> None:
         if self._large_display == large:
             return
@@ -1808,14 +1818,8 @@ class SideNavigation(QFrame):
         self._apply_width()
 
     def _apply_width(self) -> None:
-        if self._large_display:
-            width = 330 if self._expanded else 118
-        else:
-            width = 148 if self._expanded else 58
+        width = 330 if self._large_display else 148
         self.setFixedWidth(width)
-        self.toggle_button.setText("收起" if self._expanded else "☰")
         for button, icon, label in self._buttons:
-            button.setText(f"{icon}   {label}" if self._expanded else icon)
-            button.setToolButtonStyle(
-                Qt.ToolButtonTextOnly if self._expanded else Qt.ToolButtonTextOnly
-            )
+            button.setText(f"{icon}   {label}")
+            button.setToolButtonStyle(Qt.ToolButtonTextOnly)

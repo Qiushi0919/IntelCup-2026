@@ -200,7 +200,7 @@ QPushButton#ghostButton {
     border: 1px solid rgba(74, 107, 134, 0.35);
     font-size: 11px;
 }
-QToolButton#navToggle, QToolButton#navButton {
+QToolButton#navButton {
     min-height: 42px;
     color: #8ea7bd;
     background: transparent;
@@ -210,10 +210,6 @@ QToolButton#navToggle, QToolButton#navButton {
     font-weight: 700;
     text-align: left;
     padding: 0 12px;
-}
-QToolButton#navToggle {
-    color: #d5e7f7;
-    background: rgba(27, 60, 87, 0.58);
 }
 QToolButton#navButton:hover {
     color: #eaf6ff;
@@ -424,7 +420,7 @@ QPushButton#ghostButton {
     padding: 0 22px;
     font-size: 26px;
 }
-QToolButton#navToggle, QToolButton#navButton {
+QToolButton#navButton {
     min-height: 84px;
     padding: 0 24px;
     font-size: 30px;

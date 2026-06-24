@@ -42,6 +42,7 @@ from widgets import (
     GazePanel,
     GesturePanel,
     LogPanel,
+    MultimodalPanel,
     RecentEventsPanel,
     RightSidebar,
     SideNavigation,
@@ -84,6 +85,7 @@ class GroundStationWindow(QMainWindow):
 
         self._append_log("INFO", "地面站启动，当前使用模拟无人机数据")
         self._append_log("INFO", "多模态输入处于候选指令模式")
+        QTimer.singleShot(120, self._show_default_docks)
         QTimer.singleShot(0, self._apply_responsive_layout)
 
     def _build_menu(self) -> None:
@@ -268,6 +270,7 @@ class GroundStationWindow(QMainWindow):
 
     def _build_docks(self) -> None:
         self.docks: dict[str, QDockWidget] = {}
+        self._default_visible_docks: set[str] = set()
 
         self.event_table = EventTable()
         self._add_dock(
@@ -275,30 +278,31 @@ class GroundStationWindow(QMainWindow):
             "完整事件中心",
             self.event_table,
             Qt.BottomDockWidgetArea,
-            False,
+            True,
         )
 
         self.log_panel = LogPanel()
         self._add_dock(
-            "logs", "系统日志 · 开发模式", self.log_panel, Qt.BottomDockWidgetArea, False
+            "logs", "系统日志 · 开发模式", self.log_panel, Qt.BottomDockWidgetArea, True
         )
 
         self.voice_panel = VoicePanel()
         self.voice_panel.command_proposed.connect(self._propose_command)
-        self._add_dock(
-            "voice", "语音交互", self.voice_panel, Qt.LeftDockWidgetArea, False
-        )
-
         self.gesture_panel = GesturePanel()
         self.gesture_panel.command_proposed.connect(self._propose_command)
-        self._add_dock(
-            "gesture", "手势交互", self.gesture_panel, Qt.LeftDockWidgetArea, False
-        )
-
         self.gaze_panel = GazePanel()
         self.gaze_panel.command_proposed.connect(self._propose_command)
+        self.multimodal_panel = MultimodalPanel(
+            self.voice_panel,
+            self.gesture_panel,
+            self.gaze_panel,
+        )
         self._add_dock(
-            "gaze", "视线交互", self.gaze_panel, Qt.LeftDockWidgetArea, False
+            "multimodal",
+            "多模态交互",
+            self.multimodal_panel,
+            Qt.LeftDockWidgetArea,
+            True,
         )
 
         self.device_panel = DevicePanel()
@@ -311,11 +315,9 @@ class GroundStationWindow(QMainWindow):
             "设备、串口与网络",
             self.device_panel,
             Qt.RightDockWidgetArea,
-            False,
+            True,
         )
 
-        self.tabifyDockWidget(self.docks["voice"], self.docks["gesture"])
-        self.tabifyDockWidget(self.docks["gesture"], self.docks["gaze"])
         self.tabifyDockWidget(self.docks["events"], self.docks["logs"])
 
     def _add_dock(
@@ -336,9 +338,21 @@ class GroundStationWindow(QMainWindow):
         )
         dock.setWidget(widget)
         self.addDockWidget(area, dock)
-        dock.setVisible(visible)
+        dock.setVisible(False)
+        if visible:
+            self._default_visible_docks.add(name)
         self.docks[name] = dock
         self.view_menu.addAction(dock.toggleViewAction())
+
+    def _show_default_docks(self) -> None:
+        for name in self._default_visible_docks:
+            dock = self.docks.get(name)
+            if dock:
+                dock.setVisible(True)
+        for name in ("multimodal", "logs", "device"):
+            dock = self.docks.get(name)
+            if dock:
+                dock.raise_()
 
     def _build_status_bar(self) -> None:
         bar = QStatusBar()
@@ -360,7 +374,18 @@ class GroundStationWindow(QMainWindow):
         if name == "status":
             self._toggle_right_sidebar()
             return
+        if name in {"voice", "gesture", "gaze"}:
+            self._show_multimodal(name)
+            return
         self._show_dock(name)
+
+    def _show_multimodal(self, name: str) -> None:
+        dock = self.docks.get("multimodal")
+        if not dock:
+            return
+        dock.setVisible(True)
+        dock.raise_()
+        self.multimodal_panel.show_section(name)
 
     def _show_dock(self, name: str) -> None:
         dock = self.docks.get(name)
