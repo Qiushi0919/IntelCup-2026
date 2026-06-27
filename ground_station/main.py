@@ -38,12 +38,10 @@ from widgets import (
     CommandBar,
     CompactStatusBar,
     DevicePanel,
-    EventTable,
     GazePanel,
     GesturePanel,
     LogPanel,
     MultimodalPanel,
-    RecentEventsPanel,
     RightSidebar,
     SideNavigation,
     VideoPanel,
@@ -72,6 +70,9 @@ class GroundStationWindow(QMainWindow):
         self._large_display = False
         self._camera_connecting = False
         self.selection_state: SelectionState | None = None
+        self._main_view_mode = "flight"
+        self._multimodal_preview_path: Path | None = None
+        self._multimodal_preview_mtime = 0.0
 
         self.simulator = DroneSimulator(self)
         self.simulator.state_changed.connect(self._on_state_changed)
@@ -82,6 +83,7 @@ class GroundStationWindow(QMainWindow):
         self._build_central_ui()
         self._build_docks()
         self._build_status_bar()
+        self._build_multimodal_preview_timer()
 
         self._append_log("INFO", "地面站启动，当前使用模拟无人机数据")
         self._append_log("INFO", "多模态输入处于候选指令模式")
@@ -202,16 +204,10 @@ class GroundStationWindow(QMainWindow):
         self.command_bar = CommandBar()
         self.command_bar.command_requested.connect(self._button_command)
         bottom_layout.addWidget(self.command_bar)
-        self.recent_events = RecentEventsPanel()
-        self.recent_events.open_full_requested.connect(
-            lambda: self._show_dock("events")
-        )
-        self.recent_events.clear_requested.connect(self._clear_alerts)
-        bottom_layout.addWidget(self.recent_events)
         self.vertical_splitter.addWidget(self.bottom_panel)
         self.vertical_splitter.setStretchFactor(0, 1)
         self.vertical_splitter.setStretchFactor(1, 0)
-        self.vertical_splitter.setSizes([650, 148])
+        self.vertical_splitter.setSizes([650, 70])
 
         self.setCentralWidget(root)
 
@@ -257,29 +253,17 @@ class GroundStationWindow(QMainWindow):
         )
         device_button = QPushButton("设备")
         device_button.clicked.connect(lambda: self._show_dock("device"))
-        events_button = QPushButton("事件")
-        events_button.clicked.connect(lambda: self._show_dock("events"))
         fullscreen_button = QPushButton("全屏")
         fullscreen_button.clicked.connect(self._toggle_fullscreen)
         header_layout.addWidget(self.layout_mode_button)
         header_layout.addWidget(self.connect_camera_button)
         header_layout.addWidget(device_button)
-        header_layout.addWidget(events_button)
         header_layout.addWidget(fullscreen_button)
         return header
 
     def _build_docks(self) -> None:
         self.docks: dict[str, QDockWidget] = {}
         self._default_visible_docks: set[str] = set()
-
-        self.event_table = EventTable()
-        self._add_dock(
-            "events",
-            "完整事件中心",
-            self.event_table,
-            Qt.BottomDockWidgetArea,
-            True,
-        )
 
         self.log_panel = LogPanel()
         self._add_dock(
@@ -296,6 +280,13 @@ class GroundStationWindow(QMainWindow):
             self.voice_panel,
             self.gesture_panel,
             self.gaze_panel,
+        )
+        self.multimodal_panel.command_proposed.connect(self._propose_command)
+        self.multimodal_panel.scenario_started.connect(
+            self._enter_multimodal_view
+        )
+        self.multimodal_panel.scenario_stopped.connect(
+            self._exit_multimodal_view
         )
         self._add_dock(
             "multimodal",
@@ -317,8 +308,6 @@ class GroundStationWindow(QMainWindow):
             Qt.RightDockWidgetArea,
             True,
         )
-
-        self.tabifyDockWidget(self.docks["events"], self.docks["logs"])
 
     def _add_dock(
         self,
@@ -366,6 +355,11 @@ class GroundStationWindow(QMainWindow):
         timer.start(1000)
         self._clock_timer = timer
         self._update_clock()
+
+    def _build_multimodal_preview_timer(self) -> None:
+        self._multimodal_timer = QTimer(self)
+        self._multimodal_timer.setInterval(120)
+        self._multimodal_timer.timeout.connect(self._refresh_multimodal_preview)
 
     def _handle_navigation(self, name: str) -> None:
         if name == "mission":
@@ -420,7 +414,6 @@ class GroundStationWindow(QMainWindow):
         self.right_sidebar.set_state(state, self.camera_state)
         self.compact_status.set_state(state, self.camera_state)
         self._update_header_status()
-        self.recent_events.update_task_summary(state)
         self.status_message.setText(
             f"{state.flight_phase}  ·  坐标 ({state.x:.1f}, {state.y:.1f})  ·  "
             f"高度 {state.altitude:.2f} m  ·  电量 {state.battery_percent:.0f}%"
@@ -470,8 +463,10 @@ class GroundStationWindow(QMainWindow):
             self._refresh_style(chip)
 
     def _on_event(self, event: DetectionEvent) -> None:
-        self.event_table.add_event(event)
-        self.recent_events.add_detection(event)
+        self._append_log(
+            "WARNING",
+            f"发现{event.target_type}，置信度 {event.confidence:.0%}，来源 {event.source}",
+        )
 
     def _button_command(self, action: str, label: str) -> None:
         risk = (
@@ -499,6 +494,13 @@ class GroundStationWindow(QMainWindow):
 
         if intent.action == "SNAPSHOT":
             self.save_snapshot()
+            return
+
+        if intent.action == "INFO_ACTION":
+            message = f"{intent.source}选择：{intent.label}"
+            self._append_log("COMMAND", message)
+            self.statusBar().showMessage(message, 4500)
+            self._exit_multimodal_view(intent.label)
             return
 
         if intent.action == "SELECT_TARGET":
@@ -536,15 +538,9 @@ class GroundStationWindow(QMainWindow):
                 intent.source,
                 selection.review_state,
             )
-            self.event_table.add_event(event)
             self._append_log(
                 "COMMAND",
                 f"{intent.source}选择候选目标 {target_id}，等待确认",
-            )
-            self.recent_events.add_system_event(
-                "候选目标",
-                f"{target_id} · {detection.confidence:.0%} · 等待确认",
-                "info",
             )
             return
 
@@ -553,9 +549,6 @@ class GroundStationWindow(QMainWindow):
                 self.statusBar().showMessage("当前没有可取消的候选目标", 3500)
                 return
             self.selection_state.review_state = "已取消"
-            self.event_table.update_review_state(
-                self.selection_state.event_id, "已取消"
-            )
             self.command_bar.set_candidate(
                 self.selection_state.target_id,
                 self.selection_state.confidence,
@@ -563,11 +556,6 @@ class GroundStationWindow(QMainWindow):
                 "已取消",
             )
             self.video_panel.canvas.clear_selection()
-            self.recent_events.add_system_event(
-                "候选已取消",
-                f"{self.selection_state.target_id} · 来源 {intent.source}",
-                "info",
-            )
             self._append_log("COMMAND", f"{intent.source}：{intent.label}")
             return
 
@@ -582,19 +570,11 @@ class GroundStationWindow(QMainWindow):
                 )
                 return
             self.selection_state.review_state = "已确认"
-            self.event_table.update_review_state(
-                self.selection_state.event_id, "已确认"
-            )
             self.command_bar.set_candidate(
                 self.selection_state.target_id,
                 self.selection_state.confidence,
                 self.selection_state.source,
                 "已确认",
-            )
-            self.recent_events.add_system_event(
-                "目标已确认",
-                f"{self.selection_state.target_id} · 操作来源 {intent.source}",
-                "good",
             )
             self._append_log(
                 "COMMAND",
@@ -636,7 +616,7 @@ class GroundStationWindow(QMainWindow):
         level = "COMMAND" if ok else "WARNING"
         self._append_log(level, f"{intent.source} → {intent.label}：{message}")
         if ok:
-            self.recent_events.add_system_event(intent.label, message, "good")
+            self._exit_multimodal_view(intent.label)
         else:
             QMessageBox.warning(self, "命令未执行", message)
 
@@ -673,7 +653,6 @@ class GroundStationWindow(QMainWindow):
         self.connect_camera_button.setEnabled(False)
         self.connect_camera_button.setText("连接中…")
         self._append_log("INFO", f"正在连接 AMB82-Mini：{url}")
-        self.recent_events.add_system_event("相机连接", "正在搜索 AMB82", "info")
         self.camera_thread = CameraThread(
             url,
             self,
@@ -725,28 +704,80 @@ class GroundStationWindow(QMainWindow):
         self.video_panel.show_demo_mode(len(detections))
         if detections:
             detection = detections[0]
-            self.recent_events.add_system_event(
-                "火源识别示例",
-                f"检测成功 · 置信度 {detection.confidence:.0%}",
-                "fire",
+            self._append_log(
+                "INFO",
+                f"火源识别示例检测成功，置信度 {detection.confidence:.0%}",
             )
-            self.recent_events.flash_fire_alert()
             self.statusBar().showMessage(
                 f"示例检测成功：火源置信度 {detection.confidence:.0%}", 6000
             )
         else:
-            self.recent_events.add_system_event(
-                "火源识别示例", "未发现候选目标", "info"
-            )
+            self._append_log("INFO", "火源识别示例未发现候选目标")
 
     def _on_camera_frame(
         self, frame, detections: list[FireDetection]
     ) -> None:
+        if self._main_view_mode != "flight":
+            return
         self.video_panel.canvas.set_frame(frame)
         self.video_panel.canvas.set_detections(detections)
         self.video_panel.show_live_mode()
         height, width = frame.shape[:2]
         self.camera_state.resolution = f"{width} × {height}"
+
+    def _enter_multimodal_view(self, preview_path: str) -> None:
+        self._main_view_mode = "multimodal"
+        self._multimodal_preview_path = Path(preview_path)
+        self._multimodal_preview_mtime = 0.0
+        self.video_panel.show_multimodal_mode()
+        self.statusBar().showMessage("主画面已切换到多模态摄像头", 4000)
+        if not self._multimodal_timer.isActive():
+            self._multimodal_timer.start()
+
+    def _exit_multimodal_view(self, task_label: str = "") -> None:
+        if self._main_view_mode != "multimodal":
+            return
+        self._main_view_mode = "returning"
+        self.video_panel.show_returning_mode(task_label)
+        status = "主画面正在切回无人机图传"
+        if task_label:
+            status += f"：{task_label}"
+        self.statusBar().showMessage(status, 3000)
+        QTimer.singleShot(1400, self._finish_exit_multimodal_view)
+
+    def _finish_exit_multimodal_view(self) -> None:
+        if self._main_view_mode not in {"multimodal", "returning"}:
+            return
+        self._main_view_mode = "flight"
+        self._multimodal_preview_path = None
+        self._multimodal_preview_mtime = 0.0
+        self._multimodal_timer.stop()
+        self.video_panel.show_live_mode()
+        if not self.camera_state.connected:
+            self.video_panel.canvas.clear_frame()
+        self.video_panel.set_camera_state(self.camera_state)
+        self.statusBar().showMessage("主画面已切回无人机图传", 4000)
+
+    def _refresh_multimodal_preview(self) -> None:
+        if (
+            self._main_view_mode != "multimodal"
+            or self._multimodal_preview_path is None
+            or not self._multimodal_preview_path.exists()
+        ):
+            return
+        try:
+            mtime = self._multimodal_preview_path.stat().st_mtime
+        except OSError:
+            return
+        if mtime <= self._multimodal_preview_mtime:
+            return
+        frame = cv2.imread(str(self._multimodal_preview_path))
+        if frame is None:
+            return
+        self._multimodal_preview_mtime = mtime
+        self.video_panel.canvas.set_frame(frame)
+        self.video_panel.canvas.set_detections([])
+        self.video_panel.show_multimodal_mode()
 
     def _on_fire_confirmed(self, detection: FireDetection) -> None:
         self.video_panel.canvas.confirm_detection(detection)
@@ -814,20 +845,13 @@ class GroundStationWindow(QMainWindow):
             if thread_active
             else "重新连接"
         )
-        if connected:
-            if not was_connected:
-                self.recent_events.add_system_event(
-                    "相机在线", f"{fps:.1f} FPS · {message}", "good"
-                )
+        if connected and not was_connected:
+            self._append_log("INFO", f"相机在线：{fps:.1f} FPS · {message}")
         elif (
             self.camera_state.last_error
             and self.camera_state.last_error != previous_error
         ):
-            self.recent_events.add_system_event(
-                "图传重连",
-                self.camera_state.last_error,
-                "warn",
-            )
+            self._append_log("WARNING", f"图传重连：{self.camera_state.last_error}")
         self._update_header_status()
 
     def save_snapshot(self) -> None:
@@ -839,21 +863,13 @@ class GroundStationWindow(QMainWindow):
         )
         self.video_panel.canvas.grab().save(str(filename))
         self._append_log("INFO", f"截图已保存：{filename.name}")
-        self.recent_events.add_system_event("截图已保存", filename.name, "info")
         self.statusBar().showMessage(f"截图已保存：{filename}", 5000)
 
     def _clear_alerts(self) -> None:
-        self.recent_events.clear_alerts()
-        self._append_log("INFO", "用户清除了当前告警摘要")
+        self._append_log("INFO", "当前界面不再显示独立事件窗口")
 
     def _append_log(self, level: str, message: str) -> None:
         self.log_panel.append_log(level, message)
-        if level in {"WARNING", "ERROR"} and hasattr(self, "recent_events"):
-            self.recent_events.add_system_event(
-                "系统警告" if level == "WARNING" else "系统错误",
-                message,
-                "warn" if level == "WARNING" else "error",
-            )
 
     def _update_clock(self) -> None:
         from datetime import datetime
@@ -868,17 +884,14 @@ class GroundStationWindow(QMainWindow):
         QTimer.singleShot(80, self._apply_responsive_layout)
 
     def _reset_layout(self) -> None:
-        self.side_nav.collapse()
         self._right_sidebar_user_hidden = False
         self.right_sidebar.setVisible(True)
         self.horizontal_splitter.setSizes(
             [1100, 680] if self._large_display else [930, 320]
         )
-        self.recent_events.setVisible(True)
-        self.recent_events.set_compact(False)
         self.compact_status.setVisible(False)
         self.vertical_splitter.setSizes(
-            [720, 300] if self._large_display else [650, 148]
+            [720, 90] if self._large_display else [650, 70]
         )
 
     def resizeEvent(self, event) -> None:
@@ -895,7 +908,6 @@ class GroundStationWindow(QMainWindow):
 
         if width < 1200:
             mode = "narrow"
-            self.side_nav.collapse()
             self.compact_status.setVisible(True)
             if not self._right_sidebar_user_hidden:
                 self.right_sidebar.setVisible(False)
@@ -919,18 +931,10 @@ class GroundStationWindow(QMainWindow):
 
         compact_height = height < (1500 if large_display else 930)
         self.right_sidebar.set_compact(compact_height)
-        if height < 710:
-            self.recent_events.setVisible(True)
-            self.recent_events.set_compact(True)
-            self.vertical_splitter.setSizes([max(430, height - 128), 128])
-        else:
-            self.recent_events.setVisible(True)
-            self.recent_events.set_compact(compact_height)
-            if large_display:
-                bottom_height = 260 if compact_height else 310
-            else:
-                bottom_height = 125 if compact_height else 148
-            self.vertical_splitter.setSizes([max(430, height - bottom_height), bottom_height])
+        bottom_height = 90 if large_display else 70
+        self.vertical_splitter.setSizes(
+            [max(430, height - bottom_height), bottom_height]
+        )
 
         if mode != self._last_responsive_mode:
             self._last_responsive_mode = mode

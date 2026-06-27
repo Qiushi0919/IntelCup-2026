@@ -8,7 +8,16 @@ from datetime import datetime
 from pathlib import Path
 
 import cv2
-from PyQt5.QtCore import QProcess, QPointF, QRect, QRectF, Qt, QTimer, pyqtSignal
+from PyQt5.QtCore import (
+    QProcess,
+    QProcessEnvironment,
+    QPointF,
+    QRect,
+    QRectF,
+    Qt,
+    QTimer,
+    pyqtSignal,
+)
 from PyQt5.QtGui import (
     QColor,
     QFont,
@@ -25,7 +34,6 @@ from PyQt5.QtWidgets import (
     QFormLayout,
     QFrame,
     QGridLayout,
-    QHeaderView,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -35,8 +43,6 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QSlider,
     QSizePolicy,
-    QTableWidget,
-    QTableWidgetItem,
     QTabWidget,
     QToolButton,
     QVBoxLayout,
@@ -46,7 +52,6 @@ from PyQt5.QtWidgets import (
 from models import (
     CameraState,
     CommandIntent,
-    DetectionEvent,
     DroneState,
     FireDetection,
 )
@@ -85,10 +90,15 @@ class VideoCanvas(QWidget):
         self._hover_target_id = ""
         self._interaction_message = ""
         self._interaction_message_until = 0.0
+        self._transition_message = ""
+        self._transition_until = 0.0
         self._detection_timer = QTimer(self)
         self._detection_timer.setInterval(200)
         self._detection_timer.timeout.connect(self._expire_detections)
         self._detection_timer.start()
+        self._transition_timer = QTimer(self)
+        self._transition_timer.setInterval(60)
+        self._transition_timer.timeout.connect(self._tick_transition)
         self.setCursor(Qt.CrossCursor)
         self.setMouseTracking(True)
 
@@ -106,8 +116,29 @@ class VideoCanvas(QWidget):
         self._pixmap = QPixmap.fromImage(self._frame)
         self.update()
 
+    def clear_frame(self) -> None:
+        self._frame = None
+        self._pixmap = None
+        self._detections = []
+        self._selected_target_id = ""
+        self._hover_target_id = ""
+        self.update()
+
     def set_demo_mode(self, enabled: bool) -> None:
         self._demo_mode = enabled
+        self.update()
+
+    def show_transition(self, message: str, seconds: float = 1.2) -> None:
+        self._transition_message = message
+        self._transition_until = time.monotonic() + seconds
+        if not self._transition_timer.isActive():
+            self._transition_timer.start()
+        self.update()
+
+    def _tick_transition(self) -> None:
+        if not self._transition_message or time.monotonic() >= self._transition_until:
+            self._transition_message = ""
+            self._transition_timer.stop()
         self.update()
 
     def clear_selection(self) -> None:
@@ -247,26 +278,6 @@ class VideoCanvas(QWidget):
         painter.drawLine(cx, cy + gap, cx, cy + arm)
 
         margin = int(16 * scale)
-        painter.setFont(QFont("Microsoft YaHei UI", round(10 * scale), QFont.Bold))
-        painter.setPen(QColor("#d8f4ff"))
-        source = self._camera.source
-        if self._demo_mode:
-            status = "DEMO"
-            source = "离线识别示例 · 非实时图传"
-        elif self._camera.connected:
-            status = "ONLINE"
-        else:
-            status = "NO SIGNAL"
-            source = "未连接图传"
-        painter.drawText(margin, int(26 * scale), f"{status}  |  {source}")
-        painter.setFont(QFont("Microsoft YaHei UI", round(9 * scale)))
-        painter.setPen(QColor("#91b7ca"))
-        painter.drawText(
-            margin,
-            int(47 * scale),
-            f"{self._camera.resolution}  {self._camera.fps:.1f} FPS   "
-            f"高度 {self._state.altitude:.2f} m",
-        )
 
         if self._pixmap is not None and not self._pixmap.isNull():
             self._draw_fire_detections(painter, content_rect)
@@ -288,7 +299,7 @@ class VideoCanvas(QWidget):
             painter.drawText(
                 banner.adjusted(8 * scale, 0, -8 * scale, 0),
                 Qt.AlignVCenter | Qt.AlignRight,
-                "离线 DEMO · 结果仅用于演示",
+                "离线示例 · 结果仅用于演示",
             )
 
         if (
@@ -309,6 +320,31 @@ class VideoCanvas(QWidget):
                 Qt.AlignVCenter,
                 self._interaction_message,
             )
+
+        if self._transition_message and time.monotonic() < self._transition_until:
+            phase = max(0.0, min(1.0, self._transition_until - time.monotonic()))
+            pulse = 0.45 + 0.30 * math.sin(time.monotonic() * 9.0)
+            painter.fillRect(rect, QColor(4, 12, 20, 120))
+            painter.setPen(QPen(QColor(90, 190, 255, 120), 3))
+            center = rect.center()
+            radius = int((56 + 26 * pulse) * scale)
+            painter.drawEllipse(center, radius, radius)
+            painter.setPen(QColor("#e9f7ff"))
+            painter.setFont(QFont("Microsoft YaHei UI", round(22 * scale), QFont.Bold))
+            painter.drawText(
+                QRectF(rect).adjusted(0, -36 * scale, 0, 0),
+                Qt.AlignCenter,
+                self._transition_message,
+            )
+            painter.setFont(QFont("Microsoft YaHei UI", round(10 * scale), QFont.Bold))
+            painter.setPen(QColor("#98d8ff"))
+            painter.drawText(
+                QRectF(rect).adjusted(0, 42 * scale, 0, 0),
+                Qt.AlignCenter,
+                "正在恢复无人机图传画面",
+            )
+            if phase <= 0.05:
+                self._transition_message = ""
 
         painter.setPen(QPen(QColor(255, 255, 255, 35), 1))
         painter.drawRoundedRect(rect.adjusted(1, 1, -2, -2), 12, 12)
@@ -506,6 +542,11 @@ class VideoPanel(QFrame):
         toolbar.addWidget(snapshot_button)
         layout.addLayout(toolbar)
 
+        self.info_bar = QLabel("无信号 | 未连接图传 | 1280 × 720 | 15.0 帧/秒 | 高度 0.00 m")
+        self.info_bar.setObjectName("videoInfoBar")
+        self.info_bar.setWordWrap(True)
+        layout.addWidget(self.info_bar)
+
         self.canvas = VideoCanvas()
         self.canvas.target_clicked.connect(self.target_selected)
         self.canvas.target_missed.connect(self.target_missed)
@@ -543,10 +584,12 @@ class VideoPanel(QFrame):
                 else ""
             )
             self.camera_status.setText(
-                f"● AMB82 在线  {state.fps:.1f} FPS{age_text}"
+                f"● AMB82 在线  {state.fps:.1f} 帧/秒{age_text}"
             )
             self.camera_status.setObjectName("chipGood")
             self.mode_label.setText("火源识别 ON")
+            source = state.source
+            status = "在线"
         else:
             error = f" · {state.last_error}" if state.last_error else ""
             self.camera_status.setText(
@@ -556,6 +599,12 @@ class VideoPanel(QFrame):
                 "chipWarn" if state.last_error else "chipInfo"
             )
             self.mode_label.setText("等待真实图传")
+            source = "未连接图传"
+            status = "无信号"
+        self.info_bar.setText(
+            f"{status} | {source} | {state.resolution} | "
+            f"{state.fps:.1f} 帧/秒 | 高度 {self.canvas._state.altitude:.2f} m"
+        )
         self.camera_status.style().unpolish(self.camera_status)
         self.camera_status.style().polish(self.camera_status)
 
@@ -563,7 +612,12 @@ class VideoPanel(QFrame):
         self.canvas.set_demo_mode(True)
         self.mode_label.setText("火源识别示例")
         self.camera_status.setText(
-            f"● 离线 DEMO · {detection_count} 个候选 · 非实时图传"
+            f"● 离线示例 · {detection_count} 个候选 · 非实时图传"
+        )
+        self.info_bar.setText(
+            f"示例 | 离线识别示例 · 非实时图传 | "
+            f"{self.canvas._frame_size[0]} × {self.canvas._frame_size[1]} | "
+            f"高度 {self.canvas._state.altitude:.2f} m"
         )
         self.camera_status.setObjectName(
             "chipGood" if detection_count else "chipWarn"
@@ -573,6 +627,40 @@ class VideoPanel(QFrame):
 
     def show_live_mode(self) -> None:
         self.canvas.set_demo_mode(False)
+        self.hint.setText("双击检测框可将目标加入候选任务")
+
+    def show_returning_mode(self, task_label: str = "") -> None:
+        message = "正在切回图传"
+        if task_label:
+            message = f"正在切回图传\n当前任务：{task_label}"
+        self.canvas.show_transition(message, 1.4)
+        self.mode_label.setText("切回图传中")
+        self.camera_status.setText("● 正在恢复无人机图传")
+        self.camera_status.setObjectName("chipInfo")
+        hint = "多模态识别已完成，正在切回无人机图传"
+        if task_label:
+            hint += f"：{task_label}"
+        self.hint.setText(hint)
+        self.info_bar.setText(
+            f"切回图传 | 当前任务：{task_label or '多模态任务'} | 正在恢复主画面"
+        )
+        self.camera_status.style().unpolish(self.camera_status)
+        self.camera_status.style().polish(self.camera_status)
+
+    def show_multimodal_mode(self) -> None:
+        self.canvas.set_demo_mode(False)
+        self.canvas.set_detections([])
+        self.mode_label.setText("多模态识别")
+        self.camera_status.setText("● 多模态摄像头 · 手势+视线")
+        self.camera_status.setObjectName("chipInfo")
+        self.hint.setText("手势选择大类，倒数后用视线选择三个区域之一")
+        self.info_bar.setText(
+            f"多模态 | USB 摄像头 · 手势+视线 | "
+            f"{self.canvas._frame_size[0]} × {self.canvas._frame_size[1]} | "
+            "识别画面"
+        )
+        self.camera_status.style().unpolish(self.camera_status)
+        self.camera_status.style().polish(self.camera_status)
 
 
 class MetricBox(QFrame):
@@ -655,7 +743,7 @@ class StatusPanel(QFrame):
         self.phase = QLabel("任务待命")
         self.flow = QLabel("86")
         self.latency = QLabel("26 ms")
-        self.waypoint = QLabel("0 / 10")
+        self.waypoint = QLabel("0 / 6")
         rows = [
             ("任务阶段", self.phase),
             ("光流质量", self.flow),
@@ -741,11 +829,17 @@ class StatusPanel(QFrame):
 class MissionMap(QWidget):
     def __init__(self, waypoints: list[tuple[float, float]], parent=None) -> None:
         super().__init__(parent)
-        self.setMinimumHeight(260)
+        self.setMinimumHeight(300)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self._waypoints = waypoints
         self._state = DroneState()
-        self._track: list[tuple[float, float]] = [(4.0, 4.0)]
+        self._takeoff_point = (3.5, 3.5)
+        self._return_point = (3.5, 3.5)
+        self._route_points = [self._takeoff_point, *waypoints, self._return_point]
+        self._track: list[tuple[float, float]] = [self._takeoff_point]
+        self._map_pixmap = QPixmap(
+            str(Path(__file__).resolve().parent / "examples" / "fire_test_scene.png")
+        )
 
     def set_state(self, state: DroneState) -> None:
         self._state = state
@@ -761,77 +855,82 @@ class MissionMap(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         rect = self.rect().adjusted(10, 10, -10, -10)
-        painter.fillRect(rect, QColor("#091726"))
-        painter.setPen(QPen(QColor("#1c354b"), 1))
-        for i in range(0, 49, 4):
-            x = rect.left() + rect.width() * i / 48
-            painter.drawLine(int(x), rect.top(), int(x), rect.bottom())
-        for i in range(0, 41, 4):
-            y = rect.bottom() - rect.height() * i / 40
-            painter.drawLine(rect.left(), int(y), rect.right(), int(y))
+        painter.fillRect(rect, QColor("#f6fbff"))
+
+        if not self._map_pixmap.isNull():
+            scaled = self._map_pixmap.scaled(
+                rect.size(),
+                Qt.KeepAspectRatio,
+                Qt.SmoothTransformation,
+            )
+            map_rect = QRectF(
+                rect.left() + (rect.width() - scaled.width()) / 2,
+                rect.top() + (rect.height() - scaled.height()) / 2,
+                scaled.width(),
+                scaled.height(),
+            )
+            painter.drawPixmap(map_rect, scaled, QRectF(scaled.rect()))
+        else:
+            map_rect = QRectF(rect)
+            painter.fillRect(map_rect, QColor("#eef8ff"))
+            painter.setPen(QPen(QColor("#b8e6f8"), 1))
+            for i in range(0, 49, 2):
+                x = map_rect.left() + map_rect.width() * i / 48
+                painter.drawLine(int(x), int(map_rect.top()), int(x), int(map_rect.bottom()))
+            for i in range(0, 41, 2):
+                y = map_rect.bottom() - map_rect.height() * i / 40
+                painter.drawLine(int(map_rect.left()), int(y), int(map_rect.right()), int(y))
+
+        field_rect = map_rect.adjusted(
+            map_rect.width() * 0.067,
+            map_rect.height() * 0.086,
+            -map_rect.width() * 0.079,
+            -map_rect.height() * 0.065,
+        )
 
         def point(x: float, y: float) -> QPointF:
             return QPointF(
-                rect.left() + rect.width() * x / 48,
-                rect.bottom() - rect.height() * y / 40,
+                field_rect.left() + field_rect.width() * x / 48,
+                field_rect.bottom() - field_rect.height() * y / 40,
             )
 
-        painter.setBrush(QColor("#162334"))
-        painter.setPen(QPen(QColor("#4d6174"), 1))
-        obstacles = [
-            (7, 23, 10, 9),
-            (23, 23, 8, 9),
-            (37, 23, 7, 9),
-            (7, 9, 7, 9),
-            (20, 9, 10, 9),
-            (37, 4, 7, 14),
-        ]
-        for x, y, w, h in obstacles:
-            top_left = point(x, y + h)
-            bottom_right = point(x + w, y)
-            painter.drawRoundedRect(
-                QRectF(top_left, bottom_right).normalized(), 4, 4
-            )
-
-        painter.setPen(QPen(QColor("#5e839d"), 1, Qt.DashLine))
+        painter.setPen(QPen(QColor(30, 117, 220, 230), 4, Qt.SolidLine))
         route = QPainterPath()
-        first = point(*self._waypoints[0])
-        route.moveTo(first)
-        for wp in self._waypoints[1:]:
+        route.moveTo(point(*self._route_points[0]))
+        for wp in self._route_points[1:]:
             route.lineTo(point(*wp))
         painter.drawPath(route)
 
+        takeoff = point(*self._takeoff_point)
+        painter.setBrush(QColor("#ff2c2c"))
+        painter.setPen(QPen(QColor("#ffffff"), 2))
+        painter.drawRoundedRect(QRectF(takeoff.x() - 7, takeoff.y() - 7, 14, 14), 3, 3)
+        painter.setFont(QFont("Microsoft YaHei UI", 9, QFont.Bold))
+        painter.setPen(QColor("#ffffff"))
+        painter.drawText(point(0.6, 5.5), "起飞")
+        painter.drawText(point(0.6, 2.0), "返航")
+
+        for wp in self._waypoints:
+            p = point(*wp)
+            painter.setBrush(QColor(30, 117, 220, 235))
+            painter.setPen(QPen(QColor("#ffffff"), 2))
+            painter.drawEllipse(p, 8, 8)
+
         if len(self._track) > 1:
-            painter.setPen(QPen(QColor("#26c6da"), 2))
+            painter.setPen(QPen(QColor("#00bcd4"), 3))
             track = QPainterPath()
             track.moveTo(point(*self._track[0]))
             for item in self._track[1:]:
                 track.lineTo(point(*item))
             painter.drawPath(track)
 
-        for index, wp in enumerate(self._waypoints):
-            p = point(*wp)
-            painter.setBrush(QColor("#3e85bd"))
-            painter.setPen(Qt.NoPen)
-            painter.drawEllipse(p, 4, 4)
-            if index in (0, len(self._waypoints) - 1):
-                painter.setPen(QColor("#86aac3"))
-                painter.drawText(p + QPointF(6, -6), str(index + 1))
-
         drone = point(self._state.x, self._state.y)
         painter.setBrush(QColor("#5ff0be"))
-        painter.setPen(QPen(QColor("#d8fff1"), 2))
-        painter.drawEllipse(drone, 7, 7)
-        painter.setPen(QColor("#d8fff1"))
-        painter.drawText(drone + QPointF(10, -8), "UAV")
-
-        fire = point(26, 20)
-        painter.setBrush(QColor("#ff5656"))
-        painter.setPen(Qt.NoPen)
-        painter.drawEllipse(fire, 6, 6)
-
-        painter.setPen(QColor("#6f879c"))
-        painter.drawText(rect.adjusted(8, 6, -8, -6), Qt.AlignTop, "48 m × 40 m 任务场地")
+        painter.setPen(QPen(QColor("#063c2e"), 2))
+        painter.drawEllipse(drone, 8, 8)
+        painter.setPen(QColor("#063c2e"))
+        painter.setFont(QFont("Microsoft YaHei UI", 10, QFont.Bold))
+        painter.drawText(drone + QPointF(11, -8), "UAV")
 
 
 class MapPanel(QFrame):
@@ -857,50 +956,6 @@ class MapPanel(QFrame):
     def set_state(self, state: DroneState) -> None:
         self.map.set_state(state)
         self.progress_text.setText(f"进度 {state.mission_progress:.0f}%")
-
-
-class EventTable(QTableWidget):
-    def __init__(self, parent=None) -> None:
-        super().__init__(0, 8, parent)
-        self.setHorizontalHeaderLabels(
-            ["事件 ID", "时间", "事件", "置信度", "位置 / 高度", "来源", "审核状态", "命令 ID"]
-        )
-        self.verticalHeader().setVisible(False)
-        self.setAlternatingRowColors(False)
-        self.setSelectionBehavior(QTableWidget.SelectRows)
-        self.setEditTriggers(QTableWidget.NoEditTriggers)
-        header = self.horizontalHeader()
-        header.setSectionResizeMode(QHeaderView.Interactive)
-        header.setSectionResizeMode(2, QHeaderView.Stretch)
-        header.setSectionResizeMode(5, QHeaderView.Stretch)
-        self.setColumnWidth(0, 92)
-        self.setColumnWidth(1, 82)
-        self.setColumnWidth(3, 78)
-        self.setColumnWidth(4, 150)
-        self.setColumnWidth(6, 92)
-        self.setColumnWidth(7, 92)
-
-    def add_event(self, event: DetectionEvent) -> None:
-        self.insertRow(0)
-        values = [
-            event.event_id,
-            event.created_at.strftime("%H:%M:%S"),
-            event.target_type,
-            f"{event.confidence:.0%}",
-            f"({event.x:.1f}, {event.y:.1f}) · {event.altitude:.1f} m",
-            event.source,
-            event.review_state,
-            event.command_id or "—",
-        ]
-        for column, value in enumerate(values):
-            self.setItem(0, column, QTableWidgetItem(value))
-
-    def update_review_state(self, event_id: str, state: str) -> None:
-        for row in range(self.rowCount()):
-            identifier = self.item(row, 0)
-            if identifier and identifier.text() == event_id:
-                self.setItem(row, 6, QTableWidgetItem(state))
-                return
 
 
 class VoicePanel(QWidget):
@@ -1097,11 +1152,35 @@ class VoicePanel(QWidget):
         return Path(sys.executable)
 
 
+def find_multimodal_python() -> Path:
+    app_root = Path(__file__).resolve().parents[1]
+    candidates = [
+        app_root / "multimodal_recognition" / ".venv" / "Scripts" / "python.exe",
+        app_root.parent
+        / "IntelCup-2026-multimodal-input"
+        / "multimodal_recognition"
+        / ".venv"
+        / "Scripts"
+        / "python.exe",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return Path(sys.executable)
+
+
 class GesturePanel(QWidget):
     command_proposed = pyqtSignal(object)
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
+        self._process: QProcess | None = None
+        self._script = (
+            Path(__file__).resolve().parents[1]
+            / "multimodal_recognition"
+            / "gesture_three.py"
+        )
+        self._python = find_multimodal_python()
         layout = QVBoxLayout(self)
         self.enabled = QCheckBox("启用手势输入")
         self.enabled.setChecked(True)
@@ -1124,14 +1203,33 @@ class GesturePanel(QWidget):
         button = QPushButton("提交当前手势")
         button.clicked.connect(self._submit)
         layout.addWidget(button)
+        controls = QHBoxLayout()
+        self.start_button = QPushButton("启动手势识别")
+        self.start_button.clicked.connect(self._start_recognition)
+        controls.addWidget(self.start_button)
+        self.stop_button = QPushButton("停止识别")
+        self.stop_button.setEnabled(False)
+        self.stop_button.clicked.connect(self._stop_recognition)
+        controls.addWidget(self.stop_button)
+        layout.addLayout(controls)
+        self.recognition_log = QPlainTextEdit()
+        self.recognition_log.setReadOnly(True)
+        self.recognition_log.setMaximumHeight(115)
+        self.recognition_log.setPlaceholderText(
+            "真实手势识别状态会显示在这里"
+        )
+        layout.addWidget(self.recognition_log)
         layout.addStretch()
+
+    def _set_health(self, text: str, object_name: str) -> None:
+        self.confidence.setText(text)
+        self.confidence.setObjectName(object_name)
+        self.confidence.style().unpolish(self.confidence)
+        self.confidence.style().polish(self.confidence)
 
     def _submit(self) -> None:
         if not self.enabled.isChecked():
-            self.confidence.setText("手势输入已禁用")
-            self.confidence.setObjectName("chipWarn")
-            self.confidence.style().unpolish(self.confidence)
-            self.confidence.style().polish(self.confidence)
+            self._set_health("手势输入已禁用", "chipWarn")
             return
         index = self.combo.currentIndex()
         data = [
@@ -1153,12 +1251,138 @@ class GesturePanel(QWidget):
             f"来源正常 · 最近输入 {datetime.now().strftime('%H:%M:%S')} · 94%"
         )
 
+    def _start_recognition(self) -> None:
+        if self._process is not None:
+            return
+        if not self._script.exists():
+            self._set_health("未找到手势识别程序", "chipWarn")
+            self.recognition_log.appendPlainText(
+                "请确认 multimodal_recognition 目录已经并入地面站。"
+            )
+            return
+        process = QProcess(self)
+        process.setProgram(str(self._python))
+        environment = QProcessEnvironment.systemEnvironment()
+        environment.insert("PYTHONIOENCODING", "utf-8")
+        environment.insert("PYTHONUTF8", "1")
+        process.setProcessEnvironment(environment)
+        process.setArguments(
+            [
+                str(self._script),
+                "--camera",
+                "0",
+                "--rotate",
+                "0",
+                "--min-confidence",
+                "0.65",
+            ]
+        )
+        process.setWorkingDirectory(str(self._script.parent))
+        process.readyReadStandardOutput.connect(self._read_stdout)
+        process.readyReadStandardError.connect(self._read_stderr)
+        process.errorOccurred.connect(self._process_error)
+        process.finished.connect(self._process_finished)
+        self._process = process
+        self.recognition_log.clear()
+        self.recognition_log.appendPlainText(f"启动手势识别：{self._python}")
+        self.recognition_log.appendPlainText("请勿同时开启视线识别，以免占用同一个摄像头。")
+        self._set_health("手势识别启动中", "chipInfo")
+        self.start_button.setEnabled(False)
+        self.stop_button.setEnabled(True)
+        process.start()
+
+    def _stop_recognition(self) -> None:
+        if self._process is None:
+            return
+        self.recognition_log.appendPlainText("正在停止手势识别...")
+        self._process.terminate()
+        if not self._process.waitForFinished(1500):
+            self._process.kill()
+
+    def _read_stdout(self) -> None:
+        if self._process is None:
+            return
+        data = bytes(self._process.readAllStandardOutput()).decode(
+            "utf-8", errors="replace"
+        )
+        for line in data.splitlines():
+            if not line.strip():
+                continue
+            self.recognition_log.appendPlainText(line)
+            self._handle_recognition_line(line)
+
+    def _read_stderr(self) -> None:
+        if self._process is None:
+            return
+        data = bytes(self._process.readAllStandardError()).decode(
+            "utf-8", errors="replace"
+        )
+        for line in data.splitlines():
+            if line.strip():
+                self.recognition_log.appendPlainText(f"提示：{line}")
+
+    def _handle_recognition_line(self, line: str) -> None:
+        if not line.startswith("TRIGGER:"):
+            return
+        mappings = [
+            ("Open Palm", "HOLD", "暂停并悬停", "medium", False),
+            ("Fist", "CANCEL_SELECTION", "取消目标选择", "low", False),
+            ("Thumb Up", "CONFIRM_CANDIDATE", "确认候选操作", "medium", False),
+        ]
+        for keyword, action, label, risk, confirm in mappings:
+            if keyword in line:
+                confidence = self._extract_confidence(line, 0.90)
+                self._set_health(
+                    f"真实手势：{label} · {confidence:.0%}",
+                    "chipGood",
+                )
+                self.command_proposed.emit(
+                    CommandIntent(
+                        action=action,
+                        source="手势",
+                        label=label,
+                        confidence=confidence,
+                        risk_level=risk,
+                        requires_confirmation=confirm,
+                    )
+                )
+                return
+
+    def _process_error(self, _error) -> None:
+        self._set_health("手势识别启动失败", "chipWarn")
+        self.recognition_log.appendPlainText(
+            "请先运行 install_multimodal_deps.bat 安装多模态依赖。"
+        )
+
+    def _process_finished(self, exit_code: int, _exit_status) -> None:
+        self._process = None
+        self.start_button.setEnabled(True)
+        self.stop_button.setEnabled(False)
+        if exit_code == 0:
+            self._set_health("手势识别已停止", "chipInfo")
+        else:
+            self._set_health("手势识别已退出，请查看日志", "chipWarn")
+
+    @staticmethod
+    def _extract_confidence(line: str, fallback: float) -> float:
+        match = re.search(r"\((\d+)%\)", line)
+        if not match:
+            return fallback
+        return int(match.group(1)) / 100
+
 
 class GazePanel(QWidget):
     command_proposed = pyqtSignal(object)
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
+        self._process: QProcess | None = None
+        self._script = (
+            Path(__file__).resolve().parents[1]
+            / "multimodal_recognition"
+            / "gaze_three_point.py"
+        )
+        self._python = find_multimodal_python()
         layout = QVBoxLayout(self)
         self.enabled = QCheckBox("启用视线输入")
         self.enabled.setChecked(True)
@@ -1182,17 +1406,37 @@ class GazePanel(QWidget):
         button = QPushButton("将注视目标设为候选")
         button.clicked.connect(self._submit)
         layout.addWidget(button)
+        controls = QHBoxLayout()
+        self.start_button = QPushButton("启动视线识别")
+        self.start_button.clicked.connect(self._start_recognition)
+        controls.addWidget(self.start_button)
+        self.stop_button = QPushButton("停止识别")
+        self.stop_button.setEnabled(False)
+        self.stop_button.clicked.connect(self._stop_recognition)
+        controls.addWidget(self.stop_button)
+        layout.addLayout(controls)
+        self.recognition_log = QPlainTextEdit()
+        self.recognition_log.setReadOnly(True)
+        self.recognition_log.setMaximumHeight(115)
+        self.recognition_log.setPlaceholderText(
+            "真实视线识别状态会显示在这里"
+        )
+        layout.addWidget(self.recognition_log)
         layout.addStretch()
+
+    def _set_health(self, text: str, object_name: str) -> None:
+        self.calibration.setText(text)
+        self.calibration.setObjectName(object_name)
+        self.calibration.style().unpolish(self.calibration)
+        self.calibration.style().polish(self.calibration)
 
     def _submit(self) -> None:
         if not self.enabled.isChecked():
-            self.calibration.setText("视线输入已禁用")
-            self.calibration.setObjectName("chipWarn")
-            self.calibration.style().unpolish(self.calibration)
-            self.calibration.style().polish(self.calibration)
+            self._set_health("视线输入已禁用", "chipWarn")
             return
-        self.calibration.setText(
-            f"校准良好 · 最近输入 {datetime.now().strftime('%H:%M:%S')} · 89%"
+        self._set_health(
+            f"校准良好 · 最近输入 {datetime.now().strftime('%H:%M:%S')} · 89%",
+            "chipGood",
         )
         self.command_proposed.emit(
             CommandIntent(
@@ -1205,8 +1449,125 @@ class GazePanel(QWidget):
             )
         )
 
+    def _start_recognition(self) -> None:
+        if self._process is not None:
+            return
+        if not self._script.exists():
+            self._set_health("未找到视线识别程序", "chipWarn")
+            self.recognition_log.appendPlainText(
+                "请确认 multimodal_recognition 目录已经并入地面站。"
+            )
+            return
+        process = QProcess(self)
+        process.setProgram(str(self._python))
+        process.setArguments(
+            [
+                str(self._script),
+                "--camera",
+                "0",
+                "--rotate",
+                "0",
+                "--min-confidence",
+                "0.62",
+                "--head-priority",
+                "0.72",
+                "--laser",
+                "--laser-base-offset",
+                "0.02",
+                "--laser-vertical-scale",
+                "8.0",
+            ]
+        )
+        process.setWorkingDirectory(str(self._script.parent))
+        process.readyReadStandardOutput.connect(self._read_stdout)
+        process.readyReadStandardError.connect(self._read_stderr)
+        process.errorOccurred.connect(self._process_error)
+        process.finished.connect(self._process_finished)
+        self._process = process
+        self.recognition_log.clear()
+        self.recognition_log.appendPlainText(f"启动视线识别：{self._python}")
+        self.recognition_log.appendPlainText("请勿同时开启手势识别，以免占用同一个摄像头。")
+        self._set_health("视线识别启动中", "chipInfo")
+        self.start_button.setEnabled(False)
+        self.stop_button.setEnabled(True)
+        process.start()
+
+    def _stop_recognition(self) -> None:
+        if self._process is None:
+            return
+        self.recognition_log.appendPlainText("正在停止视线识别...")
+        self._process.terminate()
+        if not self._process.waitForFinished(1500):
+            self._process.kill()
+
+    def _read_stdout(self) -> None:
+        if self._process is None:
+            return
+        data = bytes(self._process.readAllStandardOutput()).decode(
+            "utf-8", errors="replace"
+        )
+        for line in data.splitlines():
+            if not line.strip():
+                continue
+            self.recognition_log.appendPlainText(line)
+            self._handle_recognition_line(line)
+
+    def _read_stderr(self) -> None:
+        if self._process is None:
+            return
+        data = bytes(self._process.readAllStandardError()).decode(
+            "utf-8", errors="replace"
+        )
+        for line in data.splitlines():
+            if line.strip():
+                self.recognition_log.appendPlainText(f"提示：{line}")
+
+    def _handle_recognition_line(self, line: str) -> None:
+        if line in {"CONFIRM", "CANCEL"}:
+            action = "CONFIRM_CANDIDATE" if line == "CONFIRM" else "CANCEL_SELECTION"
+            label = "确认候选操作" if line == "CONFIRM" else "取消目标选择"
+            self._set_health(f"头部动作：{label}", "chipGood")
+            self.command_proposed.emit(
+                CommandIntent(
+                    action=action,
+                    source="视线",
+                    label=label,
+                    confidence=0.90,
+                    risk_level="medium" if line == "CONFIRM" else "low",
+                    requires_confirmation=False,
+                )
+            )
+            return
+        for direction in ("LEFT", "CENTER", "RIGHT"):
+            if f": {direction} " in line or line.endswith(f": {direction}"):
+                confidence = GesturePanel._extract_confidence(line, 0.85)
+                self._set_health(
+                    f"视线方向：{direction} · {confidence:.0%}",
+                    "chipGood",
+                )
+                return
+
+    def _process_error(self, _error) -> None:
+        self._set_health("视线识别启动失败", "chipWarn")
+        self.recognition_log.appendPlainText(
+            "请先运行 install_multimodal_deps.bat 安装多模态依赖。"
+        )
+
+    def _process_finished(self, exit_code: int, _exit_status) -> None:
+        self._process = None
+        self.start_button.setEnabled(True)
+        self.stop_button.setEnabled(False)
+        if exit_code == 0:
+            self._set_health("视线识别已停止", "chipInfo")
+        else:
+            self._set_health("视线识别已退出，请查看日志", "chipWarn")
+
 
 class MultimodalPanel(QWidget):
+    command_proposed = pyqtSignal(object)
+    scenario_started = pyqtSignal(str)
+    scenario_stopped = pyqtSignal()
+
     def __init__(
         self,
         voice_panel: VoicePanel,
@@ -1215,6 +1576,13 @@ class MultimodalPanel(QWidget):
         parent=None,
     ) -> None:
         super().__init__(parent)
+        self._process: QProcess | None = None
+        self._script = (
+            Path(__file__).resolve().parents[1]
+            / "multimodal_recognition"
+            / "intent_scenario.py"
+        )
+        self._python = find_multimodal_python()
         self.voice_panel = voice_panel
         self.gesture_panel = gesture_panel
         self.gaze_panel = gaze_panel
@@ -1223,6 +1591,25 @@ class MultimodalPanel(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(6)
         layout.addWidget(self.voice_panel, 0)
+
+        scenario_controls = QHBoxLayout()
+        self.scenario_start = QPushButton("启动手势+视线场景")
+        self.scenario_start.setObjectName("primaryButton")
+        self.scenario_start.clicked.connect(self._start_scenario)
+        scenario_controls.addWidget(self.scenario_start)
+        self.scenario_stop = QPushButton("停止场景识别")
+        self.scenario_stop.setEnabled(False)
+        self.scenario_stop.clicked.connect(self._stop_scenario)
+        scenario_controls.addWidget(self.scenario_stop)
+        layout.addLayout(scenario_controls)
+
+        self.scenario_log = QPlainTextEdit()
+        self.scenario_log.setReadOnly(True)
+        self.scenario_log.setMaximumHeight(105)
+        self.scenario_log.setPlaceholderText(
+            "手势三选一确认大类后，直接进入视线三选一"
+        )
+        layout.addWidget(self.scenario_log)
 
         self.tabs = QTabWidget()
         self.tabs.setTabPosition(QTabWidget.South)
@@ -1235,6 +1622,115 @@ class MultimodalPanel(QWidget):
             self.tabs.setCurrentWidget(self.gesture_panel)
         elif name == "gaze":
             self.tabs.setCurrentWidget(self.gaze_panel)
+
+    def _start_scenario(self) -> None:
+        if self._process is not None:
+            return
+        if not self._script.exists():
+            self.scenario_log.appendPlainText("未找到场景识别程序。")
+            return
+        process = QProcess(self)
+        process.setProgram(str(self._python))
+        process.setArguments(
+            [
+                str(self._script),
+                "--camera",
+                "0",
+                "--rotate",
+                "0",
+                "--laser",
+                "--no-window",
+                "--preview-file",
+                str(Path(__file__).resolve().parents[1] / "work" / "multimodal_preview.jpg"),
+            ]
+        )
+        process.setWorkingDirectory(str(self._script.parent))
+        process.readyReadStandardOutput.connect(self._read_stdout)
+        process.readyReadStandardError.connect(self._read_stderr)
+        process.errorOccurred.connect(self._process_error)
+        process.finished.connect(self._process_finished)
+        self._process = process
+        self.scenario_log.clear()
+        self.scenario_log.appendPlainText(f"启动场景识别：{self._python}")
+        self.scenario_log.appendPlainText(
+            "流程：手势三选一选择 起飞/自检/返航 -> 视线三选一选择细项。"
+        )
+        self.scenario_start.setEnabled(False)
+        self.scenario_stop.setEnabled(True)
+        process.start()
+        self.scenario_started.emit(
+            str(Path(__file__).resolve().parents[1] / "work" / "multimodal_preview.jpg")
+        )
+
+    def _stop_scenario(self) -> None:
+        if self._process is None:
+            return
+        self.scenario_log.appendPlainText("正在停止场景识别...")
+        self._process.terminate()
+        if not self._process.waitForFinished(1500):
+            self._process.kill()
+
+    def _read_stdout(self) -> None:
+        if self._process is None:
+            return
+        data = bytes(self._process.readAllStandardOutput()).decode(
+            "utf-8", errors="replace"
+        )
+        for line in data.splitlines():
+            if not line.strip():
+                continue
+            self.scenario_log.appendPlainText(line)
+            if line.startswith("SCENARIO_RESULT:"):
+                self._handle_result(line)
+
+    def _read_stderr(self) -> None:
+        if self._process is None:
+            return
+        data = bytes(self._process.readAllStandardError()).decode(
+            "utf-8", errors="replace"
+        )
+        for line in data.splitlines():
+            if line.strip():
+                self.scenario_log.appendPlainText(f"提示：{line}")
+
+    def _handle_result(self, line: str) -> None:
+        fields = dict(re.findall(r"([a-z_]+)=([^\s]+)", line))
+        action = fields.get("action", "INFO_ACTION")
+        label = fields.get("label", fields.get("option", "多模态场景指令"))
+        option = fields.get("option", "")
+        if any(char in label for char in ("�", "□", "\ufffd")):
+            label = option or {
+                "TAKEOFF": "起飞",
+                "RTL": "返航",
+                "LAND": "降落",
+            }.get(action, "多模态场景指令")
+        confidence = float(fields.get("confidence", "0.90"))
+        risk = "high" if action in {"TAKEOFF", "RTL", "LAND"} else "medium"
+        self.command_proposed.emit(
+            CommandIntent(
+                action=action,
+                source="手势+视线",
+                label=label,
+                confidence=confidence,
+                risk_level=risk,
+                requires_confirmation=action in {"TAKEOFF", "RTL", "LAND"},
+                parameters=fields,
+            )
+        )
+        self._stop_scenario()
+
+    def _process_error(self, _error) -> None:
+        self.scenario_log.appendPlainText(
+            "场景识别启动失败。请先运行 install_multimodal_deps.bat。"
+        )
+
+    def _process_finished(self, exit_code: int, _exit_status) -> None:
+        self._process = None
+        self.scenario_start.setEnabled(True)
+        self.scenario_stop.setEnabled(False)
+        message = "场景识别已停止" if exit_code == 0 else "场景识别已退出，请查看日志"
+        self.scenario_log.appendPlainText(message)
+        self.scenario_stopped.emit()
 
 
 class DevicePanel(QWidget):
@@ -1284,7 +1780,7 @@ class DevicePanel(QWidget):
         )
         layout.addWidget(camera_button)
         info = QLabel(
-            "图传优先使用 720p/15 FPS H.264 RTSP，并自动兼容旧快照固件。"
+            "图传优先使用 720p/15 帧/秒 H.264 RTSP，并自动兼容旧快照固件。"
             "当前飞控仍默认使用模拟器；接入真实飞控前，应先完成只读遥测验证。"
         )
         info.setWordWrap(True)
@@ -1488,7 +1984,7 @@ class HealthPanel(QFrame):
         )
         if camera.connected:
             self.camera_diagnostics.setText(
-                f"图传诊断：{camera.source_kind.upper()} · {camera.fps:.1f} FPS · "
+                f"图传诊断：{camera.source_kind.upper()} · {camera.fps:.1f} 帧/秒 · "
                 f"帧龄 {camera.frame_age_ms} ms · 重连 {camera.reconnect_count} 次"
             )
         else:
@@ -1582,7 +2078,7 @@ class CompactStatusBar(QFrame):
             "miniChipGood" if state.connected else "miniChipWarn"
         )
         self.camera.setText(
-            f"图传 {camera.fps:.0f} FPS" if camera.connected else "图传 离线"
+            f"图传 {camera.fps:.0f} 帧/秒" if camera.connected else "图传 离线"
         )
         self.camera.setObjectName(
             "miniChipGood"
@@ -1606,175 +2102,6 @@ class CompactStatusBar(QFrame):
             chip.style().polish(chip)
 
 
-class RecentEventsPanel(QFrame):
-    open_full_requested = pyqtSignal()
-    clear_requested = pyqtSignal()
-
-    def __init__(self, parent=None) -> None:
-        super().__init__(parent)
-        self.setObjectName("recentEvents")
-        self._items: list[dict] = []
-        self._compact = False
-        self._flash_remaining = 0
-        self._flash_on = False
-        self._flash_timer = QTimer(self)
-        self._flash_timer.setInterval(260)
-        self._flash_timer.timeout.connect(self._advance_alert_flash)
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(12, 7, 12, 9)
-        layout.setSpacing(5)
-        header = QHBoxLayout()
-        self.title = QLabel("最近事件")
-        self.title.setObjectName("sectionTitle")
-        self.summary = QLabel("任务待命")
-        self.summary.setObjectName("muted")
-        full_button = QPushButton("完整事件")
-        full_button.setObjectName("ghostButton")
-        full_button.clicked.connect(self.open_full_requested)
-        clear_button = QPushButton("清除告警")
-        clear_button.setObjectName("ghostButton")
-        clear_button.clicked.connect(self.clear_requested)
-        header.addWidget(self.title)
-        header.addWidget(self.summary)
-        header.addStretch()
-        header.addWidget(full_button)
-        header.addWidget(clear_button)
-        layout.addLayout(header)
-
-        self.compact_alert = QLabel("暂无关键告警")
-        self.compact_alert.setObjectName("compactAlert")
-        self.compact_alert.setWordWrap(False)
-        self.compact_alert.setVisible(False)
-        layout.addWidget(self.compact_alert)
-
-        self.rows_widget = QWidget()
-        self.rows = QHBoxLayout(self.rows_widget)
-        self.rows.setContentsMargins(0, 0, 0, 0)
-        self.rows.setSpacing(7)
-        layout.addWidget(self.rows_widget)
-        self.add_system_event("系统就绪", "模拟遥测已启动", "good")
-        self.add_system_event("相机状态", "等待连接 AMB82", "info")
-        self.add_system_event("任务状态", "待命 · 航点 0/10", "info")
-
-    def add_detection(self, event: DetectionEvent) -> None:
-        self.add_system_event(
-            f"发现 {event.target_type}",
-            f"置信度 {event.confidence:.0%} · ({event.x:.1f}, {event.y:.1f})",
-            "fire",
-        )
-        self.flash_fire_alert()
-
-    def flash_fire_alert(self) -> None:
-        self._flash_remaining = 14
-        self._flash_on = False
-        self.title.setText("⚠ 火源告警")
-        self._advance_alert_flash()
-        if not self._flash_timer.isActive():
-            self._flash_timer.start()
-
-    def _advance_alert_flash(self) -> None:
-        if self._flash_remaining <= 0:
-            self._flash_timer.stop()
-            self.setObjectName("recentEvents")
-            self.title.setText("最近事件")
-            self._refresh_style()
-            return
-        self._flash_on = not self._flash_on
-        self.setObjectName(
-            "recentEventsAlertRed" if self._flash_on else "recentEventsAlertAmber"
-        )
-        self._flash_remaining -= 1
-        self._refresh_style()
-
-    def _refresh_style(self) -> None:
-        self.style().unpolish(self)
-        self.style().polish(self)
-        self.update()
-
-    def add_system_event(self, title: str, detail: str, level: str = "info") -> None:
-        self._items.insert(
-            0,
-            {
-                "time": datetime.now().strftime("%H:%M:%S"),
-                "title": title,
-                "detail": detail,
-                "level": level,
-            },
-        )
-        self._items = self._items[:3]
-        self._render()
-
-    def update_task_summary(self, state: DroneState) -> None:
-        self.summary.setText(
-            f"{state.flight_phase} · 航点 {state.current_waypoint}/{state.total_waypoints}"
-        )
-
-    def clear_alerts(self) -> None:
-        self._items = [
-            item
-            for item in self._items
-            if item["level"] not in {"warn", "error", "fire"}
-        ]
-        if not self._items:
-            self.add_system_event("系统状态", "暂无活动告警", "good")
-        else:
-            self._render()
-
-    def set_compact(self, compact: bool) -> None:
-        if self._compact == compact:
-            return
-        self._compact = compact
-        self.rows_widget.setVisible(not compact)
-        self.compact_alert.setVisible(compact)
-        self._render()
-
-    def _render(self) -> None:
-        while self.rows.count():
-            item = self.rows.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-        for event in self._items:
-            card = QFrame()
-            card.setObjectName(f"eventCard{event['level'].title()}")
-            card_layout = QVBoxLayout(card)
-            card_layout.setContentsMargins(10, 6, 10, 6)
-            card_layout.setSpacing(1)
-            top = QHBoxLayout()
-            name = QLabel(event["title"])
-            name.setObjectName("eventTitle")
-            timestamp = QLabel(event["time"])
-            timestamp.setObjectName("muted")
-            top.addWidget(name)
-            top.addStretch()
-            top.addWidget(timestamp)
-            detail = QLabel(event["detail"])
-            detail.setObjectName("eventDetail")
-            detail.setWordWrap(False)
-            card_layout.addLayout(top)
-            card_layout.addWidget(detail)
-            self.rows.addWidget(card, 1)
-        if self._items:
-            important = next(
-                (
-                    item
-                    for item in self._items
-                    if item["level"] in {"fire", "error", "warn"}
-                ),
-                self._items[0],
-            )
-            prefix = "⚠" if important["level"] in {"fire", "error", "warn"} else "●"
-            self.compact_alert.setText(
-                f"{prefix} {important['time']}  {important['title']}：{important['detail']}"
-            )
-            self.compact_alert.setObjectName(
-                "compactAlertDanger"
-                if important["level"] in {"fire", "error", "warn"}
-                else "compactAlert"
-            )
-            self.compact_alert.style().unpolish(self.compact_alert)
-            self.compact_alert.style().polish(self.compact_alert)
-
-
 class SideNavigation(QFrame):
     navigation_requested = pyqtSignal(str)
 
@@ -1784,7 +2111,6 @@ class SideNavigation(QFrame):
         ("voice", "语", "语音"),
         ("gesture", "势", "手势"),
         ("gaze", "视", "视线"),
-        ("events", "事", "事件"),
         ("logs", "志", "日志"),
         ("device", "设", "设备"),
     ]

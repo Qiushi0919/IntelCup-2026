@@ -11,8 +11,12 @@ venv/
 captures/
 recordings/
 logs/
+work/
 *.log
 *.tmp
+multimodal_recognition/.venv/
+multimodal_recognition/models/
+multimodal_recognition/gaze_calibration.json
 
 # IDE / OS
 .idea/

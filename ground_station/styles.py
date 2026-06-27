@@ -13,25 +13,10 @@ QFrame#header {
     background: #0b1b2b;
     border-bottom: 1px solid rgba(76, 111, 143, 0.30);
 }
-QFrame#card, QFrame#metricBox, QFrame#commandBar, QFrame#recentEvents,
-QFrame#recentEventsAlertRed, QFrame#recentEventsAlertAmber {
+QFrame#card, QFrame#metricBox, QFrame#commandBar {
     background: #0d1d2d;
     border: 1px solid rgba(67, 102, 133, 0.34);
     border-radius: 10px;
-}
-QFrame#recentEventsAlertRed {
-    background: #42151b;
-    border: 2px solid #ff4655;
-}
-QFrame#recentEventsAlertAmber {
-    background: #3a260d;
-    border: 2px solid #f1a331;
-}
-QFrame#recentEventsAlertRed QLabel#sectionTitle {
-    color: #ff8b94;
-}
-QFrame#recentEventsAlertAmber QLabel#sectionTitle {
-    color: #ffd071;
 }
 QFrame#videoCard {
     background: #06111c;
@@ -69,19 +54,6 @@ QLabel#candidateText {
     color: #e6f2fd;
     font-size: 12px;
     font-weight: 700;
-}
-QLabel#compactAlert, QLabel#compactAlertDanger {
-    min-height: 28px;
-    padding: 0 10px;
-    color: #cfe2f3;
-    background: rgba(14, 38, 58, 0.92);
-    border-radius: 6px;
-    font-weight: 700;
-}
-QLabel#compactAlertDanger {
-    color: #ffe1a3;
-    background: rgba(106, 38, 28, 0.96);
-    border: 1px solid #ef6a54;
 }
 QFrame#sideNav {
     background: #091827;
@@ -135,6 +107,16 @@ QLabel#chipWarn, QPushButton#statusWarn {
     border: 1px solid rgba(156, 114, 47, 0.65);
     border-radius: 10px;
     padding: 5px 10px;
+    font-weight: 700;
+}
+QLabel#videoInfoBar {
+    min-height: 28px;
+    padding: 4px 10px;
+    color: #b9d5ea;
+    background: #091827;
+    border: 1px solid rgba(61, 98, 128, 0.55);
+    border-radius: 7px;
+    font-size: 12px;
     font-weight: 700;
 }
 QLabel#miniChipGood, QLabel#miniChipInfo, QLabel#miniChipWarn {
@@ -228,30 +210,6 @@ QProgressBar {
 QProgressBar::chunk {
     border-radius: 4px;
     background: #27c58b;
-}
-QFrame#eventCardGood, QFrame#eventCardInfo, QFrame#eventCardWarn,
-QFrame#eventCardError, QFrame#eventCardFire {
-    border: 0;
-    border-left: 3px solid #496b86;
-    border-radius: 5px;
-    background: rgba(14, 34, 52, 0.90);
-}
-QFrame#eventCardGood { border-left-color: #36c58d; }
-QFrame#eventCardInfo { border-left-color: #3d91c4; }
-QFrame#eventCardWarn { border-left-color: #d99a36; }
-QFrame#eventCardError { border-left-color: #d75462; }
-QFrame#eventCardFire {
-    border-left: 5px solid #ff4453;
-    background: rgba(83, 21, 29, 0.96);
-}
-QLabel#eventTitle {
-    color: #e5f0fa;
-    font-size: 12px;
-    font-weight: 700;
-}
-QLabel#eventDetail {
-    color: #7891a8;
-    font-size: 11px;
 }
 QSplitter::handle {
     background: transparent;

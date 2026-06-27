@@ -27,18 +27,19 @@ class DroneSimulator(QObject):
         self._landing = False
         self._time = 0.0
         self._event_sent = False
+        self._takeoff_point = (3.5, 3.5)
+        self._return_point = (3.5, 3.5)
         self._waypoints = [
-            (4.0, 4.0),
-            (44.0, 4.0),
-            (44.0, 12.0),
-            (4.0, 12.0),
-            (4.0, 20.0),
-            (44.0, 20.0),
-            (44.0, 28.0),
-            (4.0, 28.0),
-            (4.0, 36.0),
-            (44.0, 36.0),
+            (11.5, 29.0),
+            (27.0, 29.0),
+            (41.0, 29.0),
+            (41.0, 12.0),
+            (25.0, 12.0),
+            (10.0, 12.0),
         ]
+        self._route_points = [self._takeoff_point, *self._waypoints, self._return_point]
+        self.state.x, self.state.y = self._takeoff_point
+        self.state.total_waypoints = len(self._waypoints)
         self._segment = 0
         self._segment_t = 0.0
 
@@ -185,8 +186,10 @@ class DroneSimulator(QObject):
 
     def _advance_route(self, dt: float) -> None:
         state = self.state
-        start = self._waypoints[self._segment]
-        end = self._waypoints[min(self._segment + 1, len(self._waypoints) - 1)]
+        start = self._route_points[self._segment]
+        end = self._route_points[
+            min(self._segment + 1, len(self._route_points) - 1)
+        ]
         segment_length = max(0.1, math.hypot(end[0] - start[0], end[1] - start[1]))
         speed = 4.0
         previous_x, previous_y = state.x, state.y
@@ -195,15 +198,18 @@ class DroneSimulator(QObject):
         if self._segment_t >= 1.0:
             self._segment_t = 0.0
             self._segment += 1
-            if self._segment >= len(self._waypoints) - 1:
+            if self._segment >= len(self._route_points) - 1:
+                state.x, state.y = self._return_point
+                state.current_waypoint = state.total_waypoints
+                state.mission_progress = 100.0
                 self._mission_running = False
-                self._returning = True
+                self._returning = False
                 state.flight_mode = "RTL"
-                state.flight_phase = "巡逻完成，正在返航"
-                self.log_generated.emit("INFO", "覆盖巡逻完成，自动返航")
+                state.flight_phase = "巡逻完成，已返航"
+                self.log_generated.emit("INFO", "覆盖巡逻完成，已返回黑色返航区")
                 return
-            start = self._waypoints[self._segment]
-            end = self._waypoints[self._segment + 1]
+            start = self._route_points[self._segment]
+            end = self._route_points[self._segment + 1]
 
         state.x = start[0] + (end[0] - start[0]) * self._segment_t
         state.y = start[1] + (end[1] - start[1]) * self._segment_t
@@ -211,9 +217,11 @@ class DroneSimulator(QObject):
         state.distance_travelled += math.hypot(
             state.x - previous_x, state.y - previous_y
         )
-        state.current_waypoint = min(self._segment + 1, state.total_waypoints)
+        state.current_waypoint = min(self._segment, state.total_waypoints)
         state.mission_progress = (
-            (self._segment + self._segment_t) / (len(self._waypoints) - 1) * 100
+            min(self._segment + self._segment_t, state.total_waypoints)
+            / state.total_waypoints
+            * 100
         )
         state.flight_phase = "覆盖巡逻"
 
@@ -251,4 +259,3 @@ class DroneSimulator(QObject):
         state.distance_travelled += math.hypot(
             state.x - previous_x, state.y - previous_y
         )
-

@@ -30,7 +30,7 @@ class DroneState:
     link_latency_ms: int = 26
     packet_loss_percent: float = 0.2
     current_waypoint: int = 0
-    total_waypoints: int = 10
+    total_waypoints: int = 6
     mission_progress: float = 0.0
     elapsed_seconds: int = 0
     distance_travelled: float = 0.0
