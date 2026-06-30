@@ -1,1 +1,0 @@
-http://firmware.ardupilot.org/Tools/MissionPlanner/MissionPlanner-latest.msi
