@@ -1,79 +1,28 @@
-# Intel Cup 2026 · Ground Station
+# IntelCup-2026 Workspace
 
-当前分支维护地面站、图传、火源识别、语音识别、手势识别和视线识别相关代码。
+这个文件夹把 IntelCup 相关内容集中放在一起：
 
-## 当前代码状态
+- `IntelCup-2026/`：文档分支。
+- `IntelCup-2026-ground-station/`：地面站、图传、火源识别和语音识别入口。
+- `IntelCup-2026-aircraft-code/`：飞机代码与原始开发资料。
+- `Intel项目/`：原始语音识别程序备份。
 
-- 图传：OK，支持 AMB82 RTSP / 快照回退，地面站界面可连接相机。
-- 数传：OK，可以与飞控连接，通过串口实时输入。
-- 语音识别：OK，已接入 OpenVINO Whisper 实时识别，识别文本会进入候选指令流程。
-- 手势识别：OK，已接入 MediaPipe 三手势识别，可触发暂停、取消候选、确认候选。
-- 视线识别：OK，已接入头部姿态 + 视线融合识别，可显示方向并触发确认/取消。
-- 手势 + 视线场景：OK，手势先选择起飞/自检/返航大类，倒数 5 秒后用视线选择三个细项。
+## 运行地面站
 
-## 运行截图
-
-![地面站运行截图](docs/images/ground-station-runtime.png)
-
-## 目录
-
-```text
-ground_station/      PyQt5 地面站、任务地图、告警与火源识别
-voice_asr/           OpenVINO Whisper 实时语音识别
-multimodal_recognition/ MediaPipe 手势识别与视线识别
-pc_camera_viewer/    AMB82 RTSP/快照读取与独立预览程序
-wireless_camera/     AMB82 720p H.264 RTSP 固件
-recovery_blink/      AMB82 恢复与硬件连通测试
-```
-
-## 快速启动
-
-Windows 下双击：
-
-```text
-run_ground_station.bat
-```
-
-或在当前目录运行：
-
-```powershell
-python -m pip install -r ground_station\requirements.txt
-python ground_station\main.py
-```
+双击当前目录下的 `启动地面站.bat`。
 
 ## 语音识别
 
-地面站会优先调用 Anaconda 的 `gluon` 环境运行实时语音识别：
+语音识别代码已经复制到：
 
 ```text
-C:\Users\Qiushi\.conda\envs\gluon\python.exe
+IntelCup-2026-ground-station/voice_asr/
 ```
 
-如果换机器后缺少依赖，可运行：
+地面站左侧“语音交互”窗口里可以启动或停止实时语音识别。首次使用前如缺少 OpenVINO、Transformers、Torch 等依赖，双击：
 
 ```text
-install_voice_asr_deps.bat
+IntelCup-2026-ground-station/install_voice_asr_deps.bat
 ```
 
-首次加载 Whisper/OpenVINO 模型会从 Hugging Face 下载模型，耗时较长。
-
-## 手势与视线识别
-
-地面站“多模态交互”窗口中可以直接启动或停止手势识别、视线识别。
-两个识别器都会打开独立摄像头预览窗口，并把识别结果回传到地面站候选指令流程。
-
-同一个 USB 摄像头通常一次只能被一个识别器占用，因此手势识别和视线识别不要同时开启。
-
-也可以启动“手势+视线场景”单窗口流程：
-
-- 张开手掌：进入起飞类，视线选择 `预热 / 低空起飞 / 高空起飞`；
-- 握拳：进入自检类，视线选择 `电机自检 / 陀螺仪自检 / 摄像头状态`；
-- 竖大拇指：进入返航类，视线选择 `立即返航 / 1分钟后返航 / 3分钟后返航`。
-
-该场景流程同样使用一个 USB 摄像头，不要与其它识别窗口同时开启。
-
-如果换机器后缺少依赖，可运行：
-
-```text
-install_multimodal_deps.bat
-```
+首次运行 Whisper/OpenVINO 模型时会从 Hugging Face 下载模型，时间会比较长。

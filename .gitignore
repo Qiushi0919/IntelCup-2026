@@ -1,4 +1,4 @@
-# Python
+# Python and runtime caches
 __pycache__/
 *.py[cod]
 .pytest_cache/
@@ -8,15 +8,18 @@ __pycache__/
 venv/
 
 # Runtime output
+work/
 captures/
 recordings/
 logs/
-work/
 *.log
 *.tmp
-multimodal_recognition/.venv/
+camera_test_*.jpg
+
+# Local model caches
+models/
 multimodal_recognition/models/
-multimodal_recognition/gaze_calibration.json
+*/multimodal_recognition/models/
 
 # IDE / OS
 .idea/
@@ -26,9 +29,8 @@ multimodal_recognition/gaze_calibration.json
 Thumbs.db
 desktop.ini
 
-# Local tools and vendor archives
+# Local tools and packaged installers
 .tools/
-DK2500开发套件/
 *.exe
 *.msi
 *.cab
@@ -39,26 +41,14 @@ DK2500开发套件/
 *.mp4
 *.wmv
 
-# Build output
-build/
-dist/
-*.o
-*.obj
-*.map
-*.elf
-*.hex
-*.bin
-!wireless_camera/firmware/*.bin
-
-# Secrets and machine-local configuration
+# Secrets
 .env
 .env.*
 *.pem
 *.key
 *credential*
 *secret*
-wireless_camera/network_config.h
-
-# Office temporary files
-~$*
-*.bak
+SN.txt
+serial*.txt
+license*.txt
+network_config.h

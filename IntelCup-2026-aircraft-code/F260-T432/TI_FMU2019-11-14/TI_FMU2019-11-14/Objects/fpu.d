@@ -1,0 +1,11 @@
+.\objects\fpu.o: Driver\MSP432P4xx\fpu.c
+.\objects\fpu.o: .\Driver\MSP432P4xx\fpu.h
+.\objects\fpu.o: D:\software2\MDK\ARM\ARMCC\Bin\..\include\stdint.h
+.\objects\fpu.o: D:\software2\MDK\TexasInstruments\MSP432P4xx_DFP\3.2.5\Device\Include\msp.h
+.\objects\fpu.o: D:\software2\MDK\TexasInstruments\MSP432P4xx_DFP\3.2.5\Device\Include\msp432p401r.h
+.\objects\fpu.o: D:\software2\MDK\TexasInstruments\MSP432P4xx_DFP\3.2.5\Device\Include\msp_compatibility.h
+.\objects\fpu.o: D:\software2\MDK\TexasInstruments\MSP432P4xx_DFP\3.2.5\Device\Include\msp432p401r_classic.h
+.\objects\fpu.o: D:\software2\MDK\ARM\CMSIS\5.0.1\CMSIS\Include\core_cm4.h
+.\objects\fpu.o: D:\software2\MDK\ARM\CMSIS\5.0.1\CMSIS\Include\cmsis_compiler.h
+.\objects\fpu.o: D:\software2\MDK\ARM\CMSIS\5.0.1\CMSIS\Include\cmsis_armcc.h
+.\objects\fpu.o: D:\software2\MDK\TexasInstruments\MSP432P4xx_DFP\3.2.5\Device\Include\system_msp432p401r.h

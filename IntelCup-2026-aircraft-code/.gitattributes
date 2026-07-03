@@ -1,0 +1,14 @@
+* text=auto
+*.c text eol=lf
+*.h text eol=lf
+*.cpp text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.pdf binary
+*.doc binary
+*.docx binary
+*.rar binary
+*.bin binary
+*.hex binary
+*.px4 binary
