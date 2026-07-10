@@ -9,7 +9,7 @@ import cv2
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
-from common import TemporalStabilizer
+from common import TemporalStabilizer, open_camera_capture
 from gaze_three_point import (
     draw_eye_laser,
     estimate_head_pose,
@@ -28,8 +28,8 @@ SCENARIOS = {
         "gesture_display": "OPEN PALM",
         "options": [
             ("预热", "INFO_ACTION", "起飞前预热"),
-            ("低空起飞", "TAKEOFF", "低空起飞"),
-            ("高空起飞", "TAKEOFF", "高空起飞"),
+            ("低空巡逻", "TAKEOFF", "低空巡逻"),
+            ("定制航点", "TAKEOFF", "定制航点"),
         ],
     },
     "Closed_Fist": {
@@ -38,8 +38,8 @@ SCENARIOS = {
         "gesture": "握拳",
         "gesture_display": "FIST",
         "options": [
-            ("电机自检", "INFO_ACTION", "电机自检"),
-            ("陀螺仪自检", "INFO_ACTION", "陀螺仪自检"),
+            ("姿态自检", "INFO_ACTION", "姿态自检"),
+            ("参数自检", "INFO_ACTION", "参数自检"),
             ("摄像头状态", "INFO_ACTION", "摄像头状态检查"),
         ],
     },
@@ -50,8 +50,8 @@ SCENARIOS = {
         "gesture_display": "THUMB UP",
         "options": [
             ("立即返航", "RTL", "立即返航"),
-            ("1分钟后返航", "INFO_ACTION", "1分钟后返航"),
-            ("3分钟后返航", "INFO_ACTION", "3分钟后返航"),
+            ("10秒后返航", "INFO_ACTION", "10秒后返航"),
+            ("日志输出", "INFO_ACTION", "日志输出"),
         ],
     },
 }
@@ -59,8 +59,8 @@ SCENARIOS = {
 REGIONS = ("LEFT", "CENTER", "RIGHT")
 REGION_NAMES = {"LEFT": "左侧", "CENTER": "中间", "RIGHT": "右侧"}
 GESTURE_REGIONS = {
-    "LEFT": ("Open_Palm", "张开手掌", "起飞"),
-    "CENTER": ("Closed_Fist", "握拳", "自检"),
+    "LEFT": ("Closed_Fist", "握拳", "自检"),
+    "CENTER": ("Open_Palm", "张开手掌", "起飞"),
     "RIGHT": ("Thumb_Up", "竖大拇指", "返航"),
 }
 GESTURE_REGION_BY_LABEL = {
@@ -392,12 +392,17 @@ def main() -> int:
         min_tracking_confidence=0.70,
     )
 
-    capture = cv2.VideoCapture(args.camera, cv2.CAP_DSHOW)
-    capture.set(cv2.CAP_PROP_FRAME_WIDTH, args.width)
-    capture.set(cv2.CAP_PROP_FRAME_HEIGHT, args.height)
-    if not capture.isOpened():
-        print(f"Cannot open camera {args.camera}", file=sys.stderr)
+    capture, camera_index, backend_name = open_camera_capture(
+        args.camera, args.width, args.height
+    )
+    if capture is None:
+        print(
+            "未检测到可用摄像头。请重新插拔 USB 摄像头，确认 Windows 相机应用能打开，"
+            "并关闭其它占用摄像头的软件。",
+            file=sys.stderr,
+        )
         return 3
+    print(f"CAMERA_OPENED index={camera_index} backend={backend_name}", flush=True)
 
     mode = "GESTURE"
     scenario_key = ""

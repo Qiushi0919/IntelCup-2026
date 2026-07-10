@@ -252,6 +252,35 @@ QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox {
 QLineEdit:focus, QComboBox:focus {
     border-color: #2f91da;
 }
+QComboBox::drop-down {
+    width: 30px;
+    border-left: 1px solid rgba(68, 105, 135, 0.55);
+    background: #102337;
+    border-top-right-radius: 7px;
+    border-bottom-right-radius: 7px;
+}
+QComboBox QAbstractItemView {
+    color: #e2edf8;
+    background: #0a1929;
+    border: 1px solid #315a79;
+    selection-color: #ffffff;
+    selection-background-color: #1677d8;
+    outline: 0;
+    padding: 4px;
+}
+QComboBox QAbstractItemView::item {
+    min-height: 26px;
+    padding: 4px 8px;
+    background: #0a1929;
+}
+QComboBox QAbstractItemView::item:hover {
+    color: #ffffff;
+    background: #1a4b70;
+}
+QComboBox QAbstractItemView::item:selected {
+    color: #ffffff;
+    background: #1677d8;
+}
 QTabWidget::pane {
     border: 1px solid #1b334c;
     border-radius: 8px;
@@ -405,6 +434,57 @@ QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox {
     min-height: 70px;
     padding: 0 22px;
     font-size: 30px;
+}
+QComboBox QAbstractItemView {
+    color: #e2edf8;
+    background: #0a1929;
+    border: 2px solid #315a79;
+    selection-color: #ffffff;
+    selection-background-color: #1677d8;
+    font-size: 30px;
+    outline: 0;
+}
+QComboBox QAbstractItemView::item {
+    min-height: 58px;
+    padding: 8px 18px;
+    background: #0a1929;
+}
+QComboBox QAbstractItemView::item:hover {
+    color: #ffffff;
+    background: #1a4b70;
+}
+QComboBox QAbstractItemView::item:selected {
+    color: #ffffff;
+    background: #1677d8;
+}
+QToolButton#mapWaypointButton {
+    color: #ffffff;
+    background: #1677d8;
+    border: 2px solid #d7f1ff;
+    border-radius: 18px;
+    font-size: 20px;
+    font-weight: 900;
+}
+QToolButton#mapWaypointButton:hover {
+    background: #25a4ff;
+}
+QToolButton#mapWaypointButton[routeSelected="true"] {
+    color: #071421;
+    background: #ffcc4d;
+    border-color: #fff0b8;
+}
+QToolButton#routeTokenButton {
+    color: #071421;
+    background: #ffcc4d;
+    border: 1px solid #ffe7a6;
+    border-radius: 13px;
+    font-size: 20px;
+    font-weight: 900;
+    min-width: 36px;
+    min-height: 30px;
+}
+QToolButton#routeTokenButton:hover {
+    background: #ffe083;
 }
 QStatusBar {
     min-height: 52px;

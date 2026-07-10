@@ -24,6 +24,7 @@ from PyQt5.QtWidgets import (
 
 from camera_service import CameraThread
 from fire_detector import FireDetector
+from flight_log_recorder import FlightLogRecorder
 from models import (
     CameraState,
     CommandIntent,
@@ -34,6 +35,18 @@ from models import (
 )
 from simulator import DroneSimulator
 from styles import APP_STYLE, LARGE_DISPLAY_STYLE
+from telemetry_service import (
+    FORCE_SDK_MODE18_FRAME,
+    SAFETY_HOLD_FRAME,
+    SAFETY_LAND_FRAME,
+    SAFETY_RTL_FRAME,
+    SAFETY_SHUTDOWN_FRAME,
+    CoordinateThread,
+    FiretruckFrame,
+    TelemetryThread,
+    build_waypoint_clear_frame,
+    build_waypoint_write_frame,
+)
 from widgets import (
     CommandBar,
     CompactStatusBar,
@@ -46,11 +59,32 @@ from widgets import (
     SideNavigation,
     VideoPanel,
     VoicePanel,
+    suggested_amb82_url,
 )
 
 
 APP_DIR = Path(__file__).resolve().parent
 CAPTURE_DIR = APP_DIR / "captures"
+TAKEOFF_ROUTE_WAYPOINTS_CM = {
+    "1": (100, 155, 120),
+    "2": (255, 155, 120),
+    "3": (410, 125, 120),
+    "4": (410, 305, 120),
+    "5": (270, 305, 120),
+    "6": (115, 305, 120),
+}
+TAKEOFF_FRAME_REPEAT_COUNT = 10
+TAKEOFF_FRAME_REPEAT_INTERVAL_MS = 60
+TAKEOFF_CLEAR_FRAME_REPEAT_COUNT = 2
+TAKEOFF_CLEAR_FRAME_REPEAT_INTERVAL_MS = 2500
+TAKEOFF_CLEAR_TO_WAYPOINT_DELAY_MS = 7500
+TAKEOFF_WAYPOINT_STEP_DELAY_MS = 1000
+SAFETY_UART4_COMMANDS = {
+    "HOLD": ("暂停 / 悬停", SAFETY_HOLD_FRAME),
+    "RTL": ("返航", SAFETY_RTL_FRAME),
+    "LAND": ("降落", SAFETY_LAND_FRAME),
+    "SHUTDOWN": ("关机", SAFETY_SHUTDOWN_FRAME),
+}
 
 
 class GroundStationWindow(QMainWindow):
@@ -63,16 +97,37 @@ class GroundStationWindow(QMainWindow):
         self.camera_state = CameraState()
         self.drone_state = DroneState()
         self.camera_thread: CameraThread | None = None
+        self.telemetry_thread: TelemetryThread | None = None
+        self.coordinate_thread: CoordinateThread | None = None
         self.lens_correction_enabled = True
         self.lens_correction_strength = 50
         self._right_sidebar_user_hidden = False
         self._last_responsive_mode = ""
         self._large_display = False
         self._camera_connecting = False
+        self._real_telemetry_active = False
+        self._last_telemetry_status = ""
+        self._coordinate_active = False
+        self._last_coordinate_status = ""
+        self._self_check_active = False
+        self._self_check_label = "系统自检"
         self.selection_state: SelectionState | None = None
         self._main_view_mode = "flight"
         self._multimodal_preview_path: Path | None = None
         self._multimodal_preview_mtime = 0.0
+        self._multimodal_waiting_map_confirm = False
+        self._takeoff_countdown_timer = QTimer(self)
+        self._takeoff_countdown_timer.setInterval(1000)
+        self._takeoff_countdown_timer.timeout.connect(self._tick_takeoff_countdown)
+        self._takeoff_countdown_value = 0
+        self._return_countdown_timer = QTimer(self)
+        self._return_countdown_timer.setInterval(1000)
+        self._return_countdown_timer.timeout.connect(self._tick_return_countdown)
+        self._return_countdown_value = 0
+        self._pending_takeoff_route: list[str] = []
+        self._pending_takeoff_label = ""
+        self._takeoff_sequence_active = False
+        self.flight_log_recorder = FlightLogRecorder(APP_DIR / "flight_logs")
 
         self.simulator = DroneSimulator(self)
         self.simulator.state_changed.connect(self._on_state_changed)
@@ -116,7 +171,7 @@ class GroundStationWindow(QMainWindow):
         help_menu.addAction(about)
 
         shortcuts = [
-            ("连接相机", "C", lambda: self.connect_camera("auto")),
+            ("连接相机", "C", lambda: self.connect_camera(suggested_amb82_url())),
             ("全屏", "F", self._toggle_fullscreen),
             ("全屏 F11", "F11", self._toggle_fullscreen),
             (
@@ -177,12 +232,18 @@ class GroundStationWindow(QMainWindow):
         self.video_panel = VideoPanel()
         self.video_panel.snapshot_requested.connect(self.save_snapshot)
         self.video_panel.connect_camera_requested.connect(
-            lambda: self.connect_camera("auto")
+            lambda: self.connect_camera(suggested_amb82_url())
         )
         self.video_panel.demo_requested.connect(self._load_fire_demo)
         self.video_panel.target_selected.connect(self._select_target)
         self.video_panel.target_missed.connect(
             lambda message: self.statusBar().showMessage(message, 3500)
+        )
+        self.video_panel.takeoff_map_confirmed.connect(
+            self._confirm_multimodal_takeoff_map
+        )
+        self.video_panel.route_sequence_changed.connect(
+            self._update_multimodal_route_preview
         )
         self.video_panel.lens_correction_toggled.connect(
             self._toggle_lens_correction
@@ -249,7 +310,7 @@ class GroundStationWindow(QMainWindow):
         self.layout_mode_button.clicked.connect(self._reset_layout)
         self.connect_camera_button = QPushButton("连接相机")
         self.connect_camera_button.clicked.connect(
-            lambda: self.connect_camera("auto")
+            lambda: self.connect_camera(suggested_amb82_url())
         )
         device_button = QPushButton("设备")
         device_button.clicked.connect(lambda: self._show_dock("device"))
@@ -288,6 +349,9 @@ class GroundStationWindow(QMainWindow):
         self.multimodal_panel.scenario_stopped.connect(
             self._exit_multimodal_view
         )
+        self.multimodal_panel.takeoff_map_requested.connect(
+            self._show_multimodal_takeoff_map
+        )
         self._add_dock(
             "multimodal",
             "多模态交互",
@@ -298,6 +362,8 @@ class GroundStationWindow(QMainWindow):
 
         self.device_panel = DevicePanel()
         self.device_panel.connect_camera.connect(self.connect_camera)
+        self.device_panel.connect_telemetry.connect(self.connect_telemetry)
+        self.device_panel.disconnect_telemetry.connect(self.disconnect_telemetry)
         self.device_panel.lens_correction_changed.connect(
             self._set_lens_correction
         )
@@ -409,14 +475,19 @@ class GroundStationWindow(QMainWindow):
             )
 
     def _on_state_changed(self, state: DroneState) -> None:
+        if self._real_telemetry_active and self.sender() is self.simulator:
+            return
         self.drone_state = state
         self.video_panel.set_state(state)
+        if self._self_check_active:
+            self._refresh_self_check_view()
         self.right_sidebar.set_state(state, self.camera_state)
+        self._observe_flight_log_state(state)
         self.compact_status.set_state(state, self.camera_state)
         self._update_header_status()
         self.status_message.setText(
-            f"{state.flight_phase}  ·  坐标 ({state.x:.1f}, {state.y:.1f})  ·  "
-            f"高度 {state.altitude:.2f} m  ·  电量 {state.battery_percent:.0f}%"
+            f"{state.flight_phase}  ·  坐标 ({state.x:.0f}, {state.y:.0f}) cm  ·  "
+            f"高度 {state.altitude:.2f} m  ·  电压 {state.battery_voltage:.1f} V"
         )
 
     def _update_header_status(self) -> None:
@@ -469,6 +540,12 @@ class GroundStationWindow(QMainWindow):
         )
 
     def _button_command(self, action: str, label: str) -> None:
+        if action == "SELF_CHECK":
+            self._show_self_check_view(label, "主界面按钮")
+            return
+        if action in SAFETY_UART4_COMMANDS:
+            self._send_immediate_safety_command(action, label)
+            return
         risk = (
             "high"
             if action in {"TAKEOFF", "START_MISSION", "RTL", "LAND"}
@@ -483,6 +560,29 @@ class GroundStationWindow(QMainWindow):
                 requires_confirmation=risk == "high",
             )
         )
+
+    def _send_immediate_safety_command(self, action: str, label: str) -> None:
+        command_name, frame = SAFETY_UART4_COMMANDS[action]
+        if action == "RTL" and self._return_countdown_timer.isActive():
+            self._return_countdown_timer.stop()
+            self._return_countdown_value = 0
+        if self.telemetry_thread is None or not self.telemetry_thread.isRunning():
+            message = f"UART4 未连接，{command_name}保护指令没有发送。"
+            self._append_log("ERROR", message)
+            QMessageBox.warning(self, "UART4 未连接", message)
+            return
+        self.telemetry_thread.send_bytes(frame)
+        self._append_log(
+            "COMMAND",
+            f"安全指令中心：已立即发送{command_name}指令 {frame.hex(' ').upper()}",
+        )
+        self.statusBar().showMessage(f"{command_name}保护指令已发送", 5000)
+
+        ok, message = self.simulator.apply_command(action)
+        level = "COMMAND" if ok else "INFO"
+        self._append_log(level, f"主界面按钮 → {label}：{message}")
+        self._leave_self_check_view()
+        self._exit_multimodal_view(label)
 
     def _propose_command(self, intent: CommandIntent) -> None:
         if intent.confidence < 0.75:
@@ -500,7 +600,24 @@ class GroundStationWindow(QMainWindow):
             message = f"{intent.source}选择：{intent.label}"
             self._append_log("COMMAND", message)
             self.statusBar().showMessage(message, 4500)
+            if intent.label == "10秒后返航":
+                self._start_return_countdown()
+                return
+            if intent.label == "日志输出":
+                self._export_latest_flight_log()
+                return
+            if self._is_self_check_label(intent.label):
+                self._show_self_check_view(intent.label, intent.source)
+                return
             self._exit_multimodal_view(intent.label)
+            return
+
+        if (
+            intent.action == "RTL"
+            and intent.source == "手势+视线"
+            and intent.label == "立即返航"
+        ):
+            self._send_immediate_safety_command("RTL", intent.label)
             return
 
         if intent.action == "SELECT_TARGET":
@@ -616,6 +733,7 @@ class GroundStationWindow(QMainWindow):
         level = "COMMAND" if ok else "WARNING"
         self._append_log(level, f"{intent.source} → {intent.label}：{message}")
         if ok:
+            self._leave_self_check_view()
             self._exit_multimodal_view(intent.label)
         else:
             QMessageBox.warning(self, "命令未执行", message)
@@ -636,7 +754,302 @@ class GroundStationWindow(QMainWindow):
             )
         )
 
+    def connect_telemetry(
+        self,
+        port: str,
+        baudrate: int,
+        coordinate_port: str,
+        coordinate_baudrate: int,
+        protocol: str,
+    ) -> None:
+        port = port.strip()
+        coordinate_port = coordinate_port.strip()
+        if not port or port == "模拟器" or protocol == "模拟遥测":
+            self.disconnect_telemetry()
+            self._append_log("INFO", "飞控数传切换为模拟遥测")
+            self.device_panel.set_telemetry_status(True, "已使用模拟遥测")
+            return
+
+        if protocol != "NCLink 只读":
+            QMessageBox.warning(
+                self,
+                "暂不支持",
+                "当前只接入 NCLink 只读协议。请选择“NCLink 只读”。",
+            )
+            return
+
+        self._stop_telemetry_thread()
+        self._stop_coordinate_thread()
+        self._real_telemetry_active = True
+        self._coordinate_active = bool(coordinate_port and coordinate_port != "模拟器")
+        if self.simulator.timer.isActive():
+            self.simulator.timer.stop()
+
+        self.drone_state.connected = False
+        self.drone_state.telemetry_connected = False
+        self.drone_state.flight_mode = "CONNECTING"
+        self.drone_state.flight_phase = "连接飞控数传中"
+        self.drone_state.warning = "正在等待真实飞控数据"
+        self._on_state_changed(self.drone_state)
+        self.device_panel.set_telemetry_status(False, f"UART4 正在连接 {port} @ {baudrate}")
+        if self._coordinate_active:
+            self.device_panel.set_coordinate_status(
+                False,
+                f"UART2 正在连接 {coordinate_port} @ {coordinate_baudrate}",
+            )
+        else:
+            self.device_panel.set_coordinate_status(
+                False, "未启用；选择 UART2 坐标口后可接收实时 x/y"
+            )
+        self._append_log("INFO", f"正在连接 UART4 状态口：{port} @ {baudrate}，NCLink 只读")
+
+        self.telemetry_thread = TelemetryThread(port, baudrate, self)
+        self.telemetry_thread.state_changed.connect(self._on_telemetry_state)
+        self.telemetry_thread.status_changed.connect(self._on_telemetry_status)
+        self.telemetry_thread.log_generated.connect(self._append_log)
+        self.telemetry_thread.start()
+
+        if self._coordinate_active:
+            self._append_log(
+                "INFO",
+                f"正在连接 UART2 坐标口：{coordinate_port} @ {coordinate_baudrate}，等待 FC FF E1",
+            )
+            self.coordinate_thread = CoordinateThread(
+                coordinate_port, coordinate_baudrate, self
+            )
+            self.coordinate_thread.coordinate_changed.connect(
+                self._on_coordinate_frame
+            )
+            self.coordinate_thread.status_changed.connect(
+                self._on_coordinate_status
+            )
+            self.coordinate_thread.log_generated.connect(self._append_log)
+            self.coordinate_thread.start()
+
+    def disconnect_telemetry(self) -> None:
+        self._stop_telemetry_thread()
+        self._stop_coordinate_thread()
+        self._real_telemetry_active = False
+        self._coordinate_active = False
+        if not self.simulator.timer.isActive():
+            self.simulator.timer.start(250)
+        self.drone_state.warning = ""
+        self.drone_state.telemetry_connected = True
+        self.drone_state.connected = True
+        self.device_panel.set_telemetry_status(True, "已恢复模拟遥测")
+        self.device_panel.set_coordinate_status(False, "已断开，当前使用模拟轨迹")
+        self._append_log("INFO", "飞控数传已断开，恢复模拟无人机数据")
+
+    def _stop_telemetry_thread(self) -> None:
+        if self.telemetry_thread is None:
+            return
+        self.telemetry_thread.stop()
+        self.telemetry_thread = None
+
+    def _stop_coordinate_thread(self) -> None:
+        if self.coordinate_thread is None:
+            return
+        self.coordinate_thread.stop()
+        self.coordinate_thread = None
+
+    def _on_telemetry_state(self, state: DroneState) -> None:
+        if not self._real_telemetry_active:
+            return
+        if self._coordinate_active:
+            state.x = self.drone_state.x
+            state.y = self.drone_state.y
+            state.distance_travelled = self.drone_state.distance_travelled
+        self._on_state_changed(state)
+
+    def _on_coordinate_frame(self, frame: FiretruckFrame) -> None:
+        if not self._real_telemetry_active or not self._coordinate_active:
+            return
+        self.drone_state.x = frame.x_cm
+        self.drone_state.y = frame.y_cm
+        if frame.z_cm > 0:
+            self.drone_state.altitude = frame.z_cm / 100.0
+        if frame.distance_cm >= 0:
+            self.drone_state.rangefinder_distance = frame.distance_cm / 100.0
+        self.drone_state.telemetry_connected = True
+        self.drone_state.connected = True
+        self._on_state_changed(self.drone_state)
+
+    def _on_coordinate_status(
+        self, connected: bool, message: str, diagnostics: dict
+    ) -> None:
+        self.device_panel.set_coordinate_status(connected, message)
+        if message != self._last_coordinate_status:
+            level = "INFO" if connected else "WARNING"
+            if diagnostics:
+                packets = diagnostics.get("packets", 0)
+                invalid = diagnostics.get("invalid", 0)
+                self._append_log(level, f"{message} · 坐标包 {packets} · 异常帧 {invalid}")
+            else:
+                self._append_log(level, message)
+            self._last_coordinate_status = message
+
+    def _on_telemetry_status(
+        self, connected: bool, message: str, diagnostics: dict
+    ) -> None:
+        self.device_panel.set_telemetry_status(connected, message)
+        if self._real_telemetry_active:
+            self.drone_state.connected = connected
+            self.drone_state.telemetry_connected = connected
+            if not connected:
+                self.drone_state.flight_mode = "WAITING"
+                self.drone_state.flight_phase = "等待飞控数传"
+                self.drone_state.warning = message
+            self.video_panel.set_state(self.drone_state)
+            if self._self_check_active:
+                self._refresh_self_check_view()
+            self.right_sidebar.set_state(self.drone_state, self.camera_state)
+            self.compact_status.set_state(self.drone_state, self.camera_state)
+            self._update_header_status()
+        if message != self._last_telemetry_status:
+            level = "INFO" if connected else "WARNING"
+            if diagnostics:
+                packets = diagnostics.get("packets", 0)
+                invalid = diagnostics.get("invalid", 0)
+                self._append_log(level, f"{message} · 有效包 {packets} · 异常帧 {invalid}")
+            else:
+                self._append_log(level, message)
+            self._last_telemetry_status = message
+
+    @staticmethod
+    def _is_self_check_label(label: str) -> bool:
+        keywords = ("自检", "检查", "状态")
+        return any(keyword in label for keyword in keywords)
+
+    def _show_self_check_view(self, label: str, source: str) -> None:
+        self._self_check_active = True
+        self._self_check_label = label or "系统自检"
+        self._main_view_mode = "self_check"
+        self._multimodal_preview_path = None
+        self._multimodal_preview_mtime = 0.0
+        if self._multimodal_timer.isActive():
+            self._multimodal_timer.stop()
+        self._append_log("COMMAND", f"{source}进入自检状态显示：{self._self_check_label}")
+        self._refresh_self_check_view()
+        self.statusBar().showMessage("主画面已切换到飞控自检状态", 4000)
+
+    def _leave_self_check_view(self) -> None:
+        if not self._self_check_active:
+            return
+        self._self_check_active = False
+        if self._main_view_mode == "self_check":
+            self._main_view_mode = "flight"
+            self.video_panel.show_live_mode()
+            self.video_panel.set_camera_state(self.camera_state)
+
+    def _refresh_self_check_view(self) -> None:
+        if not self._self_check_active:
+            return
+        state = self.drone_state
+        source = "真实飞控串口" if self._real_telemetry_active else "模拟遥测"
+        telemetry = self._last_telemetry_status or (
+            "等待真实飞控数据" if self._real_telemetry_active else "未连接真实数传，当前显示模拟状态"
+        )
+        connected_text = "在线" if state.telemetry_connected else "离线/等待"
+        armed_text = "已解锁" if state.armed else "未解锁"
+        warning = state.warning or "无"
+        altitude_check_failed = state.altitude > 1.5
+        self_check_result = (
+            "自检失败：高度超过 1.5 m，请先下降到安全高度"
+            if altitude_check_failed
+            else "自检通过：高度处于安全范围"
+        )
+        label = self._self_check_label
+        if "姿态自检" in label:
+            self.video_panel.show_attitude_3d_mode(state)
+            return
+        if "参数自检" in label:
+            self.video_panel.show_parameter_check_mode(state)
+            return
+        if "陀螺" in label or "惯导" in label:
+            focus_line = (
+                f"重点检查：陀螺仪/姿态角 · 横滚 {state.roll:.1f}° · "
+                f"俯仰 {state.pitch:.1f}° · 航向 {state.yaw:.1f}°"
+            )
+            detail_lines = [
+                f"飞控状态：{state.flight_phase} · 模式 {state.flight_mode} · {armed_text}",
+                f"高度：{state.altitude:.2f} m · 垂直速度 {state.vertical_speed:.2f} m/s",
+                f"链路：{connected_text} · {telemetry}",
+            ]
+        elif "电机" in label:
+            focus_line = (
+                f"重点检查：电机安全条件 · {armed_text} · 电源 "
+                f"{state.battery_voltage:.2f} V"
+            )
+            detail_lines = [
+                f"高度：{state.altitude:.2f} m · 垂直速度 {state.vertical_speed:.2f} m/s",
+                f"飞控状态：{state.flight_phase} · 模式 {state.flight_mode}",
+                f"链路：{connected_text} · {telemetry}",
+            ]
+        elif "摄像" in label or "相机" in label or "图传" in label:
+            if self.camera_state.connected:
+                address = self.camera_state.source or suggested_amb82_url()
+                if "·" in address:
+                    address = address.rsplit("·", 1)[-1].strip()
+            else:
+                address = suggested_amb82_url()
+            display_address = address
+            if display_address.lower().startswith("rtsp://"):
+                display_address = display_address[7:]
+            display_address = display_address.rstrip("/")
+            connection = "已连接" if self.camera_state.connected else "未连接"
+            fps = self.camera_state.fps if self.camera_state.connected else 0.0
+            frame_age = self.camera_state.frame_age_ms if self.camera_state.connected else -1
+            quality = (
+                "正常"
+                if self.camera_state.connected
+                and fps >= 10
+                and frame_age <= 500
+                else "等待图传"
+            )
+            camera_text = (
+                f"在线 · {fps:.1f} 帧/秒 · {self.camera_state.resolution}"
+                if self.camera_state.connected
+                else f"离线 · {self.camera_state.last_error or '等待图传'}"
+            )
+            focus_line = f"重点检查：摄像头/图传 · {camera_text}"
+            detail_lines = [
+                f"AMB82：{display_address}",
+                f"链接：{connection} · {self.camera_state.last_error or '无错误'}",
+                f"画质：{quality} · {fps:.1f} 帧/秒",
+                f"分辨率：{self.camera_state.resolution} · 帧龄 {frame_age} ms",
+            ]
+            lines = [
+                f"摄像头自检：{connection}",
+                *detail_lines,
+            ]
+            self.video_panel.show_self_check_mode(
+                "摄像头自检状态",
+                lines,
+            )
+            return
+        else:
+            focus_line = "重点检查：系统综合状态 · 飞控/数传/传感器"
+            detail_lines = [
+                f"飞控状态：{state.flight_phase} · 模式 {state.flight_mode} · {armed_text}",
+                f"姿态角：横滚 {state.roll:.1f}° · 俯仰 {state.pitch:.1f}° · 航向 {state.yaw:.1f}°",
+                f"高度：{state.altitude:.2f} m · 垂直速度 {state.vertical_speed:.2f} m/s",
+            ]
+        lines = [
+            self_check_result,
+            focus_line,
+            f"来源：{source} · 数传 {connected_text} · {telemetry}",
+            *detail_lines,
+            f"电源电压：{state.battery_voltage:.2f} V",
+            f"传感器：光流 {state.optical_flow_quality}% · 测距 {state.rangefinder_distance:.2f} m · 链路 {state.link_latency_ms} ms",
+            f"警告：{warning} · 更新 {state.last_update.strftime('%H:%M:%S')}",
+        ]
+        self.video_panel.show_self_check_mode(
+            f"飞控自检状态 · {self._self_check_label}",
+            lines,
+        )
+
     def connect_camera(self, url: str = "auto") -> None:
+        url = suggested_amb82_url() if url.strip().lower() == "auto" else url.strip()
         if self.camera_thread and self.camera_thread.isRunning():
             message = (
                 "AMB82 已连接，无需重复连接"
@@ -688,6 +1101,7 @@ class GroundStationWindow(QMainWindow):
         self.statusBar().showMessage(f"镜头去畸变{state}", 4000)
 
     def _load_fire_demo(self) -> None:
+        self._leave_self_check_view()
         source_path = APP_DIR / "examples" / "fire_test_scene.png"
         frame = cv2.imread(str(source_path))
         if frame is None:
@@ -717,6 +1131,7 @@ class GroundStationWindow(QMainWindow):
     def _on_camera_frame(
         self, frame, detections: list[FireDetection]
     ) -> None:
+        self.flight_log_recorder.update_latest_frame(frame)
         if self._main_view_mode != "flight":
             return
         self.video_panel.canvas.set_frame(frame)
@@ -726,13 +1141,248 @@ class GroundStationWindow(QMainWindow):
         self.camera_state.resolution = f"{width} × {height}"
 
     def _enter_multimodal_view(self, preview_path: str) -> None:
+        self._leave_self_check_view()
         self._main_view_mode = "multimodal"
         self._multimodal_preview_path = Path(preview_path)
         self._multimodal_preview_mtime = 0.0
+        self._multimodal_waiting_map_confirm = False
         self.video_panel.show_multimodal_mode()
         self.statusBar().showMessage("主画面已切换到多模态摄像头", 4000)
         if not self._multimodal_timer.isActive():
             self._multimodal_timer.start()
+
+    def _show_multimodal_takeoff_map(self, intent: CommandIntent | None = None) -> None:
+        if self._main_view_mode != "multimodal":
+            return
+        self._multimodal_waiting_map_confirm = True
+        task = intent.label if intent is not None else "起飞选项"
+        mode = "free" if task == "定制航点" else "preset"
+        self.video_panel.show_takeoff_map_confirmation(mode=mode, task_label=task)
+        if mode == "free":
+            self.right_sidebar.set_planning_points([])
+        else:
+            self.right_sidebar.set_planning_route([])
+        self.statusBar().showMessage(f"已完成识别：{task}，请确认任务地图", 5000)
+
+    def _update_multimodal_route_preview(self, route_sequence: object) -> None:
+        if self._main_view_mode == "multimodal" and self._multimodal_waiting_map_confirm:
+            if isinstance(route_sequence, dict) and route_sequence.get("mode") == "free":
+                points = self._payload_xy_points(route_sequence)
+                self.right_sidebar.set_planning_points(points)
+            else:
+                self.right_sidebar.set_planning_route(route_sequence)
+
+    def _confirm_multimodal_takeoff_map(self, route_sequence: object | None = None) -> None:
+        if self._main_view_mode != "multimodal":
+            return
+        if self._takeoff_sequence_active:
+            self.statusBar().showMessage("起飞航线正在写入，请勿重复确认", 3500)
+            return
+        route_sequence = route_sequence or []
+        write_wait_ms = self._send_takeoff_waypoints(route_sequence)
+        if write_wait_ms is None:
+            return
+        self._takeoff_sequence_active = True
+        self._multimodal_waiting_map_confirm = False
+        if isinstance(route_sequence, dict) and route_sequence.get("mode") == "free":
+            self.right_sidebar.start_route_tracking_points(
+                self._payload_xy_points(route_sequence)
+            )
+        else:
+            self.right_sidebar.start_route_tracking(route_sequence)
+        self.multimodal_panel.confirm_takeoff_map(route_sequence)
+        self.statusBar().showMessage("正在写入飞控航点，写入完成后自动进入起飞倒计时", 5000)
+        QTimer.singleShot(
+            write_wait_ms,
+            lambda payload=route_sequence: self._begin_takeoff_countdown_after_write(payload),
+        )
+
+    def _payload_xy_points(self, route_payload: object) -> list[tuple[float, float]]:
+        if not isinstance(route_payload, dict):
+            return []
+        points = []
+        for point in route_payload.get("points", [])[:10]:
+            if len(point) >= 2:
+                points.append((float(point[0]), float(point[1])))
+        return points
+
+    def _takeoff_waypoints_from_payload(
+        self, route_payload: object
+    ) -> tuple[list[tuple[int, int, int, str]], str] | None:
+        if isinstance(route_payload, dict) and route_payload.get("mode") == "free":
+            items: list[tuple[int, int, int, str]] = []
+            for index, point in enumerate(route_payload.get("points", [])[:10], start=1):
+                if len(point) < 2:
+                    continue
+                x_cm = max(0, min(480, int(round(float(point[0])))))
+                y_cm = max(0, min(400, int(round(float(point[1])))))
+                z_cm = int(round(float(point[2]))) if len(point) >= 3 else 120
+                items.append((x_cm, y_cm, z_cm, f"自由点{index}"))
+            label = f"高空自由航线 {len(items)} 点"
+            return items, label
+        sequence = list(route_payload) if route_payload else []
+        items = []
+        for region in sequence:
+            waypoint = TAKEOFF_ROUTE_WAYPOINTS_CM.get(region)
+            if waypoint is None:
+                continue
+            x_cm, y_cm, z_cm = waypoint
+            items.append((x_cm, y_cm, z_cm, f"区域{region}"))
+        label = "".join(sequence)
+        return items, label
+
+    def _send_takeoff_waypoints(self, route_sequence: object) -> int | None:
+        parsed = self._takeoff_waypoints_from_payload(route_sequence)
+        if parsed is None:
+            return None
+        waypoints, route_label = parsed
+        if not waypoints:
+            QMessageBox.warning(self, "未选择航线", "请先在地图中选择至少一个巡逻航点。")
+            return None
+        if self.telemetry_thread is None or not self.telemetry_thread.isRunning():
+            QMessageBox.warning(
+                self,
+                "UART4 未连接",
+                "请先连接 UART4 状态口，然后再确认地图执行起飞项。",
+            )
+            return None
+
+        frames: list[tuple[int, bytes, str, int, int]] = [
+            (
+                0,
+                build_waypoint_clear_frame(),
+                "清空飞控原航点",
+                TAKEOFF_CLEAR_FRAME_REPEAT_COUNT,
+                TAKEOFF_CLEAR_FRAME_REPEAT_INTERVAL_MS,
+            )
+        ]
+        delay_ms = TAKEOFF_CLEAR_TO_WAYPOINT_DELAY_MS
+        for index, (x_cm, y_cm, z_cm, label) in enumerate(waypoints, start=1):
+            frames.append(
+                (
+                    delay_ms,
+                    build_waypoint_write_frame(index, x_cm, y_cm, z_cm),
+                    f"P{index}={label}({x_cm},{y_cm},{z_cm})",
+                    TAKEOFF_FRAME_REPEAT_COUNT,
+                    TAKEOFF_FRAME_REPEAT_INTERVAL_MS,
+                )
+            )
+            delay_ms += TAKEOFF_WAYPOINT_STEP_DELAY_MS
+
+        self._pending_takeoff_label = route_label or f"{len(waypoints)} 个航点"
+        for delay, frame, description, repeat_count, repeat_interval_ms in frames:
+            QTimer.singleShot(
+                delay,
+                lambda payload=frame, label=description, repeats=repeat_count, interval=repeat_interval_ms: self._send_queued_takeoff_frame(
+                    payload, label, repeats, interval
+                ),
+            )
+        self._append_log(
+            "INFO",
+            f"开始写入起飞航线：{self._pending_takeoff_label}，共 {len(frames) - 1} 个航点，"
+            f"清空指令发送 {TAKEOFF_CLEAR_FRAME_REPEAT_COUNT} 遍后等待 {TAKEOFF_CLEAR_TO_WAYPOINT_DELAY_MS / 1000:.1f} 秒，"
+            f"航点指令每条重复发送 {TAKEOFF_FRAME_REPEAT_COUNT} 遍",
+        )
+        return delay_ms + 900
+
+    def _send_queued_takeoff_frame(
+        self, frame: bytes, description: str, repeat_count: int, repeat_interval_ms: int
+    ) -> None:
+        if self.telemetry_thread is None or not self.telemetry_thread.isRunning():
+            self._append_log("ERROR", f"UART4 已断开，未发送：{description}")
+            return
+        self._send_repeated_takeoff_frame(
+            frame, description, repeat_count, repeat_interval_ms
+        )
+
+    def _send_repeated_takeoff_frame(
+        self,
+        frame: bytes,
+        description: str,
+        repeat_count: int = TAKEOFF_FRAME_REPEAT_COUNT,
+        repeat_interval_ms: int = TAKEOFF_FRAME_REPEAT_INTERVAL_MS,
+    ) -> None:
+        self._append_log(
+            "COMMAND",
+            f"UART4 排队发送 {description} ×{repeat_count}：{frame.hex(' ').upper()}",
+        )
+        for repeat_index in range(repeat_count):
+            QTimer.singleShot(
+                repeat_index * repeat_interval_ms,
+                lambda payload=frame, label=description, attempt=repeat_index + 1: self._send_takeoff_frame_once(
+                    payload, label, attempt, repeat_count
+                ),
+            )
+
+    def _send_takeoff_frame_once(
+        self, frame: bytes, description: str, attempt: int, repeat_count: int
+    ) -> None:
+        if self.telemetry_thread is None or not self.telemetry_thread.isRunning():
+            self._append_log(
+                "ERROR",
+                f"UART4 已断开，未发送：{description} 第 {attempt}/{repeat_count} 遍",
+            )
+            return
+        self.telemetry_thread.send_bytes(frame)
+
+    def _start_return_countdown(self) -> None:
+        self._return_countdown_value = 10
+        self.video_panel.show_return_countdown(self._return_countdown_value)
+        if self._return_countdown_timer.isActive():
+            self._return_countdown_timer.stop()
+        self._return_countdown_timer.start()
+        self._append_log("INFO", "10秒后返航倒计时开始")
+        self.statusBar().showMessage("10秒后发送返航指令", 5000)
+
+    def _tick_return_countdown(self) -> None:
+        self._return_countdown_value -= 1
+        if self._return_countdown_value > 0:
+            self.video_panel.show_return_countdown(self._return_countdown_value)
+            return
+        self._return_countdown_timer.stop()
+        self._append_log("INFO", "返航倒计时结束，准备发送 UART4 返航指令")
+        self._send_immediate_safety_command("RTL", "10秒后返航")
+
+    def _begin_takeoff_countdown_after_write(self, route_sequence: object) -> None:
+        if not self._takeoff_sequence_active:
+            return
+        if self.telemetry_thread is None or not self.telemetry_thread.isRunning():
+            self._takeoff_sequence_active = False
+            self._append_log("ERROR", "航点写入后 UART4 已断开，起飞倒计时取消")
+            QMessageBox.warning(self, "UART4 已断开", "航点写入后 UART4 已断开，未能启动起飞倒计时。")
+            return
+        self._append_log("INFO", "航点写入等待完成，开始 5 秒起飞倒计时")
+        self.statusBar().showMessage("航点写入完成，起飞倒计时开始", 5000)
+        self._start_takeoff_countdown(route_sequence)
+
+    def _start_takeoff_countdown(self, route_sequence: object) -> None:
+        self._pending_takeoff_route = list(route_sequence) if not isinstance(route_sequence, dict) else []
+        if isinstance(route_sequence, dict) and not self._pending_takeoff_label:
+            self._pending_takeoff_label = f"高空自由航线 {len(route_sequence.get('points', []))} 点"
+        self._takeoff_countdown_value = 5
+        self.video_panel.show_takeoff_countdown(self._takeoff_countdown_value)
+        if self._takeoff_countdown_timer.isActive():
+            self._takeoff_countdown_timer.stop()
+        self._takeoff_countdown_timer.start()
+
+    def _tick_takeoff_countdown(self) -> None:
+        self._takeoff_countdown_value -= 1
+        if self._takeoff_countdown_value > 0:
+            self.video_panel.show_takeoff_countdown(self._takeoff_countdown_value)
+            return
+        self._takeoff_countdown_timer.stop()
+        if self.telemetry_thread is not None and self.telemetry_thread.isRunning():
+            route_text = self._pending_takeoff_label or "".join(self._pending_takeoff_route) or "默认航线"
+            self._send_repeated_takeoff_frame(
+                FORCE_SDK_MODE18_FRAME,
+                f"启动 mode18 巡航：航线 {route_text}",
+            )
+            self.statusBar().showMessage("mode18 巡航指令已重复发送", 5000)
+        else:
+            self._append_log("ERROR", "倒计时结束时 UART4 已断开，mode18 未发送")
+            QMessageBox.warning(self, "UART4 已断开", "倒计时结束时 UART4 已断开，未能启动巡航。")
+        self._takeoff_sequence_active = False
+        self._exit_multimodal_view("起飞巡航")
 
     def _exit_multimodal_view(self, task_label: str = "") -> None:
         if self._main_view_mode != "multimodal":
@@ -751,6 +1401,7 @@ class GroundStationWindow(QMainWindow):
         self._main_view_mode = "flight"
         self._multimodal_preview_path = None
         self._multimodal_preview_mtime = 0.0
+        self._multimodal_waiting_map_confirm = False
         self._multimodal_timer.stop()
         self.video_panel.show_live_mode()
         if not self.camera_state.connected:
@@ -761,6 +1412,7 @@ class GroundStationWindow(QMainWindow):
     def _refresh_multimodal_preview(self) -> None:
         if (
             self._main_view_mode != "multimodal"
+            or self._multimodal_waiting_map_confirm
             or self._multimodal_preview_path is None
             or not self._multimodal_preview_path.exists()
         ):
@@ -831,7 +1483,10 @@ class GroundStationWindow(QMainWindow):
             and self.camera_thread.isRunning()
             and diagnostics.get("source_kind") != "stopped"
         )
-        self.video_panel.set_camera_state(self.camera_state)
+        if self._self_check_active:
+            self._refresh_self_check_view()
+        elif self._main_view_mode == "flight":
+            self.video_panel.set_camera_state(self.camera_state)
         self.right_sidebar.health_panel.set_state(self.drone_state, self.camera_state)
         self.compact_status.set_state(self.drone_state, self.camera_state)
         thread_active = bool(
@@ -865,10 +1520,88 @@ class GroundStationWindow(QMainWindow):
         self._append_log("INFO", f"截图已保存：{filename.name}")
         self.statusBar().showMessage(f"截图已保存：{filename}", 5000)
 
+    def _observe_flight_log_state(self, state: DroneState) -> None:
+        event, _record = self.flight_log_recorder.observe_state(
+            state,
+            self.camera_state,
+            self._current_route_sequence(),
+            self._current_route_track(),
+            TAKEOFF_ROUTE_WAYPOINTS_CM,
+        )
+        if event == "started":
+            self._append_log("INFO", "飞行日志开始记录：检测到无人机解锁")
+        elif event == "completed":
+            self._append_log("INFO", "飞行日志记录完成：检测到无人机重新锁定")
+
+    def _current_route_sequence(self) -> list[str]:
+        try:
+            sequence = self.right_sidebar.map_panel.map._planning_sequence
+        except AttributeError:
+            sequence = []
+        if sequence:
+            return list(sequence)
+        return list(self._pending_takeoff_route)
+
+    def _current_route_track(self) -> list[tuple[float, float]]:
+        try:
+            return list(self.right_sidebar.map_panel.map._track)
+        except AttributeError:
+            return []
+
+    def _export_latest_flight_log(self) -> None:
+        log_root = APP_DIR / "flight_logs"
+        log_root.mkdir(exist_ok=True)
+        map_snapshot = log_root / "_latest_route_map.png"
+        try:
+            self.right_sidebar.map_panel.map.grab().save(str(map_snapshot))
+        except Exception:
+            map_snapshot = None
+        try:
+            output_path = self.flight_log_recorder.export_markdown(map_snapshot)
+        except RuntimeError as exc:
+            QMessageBox.warning(self, "暂无飞行日志", str(exc))
+            self._append_log("WARNING", f"日志输出失败：{exc}")
+            return
+        self._append_log("INFO", f"飞行日志已输出：{output_path}")
+        self.statusBar().showMessage(f"飞行日志已保存：{output_path}", 7000)
+        preview_lines = self._flight_log_preview_lines(output_path)
+        self._main_view_mode = "flight_log"
+        self._multimodal_preview_path = None
+        self._multimodal_preview_mtime = 0.0
+        if self._multimodal_timer.isActive():
+            self._multimodal_timer.stop()
+        self.video_panel.show_flight_log_preview(
+            "飞行日志预览",
+            preview_lines,
+            str(output_path),
+        )
+        QMessageBox.information(
+            self,
+            "飞行日志已输出",
+            f"飞行日志已保存到：\n{output_path}",
+        )
+
+    @staticmethod
+    def _flight_log_preview_lines(output_path: Path) -> list[str]:
+        try:
+            lines = output_path.read_text(encoding="utf-8").splitlines()
+        except OSError:
+            return ["- 预览读取失败，但 Markdown 文件已经保存。"]
+        preview: list[str] = []
+        for line in lines:
+            if line.startswith("!["):
+                continue
+            preview.append(line)
+            if len(preview) >= 30:
+                break
+        return preview
+
     def _clear_alerts(self) -> None:
         self._append_log("INFO", "当前界面不再显示独立事件窗口")
 
     def _append_log(self, level: str, message: str) -> None:
+        if hasattr(self, "flight_log_recorder"):
+            self.flight_log_recorder.append_system_log(level, message)
         self.log_panel.append_log(level, message)
 
     def _update_clock(self) -> None:
@@ -963,6 +1696,8 @@ class GroundStationWindow(QMainWindow):
     def closeEvent(self, event) -> None:
         if self.camera_thread and self.camera_thread.isRunning():
             self.camera_thread.stop()
+        self._stop_telemetry_thread()
+        self._stop_coordinate_thread()
         event.accept()
 
 

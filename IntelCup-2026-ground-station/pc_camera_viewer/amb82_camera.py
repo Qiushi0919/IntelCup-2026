@@ -221,10 +221,10 @@ class AMB82Camera:
     def _discover_camera_url(self) -> str:
         hosts = self._candidate_hosts()
         for host in hosts:
+            if self._port_open(host, 554, timeout=0.35):
+                return f"rtsp://{host}:554"
             snapshot = f"http://{host}/snapshot.jpg"
             if self._is_snapshot_camera(snapshot):
-                if self._port_open(host, 554, timeout=0.35):
-                    return f"rtsp://{host}:554"
                 return snapshot
         raise ConnectionError("AMB82 camera not found on local networks")
 
@@ -251,7 +251,7 @@ class AMB82Camera:
                 )
                 if host not in hosts and address.packed[3] != 2:
                     hosts.append(host)
-        for host in ("172.25.135.2", "10.75.128.2"):
+        for host in ("10.127.156.2", "172.25.135.2", "10.75.128.2"):
             if host not in hosts:
                 hosts.append(host)
         return hosts

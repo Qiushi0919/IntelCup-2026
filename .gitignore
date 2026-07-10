@@ -12,6 +12,8 @@ work/
 captures/
 recordings/
 logs/
+flight_logs/
+*/flight_logs/
 *.log
 *.tmp
 camera_test_*.jpg

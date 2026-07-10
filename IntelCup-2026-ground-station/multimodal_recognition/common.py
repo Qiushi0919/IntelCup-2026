@@ -4,6 +4,8 @@ from collections import Counter, deque
 from dataclasses import dataclass
 import time
 
+import cv2
+
 
 @dataclass
 class StableResult:
@@ -76,3 +78,36 @@ class TemporalStabilizer:
             stable_seconds,
             triggered,
         )
+
+
+def open_camera_capture(
+    requested_index: int,
+    width: int,
+    height: int,
+    max_index: int = 7,
+) -> tuple[cv2.VideoCapture | None, int | None, str]:
+    """Open a Windows camera, falling back to auto scan when the requested index fails."""
+
+    backends = (
+        (cv2.CAP_DSHOW, "DSHOW"),
+        (cv2.CAP_MSMF, "MSMF"),
+        (0, "DEFAULT"),
+    )
+    indexes: list[int] = []
+    if requested_index >= 0:
+        indexes.append(requested_index)
+    indexes.extend(index for index in range(max_index + 1) if index not in indexes)
+
+    for index in indexes:
+        for backend, backend_name in backends:
+            capture = (
+                cv2.VideoCapture(index, backend)
+                if backend
+                else cv2.VideoCapture(index)
+            )
+            capture.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+            capture.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+            if capture.isOpened():
+                return capture, index, backend_name
+            capture.release()
+    return None, None, "NONE"

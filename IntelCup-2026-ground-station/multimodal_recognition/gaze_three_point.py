@@ -10,7 +10,7 @@ import time
 
 import cv2
 
-from common import TemporalStabilizer
+from common import TemporalStabilizer, open_camera_capture
 from model_assets import FACE_MODEL_URL, ensure_model
 
 
@@ -447,12 +447,17 @@ def main() -> int:
         min_tracking_confidence=0.70,
     )
 
-    capture = cv2.VideoCapture(args.camera, cv2.CAP_DSHOW)
-    capture.set(cv2.CAP_PROP_FRAME_WIDTH, args.width)
-    capture.set(cv2.CAP_PROP_FRAME_HEIGHT, args.height)
-    if not capture.isOpened():
-        print(f"Cannot open camera {args.camera}", file=sys.stderr)
+    capture, camera_index, backend_name = open_camera_capture(
+        args.camera, args.width, args.height
+    )
+    if capture is None:
+        print(
+            "未检测到可用摄像头。请重新插拔 USB 摄像头，确认 Windows 相机应用能打开，"
+            "并关闭其它占用摄像头的软件。",
+            file=sys.stderr,
+        )
         return 3
+    print(f"CAMERA_OPENED index={camera_index} backend={backend_name}", flush=True)
 
     calibration = ThreePointCalibration(args.samples, args.calibration)
     calibration.load()

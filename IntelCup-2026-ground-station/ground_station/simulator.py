@@ -27,15 +27,15 @@ class DroneSimulator(QObject):
         self._landing = False
         self._time = 0.0
         self._event_sent = False
-        self._takeoff_point = (3.5, 3.5)
-        self._return_point = (3.5, 3.5)
+        self._takeoff_point = (35.0, 35.0)
+        self._return_point = (35.0, 35.0)
         self._waypoints = [
-            (11.5, 29.0),
-            (27.0, 29.0),
-            (41.0, 29.0),
-            (41.0, 12.0),
-            (25.0, 12.0),
-            (10.0, 12.0),
+            (115.0, 290.0),
+            (270.0, 290.0),
+            (410.0, 290.0),
+            (410.0, 120.0),
+            (250.0, 120.0),
+            (100.0, 120.0),
         ]
         self._route_points = [self._takeoff_point, *self._waypoints, self._return_point]
         self.state.x, self.state.y = self._takeoff_point
@@ -117,6 +117,18 @@ class DroneSimulator(QObject):
             self.log_generated.emit("WARNING", "已进入自动降落流程")
             return True, "降落命令已接受"
 
+        if action == "SHUTDOWN":
+            self._mission_running = False
+            self._paused = False
+            self._returning = False
+            self._landing = False
+            self.state.armed = False
+            self.state.flight_mode = "DISARM"
+            self.state.flight_phase = "紧急关机保护"
+            self.state.vertical_speed = 0.0
+            self.log_generated.emit("WARNING", "已执行关机保护命令")
+            return True, "关机保护命令已接受"
+
         return False, f"模拟器不支持命令 {action}"
 
     def _tick(self) -> None:
@@ -150,8 +162,8 @@ class DroneSimulator(QObject):
             self._advance_route(dt)
 
         elif self._returning:
-            self._move_towards(4.0, 4.0, dt, speed=3.0)
-            if math.hypot(state.x - 4.0, state.y - 4.0) < 0.35:
+            self._move_towards(40.0, 40.0, dt, speed=30.0)
+            if math.hypot(state.x - 40.0, state.y - 40.0) < 3.5:
                 self._returning = False
                 self._landing = True
                 state.flight_mode = "LAND"
@@ -191,7 +203,7 @@ class DroneSimulator(QObject):
             min(self._segment + 1, len(self._route_points) - 1)
         ]
         segment_length = max(0.1, math.hypot(end[0] - start[0], end[1] - start[1]))
-        speed = 4.0
+        speed = 40.0
         previous_x, previous_y = state.x, state.y
         self._segment_t += speed * dt / segment_length
 
