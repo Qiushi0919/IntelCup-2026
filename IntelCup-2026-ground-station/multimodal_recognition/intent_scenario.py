@@ -27,7 +27,7 @@ SCENARIOS = {
         "gesture": "张开手掌",
         "gesture_display": "OPEN PALM",
         "options": [
-            ("预热", "INFO_ACTION", "起飞前预热"),
+            ("仿真飞行", "INFO_ACTION", "仿真飞行"),
             ("低空巡逻", "TAKEOFF", "低空巡逻"),
             ("定制航点", "TAKEOFF", "定制航点"),
         ],

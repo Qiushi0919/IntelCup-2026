@@ -1431,6 +1431,19 @@ class VideoPanel(QFrame):
         self.parameter_check_panel.hide()
         layout.addWidget(self.parameter_check_panel, 1)
 
+        self.simulation_host = QWidget()
+        self.simulation_host.setObjectName("simulationHost")
+        self.simulation_layout = QVBoxLayout(self.simulation_host)
+        self.simulation_layout.setContentsMargins(0, 0, 0, 0)
+        self.simulation_layout.setSpacing(0)
+        self.simulation_widget: QWidget | None = None
+        self.simulation_placeholder = QLabel("3D 仿真组件未加载")
+        self.simulation_placeholder.setObjectName("selfCheckText")
+        self.simulation_placeholder.setAlignment(Qt.AlignCenter)
+        self.simulation_layout.addWidget(self.simulation_placeholder, 1)
+        self.simulation_host.hide()
+        layout.addWidget(self.simulation_host, 1)
+
         self.map_confirm_panel = QWidget()
         self._takeoff_map_mode = "preset"
         self._route_sequence: list[str] = []
@@ -1574,12 +1587,29 @@ class VideoPanel(QFrame):
         self.attitude_3d_panel.set_state(state)
         self.parameter_check_panel.set_state(state)
 
+    def set_simulation_widget(self, widget: QWidget | None) -> None:
+        while self.simulation_layout.count():
+            item = self.simulation_layout.takeAt(0)
+            child = item.widget()
+            if child is not None:
+                child.setParent(None)
+        self.simulation_widget = widget
+        if widget is None:
+            self.simulation_placeholder = QLabel("3D 仿真组件未加载")
+            self.simulation_placeholder.setObjectName("selfCheckText")
+            self.simulation_placeholder.setAlignment(Qt.AlignCenter)
+            self.simulation_layout.addWidget(self.simulation_placeholder, 1)
+            return
+        self.simulation_layout.addWidget(widget, 1)
+        widget.hide()
+
     def set_camera_state(self, state: CameraState) -> None:
         self.canvas.set_camera_state(state)
         if (
             self.map_confirm_panel.isVisible()
             or self.attitude_3d_panel.isVisible()
             or self.parameter_check_panel.isVisible()
+            or self.simulation_host.isVisible()
         ):
             return
         if self.canvas._status_report_title or self.canvas._status_report_lines:
@@ -1621,6 +1651,7 @@ class VideoPanel(QFrame):
         self.map_confirm_panel.hide()
         self.attitude_3d_panel.hide()
         self.parameter_check_panel.hide()
+        self.simulation_host.hide()
         self.canvas.show()
         self.canvas.clear_status_report()
         self.canvas.set_demo_mode(True)
@@ -1644,6 +1675,7 @@ class VideoPanel(QFrame):
         self.map_confirm_panel.hide()
         self.attitude_3d_panel.hide()
         self.parameter_check_panel.hide()
+        self.simulation_host.hide()
         self.canvas.show()
         self.canvas.clear_status_report()
         self.canvas.set_demo_mode(False)
@@ -1656,6 +1688,7 @@ class VideoPanel(QFrame):
         self.map_confirm_panel.hide()
         self.attitude_3d_panel.hide()
         self.parameter_check_panel.hide()
+        self.simulation_host.hide()
         self.canvas.show()
         message = "正在切回图传"
         if task_label:
@@ -1679,6 +1712,7 @@ class VideoPanel(QFrame):
         self.map_confirm_panel.hide()
         self.attitude_3d_panel.hide()
         self.parameter_check_panel.hide()
+        self.simulation_host.hide()
         self.canvas.show()
         self.canvas.clear_status_report()
         self.canvas.set_demo_mode(False)
@@ -1698,6 +1732,7 @@ class VideoPanel(QFrame):
         self.map_confirm_panel.hide()
         self.attitude_3d_panel.hide()
         self.parameter_check_panel.hide()
+        self.simulation_host.hide()
         self.canvas.show()
         self.canvas.clear_status_report()
         self.canvas.set_demo_mode(False)
@@ -1717,6 +1752,7 @@ class VideoPanel(QFrame):
         self.map_confirm_panel.hide()
         self.attitude_3d_panel.hide()
         self.parameter_check_panel.hide()
+        self.simulation_host.hide()
         self.canvas.show()
         self.canvas.clear_status_report()
         self.canvas.set_demo_mode(False)
@@ -1746,6 +1782,7 @@ class VideoPanel(QFrame):
         self.canvas.hide()
         self.attitude_3d_panel.hide()
         self.parameter_check_panel.hide()
+        self.simulation_host.hide()
         self.map_confirm_panel.show()
         self.view_title.setText(f"{task_label or '起飞任务'}地图确认")
         if self._takeoff_map_mode == "free":
@@ -1768,6 +1805,7 @@ class VideoPanel(QFrame):
         self.map_confirm_panel.hide()
         self.canvas.hide()
         self.parameter_check_panel.hide()
+        self.simulation_host.hide()
         self.attitude_3d_panel.show()
         self.attitude_3d_panel.set_state(state)
         self.view_title.setText("姿态自检 · 3D 航姿仪表")
@@ -1783,6 +1821,7 @@ class VideoPanel(QFrame):
         self.map_confirm_panel.hide()
         self.canvas.hide()
         self.attitude_3d_panel.hide()
+        self.simulation_host.hide()
         self.parameter_check_panel.show()
         self.parameter_check_panel.set_state(state)
         self.view_title.setText("参数自检 · 飞控状态")
@@ -1798,6 +1837,7 @@ class VideoPanel(QFrame):
         self.map_confirm_panel.hide()
         self.attitude_3d_panel.hide()
         self.parameter_check_panel.hide()
+        self.simulation_host.hide()
         self.canvas.show()
         self.canvas.set_demo_mode(False)
         self.canvas.set_detections([])
@@ -1815,6 +1855,7 @@ class VideoPanel(QFrame):
         self.map_confirm_panel.hide()
         self.attitude_3d_panel.hide()
         self.parameter_check_panel.hide()
+        self.simulation_host.hide()
         self.canvas.show()
         self.canvas.set_demo_mode(False)
         self.canvas.set_detections([])
@@ -1825,6 +1866,29 @@ class VideoPanel(QFrame):
         self.camera_status.setObjectName("chipGood")
         self.hint.setText(f"飞行日志已保存：{saved_path}")
         self.info_bar.setText("日志输出 | 最近一次飞行采样结果 | Markdown 预览")
+        self.camera_status.style().unpolish(self.camera_status)
+        self.camera_status.style().polish(self.camera_status)
+
+    def show_simulation_mode(self, available: bool = True, error: str = "") -> None:
+        self.map_confirm_panel.hide()
+        self.attitude_3d_panel.hide()
+        self.parameter_check_panel.hide()
+        self.canvas.hide()
+        self.simulation_host.show()
+        if self.simulation_widget is not None:
+            self.simulation_widget.show()
+        self.view_title.setText("无人机3D仿真")
+        self.mode_label.setText("仿真飞行")
+        if available:
+            self.camera_status.setText("● 3D 仿真运行中")
+            self.camera_status.setObjectName("chipGood")
+            self.hint.setText("使用独立仿真控制窗发送起飞、航线、自定义飞控指令")
+            self.info_bar.setText("仿真飞行 | 3D 无人机模型 | 指令由独立窗口驱动")
+        else:
+            self.camera_status.setText("● 3D 仿真不可用")
+            self.camera_status.setObjectName("chipWarn")
+            self.hint.setText(error or "请安装 pyqtgraph 与 PyOpenGL 后重启地面站")
+            self.info_bar.setText("仿真飞行 | 组件未加载 | 请检查 OpenGL 依赖")
         self.camera_status.style().unpolish(self.camera_status)
         self.camera_status.style().polish(self.camera_status)
 

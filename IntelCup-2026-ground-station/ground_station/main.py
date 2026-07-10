@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import math
 import sys
 from pathlib import Path
 
@@ -25,6 +26,22 @@ from PyQt5.QtWidgets import (
 from camera_service import CameraThread
 from fire_detector import FireDetector
 from flight_log_recorder import FlightLogRecorder
+try:
+    from drone_3d import Drone3DView
+except Exception as exc:  # pragma: no cover - depends on local OpenGL packages
+    Drone3DView = None
+    DRONE_3D_IMPORT_ERROR = exc
+else:
+    DRONE_3D_IMPORT_ERROR = None
+
+try:
+    from flight_control import FlightControlPanel
+except Exception as exc:  # pragma: no cover - defensive fallback for local installs
+    FlightControlPanel = None
+    FLIGHT_CONTROL_IMPORT_ERROR = exc
+else:
+    FLIGHT_CONTROL_IMPORT_ERROR = None
+
 from models import (
     CameraState,
     CommandIntent,
@@ -87,6 +104,56 @@ SAFETY_UART4_COMMANDS = {
 }
 
 
+class SimulationControlWindow(QWidget):
+    def __init__(self, command_handler, parent: QWidget | None = None) -> None:
+        super().__init__(parent, Qt.Window)
+        self._closing = False
+        self._panel = None
+        self.setWindowTitle("仿真飞行控制台")
+        self.resize(360, 650)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(8)
+
+        title = QLabel("仿真飞行控制台")
+        title.setObjectName("sectionTitle")
+        subtitle = QLabel("这些按钮只驱动本地 3D 仿真，不会发送真实无人机串口指令。")
+        subtitle.setObjectName("muted")
+        subtitle.setWordWrap(True)
+        layout.addWidget(title)
+        layout.addWidget(subtitle)
+
+        if FlightControlPanel is None:
+            message = QLabel(
+                "参考版本飞控指令面板未能加载："
+                f"{FLIGHT_CONTROL_IMPORT_ERROR or '未知错误'}"
+            )
+            message.setWordWrap(True)
+            message.setObjectName("selfCheckText")
+            layout.addWidget(message, 1)
+            return
+
+        self._panel = FlightControlPanel()
+        self._panel.command_sent.connect(command_handler)
+        layout.addWidget(self._panel, 1)
+
+    def set_result(self, ok: bool, message: str) -> None:
+        if self._panel is not None and hasattr(self._panel, "log"):
+            prefix = "成功" if ok else "失败"
+            self._panel.log.setText(f"{prefix}：{message}")
+
+    def close_for_shutdown(self) -> None:
+        self._closing = True
+        self.close()
+
+    def closeEvent(self, event) -> None:
+        if self._closing:
+            event.accept()
+            return
+        self.hide()
+        event.ignore()
+
+
 class GroundStationWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
@@ -127,6 +194,8 @@ class GroundStationWindow(QMainWindow):
         self._pending_takeoff_route: list[str] = []
         self._pending_takeoff_label = ""
         self._takeoff_sequence_active = False
+        self.drone_3d_view = None
+        self.simulation_control_window: SimulationControlWindow | None = None
         self.flight_log_recorder = FlightLogRecorder(APP_DIR / "flight_logs")
 
         self.simulator = DroneSimulator(self)
@@ -137,6 +206,7 @@ class GroundStationWindow(QMainWindow):
         self._build_menu()
         self._build_central_ui()
         self._build_docks()
+        self._build_simulation_feature()
         self._build_status_bar()
         self._build_multimodal_preview_timer()
 
@@ -271,6 +341,47 @@ class GroundStationWindow(QMainWindow):
         self.vertical_splitter.setSizes([650, 70])
 
         self.setCentralWidget(root)
+
+    def _build_simulation_feature(self) -> None:
+        self.simulation_control_window = SimulationControlWindow(
+            self._on_simulation_command,
+            self,
+        )
+        if Drone3DView is None:
+            self.video_panel.set_simulation_widget(None)
+            self._append_log(
+                "WARNING",
+                f"3D 仿真组件未加载：{DRONE_3D_IMPORT_ERROR}",
+            )
+            return
+        try:
+            self.drone_3d_view = Drone3DView()
+            self.drone_3d_view.set_waypoints(
+                [self._simulation_xy_to_3d(x, y) for x, y in self.simulator.waypoints]
+            )
+            self.drone_3d_view.stop()
+            self.video_panel.set_simulation_widget(self.drone_3d_view)
+            self._update_drone_3d_view(self.simulator.state)
+        except Exception as exc:
+            self.drone_3d_view = None
+            self.video_panel.set_simulation_widget(None)
+            self._append_log("WARNING", f"3D 仿真初始化失败：{exc}")
+
+    def _simulation_xy_to_3d(self, x_cm: float, y_cm: float) -> tuple[float, float]:
+        return x_cm / 10.0 - 24.0, y_cm / 10.0 - 20.0
+
+    def _update_drone_3d_view(self, state: DroneState) -> None:
+        if self.drone_3d_view is None:
+            return
+        x, y = self._simulation_xy_to_3d(state.x, state.y)
+        self.drone_3d_view.set_drone_state(
+            x=x,
+            y=y,
+            z=max(0.0, state.altitude * 8.0),
+            roll=math.radians(state.roll),
+            pitch=math.radians(state.pitch),
+            yaw=math.radians(state.yaw),
+        )
 
     def _build_header(self) -> QFrame:
         header = QFrame()
@@ -476,9 +587,13 @@ class GroundStationWindow(QMainWindow):
 
     def _on_state_changed(self, state: DroneState) -> None:
         if self._real_telemetry_active and self.sender() is self.simulator:
+            if self._main_view_mode == "simulation":
+                self._update_drone_3d_view(state)
             return
         self.drone_state = state
         self.video_panel.set_state(state)
+        if self.sender() is self.simulator or not self._real_telemetry_active:
+            self._update_drone_3d_view(state)
         if self._self_check_active:
             self._refresh_self_check_view()
         self.right_sidebar.set_state(state, self.camera_state)
@@ -605,6 +720,9 @@ class GroundStationWindow(QMainWindow):
                 return
             if intent.label == "日志输出":
                 self._export_latest_flight_log()
+                return
+            if intent.label == "仿真飞行":
+                self._show_simulation_flight(intent.source)
                 return
             if self._is_self_check_label(intent.label):
                 self._show_self_check_view(intent.label, intent.source)
@@ -921,6 +1039,7 @@ class GroundStationWindow(QMainWindow):
         return any(keyword in label for keyword in keywords)
 
     def _show_self_check_view(self, label: str, source: str) -> None:
+        self._leave_simulation_view()
         self._self_check_active = True
         self._self_check_label = label or "系统自检"
         self._main_view_mode = "self_check"
@@ -1048,6 +1167,56 @@ class GroundStationWindow(QMainWindow):
             lines,
         )
 
+    def _show_simulation_flight(self, source: str = "多模态指令") -> None:
+        self._self_check_active = False
+        self._main_view_mode = "simulation"
+        self._multimodal_preview_path = None
+        self._multimodal_preview_mtime = 0.0
+        self._multimodal_waiting_map_confirm = False
+        if self._multimodal_timer.isActive():
+            self._multimodal_timer.stop()
+        if not self.simulator.timer.isActive():
+            self.simulator.timer.start(250)
+
+        if self.drone_3d_view is not None:
+            self.drone_3d_view.set_waypoints(
+                [self._simulation_xy_to_3d(x, y) for x, y in self.simulator.waypoints]
+            )
+            self._update_drone_3d_view(self.simulator.state)
+            self.drone_3d_view.start()
+
+        available = self.drone_3d_view is not None
+        error = "" if available else str(DRONE_3D_IMPORT_ERROR or "3D 仿真初始化失败")
+        self.video_panel.show_simulation_mode(available, error)
+        if self.simulation_control_window is not None:
+            self.simulation_control_window.show()
+            self.simulation_control_window.raise_()
+            self.simulation_control_window.activateWindow()
+        self._append_log("COMMAND", f"{source}进入仿真飞行：中心画面已切换到 3D 仿真")
+        self.statusBar().showMessage("仿真飞行已启动，可在独立控制窗发送仿真指令", 5000)
+
+    def _on_simulation_command(self, command: str) -> None:
+        command = command.strip().upper()
+        if not command:
+            return
+        if self._main_view_mode != "simulation":
+            self._show_simulation_flight("仿真控制窗")
+        ok, message = self.simulator.apply_command(command)
+        level = "COMMAND" if ok else "WARNING"
+        self._append_log(level, f"仿真指令 {command}：{message}")
+        if self.simulation_control_window is not None:
+            self.simulation_control_window.set_result(ok, message)
+        self.statusBar().showMessage(message, 4500)
+
+    def _leave_simulation_view(self) -> None:
+        if self._main_view_mode != "simulation":
+            return
+        if self.drone_3d_view is not None:
+            self.drone_3d_view.stop()
+        if self.simulation_control_window is not None:
+            self.simulation_control_window.hide()
+        self._main_view_mode = "flight"
+
     def connect_camera(self, url: str = "auto") -> None:
         url = suggested_amb82_url() if url.strip().lower() == "auto" else url.strip()
         if self.camera_thread and self.camera_thread.isRunning():
@@ -1101,6 +1270,7 @@ class GroundStationWindow(QMainWindow):
         self.statusBar().showMessage(f"镜头去畸变{state}", 4000)
 
     def _load_fire_demo(self) -> None:
+        self._leave_simulation_view()
         self._leave_self_check_view()
         source_path = APP_DIR / "examples" / "fire_test_scene.png"
         frame = cv2.imread(str(source_path))
@@ -1141,6 +1311,7 @@ class GroundStationWindow(QMainWindow):
         self.camera_state.resolution = f"{width} × {height}"
 
     def _enter_multimodal_view(self, preview_path: str) -> None:
+        self._leave_simulation_view()
         self._leave_self_check_view()
         self._main_view_mode = "multimodal"
         self._multimodal_preview_path = Path(preview_path)
@@ -1696,6 +1867,10 @@ class GroundStationWindow(QMainWindow):
     def closeEvent(self, event) -> None:
         if self.camera_thread and self.camera_thread.isRunning():
             self.camera_thread.stop()
+        if self.drone_3d_view is not None:
+            self.drone_3d_view.stop()
+        if self.simulation_control_window is not None:
+            self.simulation_control_window.close_for_shutdown()
         self._stop_telemetry_thread()
         self._stop_coordinate_thread()
         event.accept()
