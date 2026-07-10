@@ -66,12 +66,12 @@ from widgets import (
 APP_DIR = Path(__file__).resolve().parent
 CAPTURE_DIR = APP_DIR / "captures"
 TAKEOFF_ROUTE_WAYPOINTS_CM = {
-    "1": (100, 155, 120),
-    "2": (255, 155, 120),
-    "3": (410, 125, 120),
-    "4": (410, 305, 120),
-    "5": (270, 305, 120),
-    "6": (115, 305, 120),
+    "1": (60, 115, 120),
+    "2": (215, 115, 120),
+    "3": (370, 85, 120),
+    "4": (370, 265, 120),
+    "5": (230, 265, 120),
+    "6": (75, 265, 120),
 }
 TAKEOFF_FRAME_REPEAT_COUNT = 10
 TAKEOFF_FRAME_REPEAT_INTERVAL_MS = 60

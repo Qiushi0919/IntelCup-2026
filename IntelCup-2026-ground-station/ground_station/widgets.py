@@ -765,6 +765,7 @@ class VideoCanvas(QWidget):
 class MapConfirmView(QWidget):
     waypoint_clicked = pyqtSignal(str)
     free_points_changed = pyqtSignal(object)
+    FREE_POINT_COORD_OFFSET_CM = 40
     WAYPOINTS = (
         ("6", 0.32, 0.23),
         ("5", 0.55, 0.24),
@@ -868,14 +869,14 @@ class MapConfirmView(QWidget):
         field_rect = self._field_rect()
         if field_rect.isNull() or not field_rect.contains(event.pos()):
             return
-        x_cm = round(
+        raw_x_cm = round(
             (event.pos().x() - field_rect.left()) / field_rect.width() * 480.0
         )
-        y_cm = round(
+        raw_y_cm = round(
             (field_rect.bottom() - event.pos().y()) / field_rect.height() * 400.0
         )
-        x_cm = max(0, min(480, int(x_cm)))
-        y_cm = max(0, min(400, int(y_cm)))
+        x_cm = max(0, min(480, int(raw_x_cm) - self.FREE_POINT_COORD_OFFSET_CM))
+        y_cm = max(0, min(400, int(raw_y_cm) - self.FREE_POINT_COORD_OFFSET_CM))
         self._free_points.append((x_cm, y_cm, 120))
         self.free_points_changed.emit(list(self._free_points))
         self.update()
@@ -901,6 +902,11 @@ class MapConfirmView(QWidget):
             field_rect.bottom() - field_rect.height() * y_cm / 400.0,
         )
 
+    def _free_point_to_view(self, x_cm: float, y_cm: float) -> QPointF:
+        visual_x = max(0.0, min(480.0, x_cm + self.FREE_POINT_COORD_OFFSET_CM))
+        visual_y = max(0.0, min(400.0, y_cm + self.FREE_POINT_COORD_OFFSET_CM))
+        return self._point_to_view(visual_x, visual_y)
+
     def _draw_free_points(self, painter: QPainter) -> None:
         if not self._free_points:
             painter.setFont(QFont("Microsoft YaHei UI", 20, QFont.Black))
@@ -913,7 +919,7 @@ class MapConfirmView(QWidget):
             return
         path = QPainterPath()
         for index, (x_cm, y_cm, _z_cm) in enumerate(self._free_points):
-            point = self._point_to_view(x_cm, y_cm)
+            point = self._free_point_to_view(x_cm, y_cm)
             if index == 0:
                 path.moveTo(point)
             else:
@@ -924,7 +930,7 @@ class MapConfirmView(QWidget):
         painter.drawPath(path)
         painter.setFont(QFont("Microsoft YaHei UI", 11, QFont.Black))
         for index, (x_cm, y_cm, z_cm) in enumerate(self._free_points, start=1):
-            point = self._point_to_view(x_cm, y_cm)
+            point = self._free_point_to_view(x_cm, y_cm)
             painter.setBrush(QColor("#ffcc4d"))
             painter.setPen(QPen(QColor("#ffffff"), 2))
             painter.drawEllipse(point, 12, 12)
@@ -1988,6 +1994,7 @@ class StatusPanel(QFrame):
 class MissionMap(QWidget):
     FIELD_WIDTH_CM = 480.0
     FIELD_HEIGHT_CM = 400.0
+    FREE_POINT_DISPLAY_OFFSET_CM = 40.0
     ROUTE_WAYPOINTS = {
         "6": (145.0, 290.0),
         "5": (270.0, 285.0),
@@ -2101,6 +2108,16 @@ class MissionMap(QWidget):
             max(0.0, min(self.FIELD_HEIGHT_CM, point[1])),
         )
 
+    def _free_point_display_point(
+        self, point: tuple[float, float]
+    ) -> tuple[float, float]:
+        return self._clamp_field_point(
+            (
+                point[0] + self.FREE_POINT_DISPLAY_OFFSET_CM,
+                point[1] + self.FREE_POINT_DISPLAY_OFFSET_CM,
+            )
+        )
+
     def paintEvent(self, _event) -> None:
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
@@ -2145,9 +2162,13 @@ class MissionMap(QWidget):
             )
 
         if self._planning_preview:
+            planning_points = [
+                self._free_point_display_point(item)
+                for item in self._planning_points
+            ]
             planned_points = (
-                self._planning_points
-                if self._planning_points
+                planning_points
+                if planning_points
                 else [
                     self.ROUTE_WAYPOINTS[number]
                     for number in self._planning_sequence
@@ -2189,7 +2210,7 @@ class MissionMap(QWidget):
             painter.setFont(QFont("Microsoft YaHei UI", 9, QFont.Bold))
             if self._planning_points:
                 for index, wp in enumerate(self._planning_points, start=1):
-                    p = point(*wp)
+                    p = point(*self._free_point_display_point(wp))
                     painter.setBrush(QColor("#ffcc4d"))
                     painter.setPen(QPen(QColor("#ffffff"), 2))
                     painter.drawEllipse(p, 9, 9)
