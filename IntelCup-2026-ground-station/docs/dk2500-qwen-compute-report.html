@@ -911,14 +911,14 @@ html&gt;body{padding:0}&lt;/style&gt;
     &lt;div class=&quot;card viz-stat&quot;&gt;
       &lt;span class=&quot;text-muted&quot;&gt;物理内存&lt;/span&gt;
       &lt;span class=&quot;viz-stat-value&quot;&gt;8 GiB&lt;/span&gt;
-      &lt;span class=&quot;text-small&quot;&gt;单条 DDR5，当前最大瓶颈&lt;/span&gt;
+      &lt;span class=&quot;text-small&quot;&gt;固定上限，必须错峰调度&lt;/span&gt;
     &lt;/div&gt;
   &lt;/div&gt;
 
   &lt;div class=&quot;controls-wrap&quot;&gt;
     &lt;div class=&quot;viz-controls&quot; aria-label=&quot;报告视图&quot;&gt;
       &lt;button class=&quot;btn btn-primary&quot; type=&quot;button&quot; data-view=&quot;current&quot; aria-pressed=&quot;true&quot;&gt;当前分工&lt;/button&gt;
-      &lt;button class=&quot;btn&quot; type=&quot;button&quot; data-view=&quot;target&quot; aria-pressed=&quot;false&quot;&gt;吃满方案&lt;/button&gt;
+      &lt;button class=&quot;btn&quot; type=&quot;button&quot; data-view=&quot;target&quot; aria-pressed=&quot;false&quot;&gt;8G 调度&lt;/button&gt;
       &lt;button class=&quot;btn&quot; type=&quot;button&quot; data-view=&quot;benchmark&quot; aria-pressed=&quot;false&quot;&gt;实测对照&lt;/button&gt;
     &lt;/div&gt;
     &lt;div class=&quot;text-small text-muted&quot; id=&quot;dk2500-view-caption&quot;&gt;当前：GPU 已工作，NPU 已识别但尚无地面站任务，单通道内存仍是瓶颈。&lt;/div&gt;
@@ -951,50 +951,50 @@ html&gt;body{padding:0}&lt;/style&gt;
         &lt;div class=&quot;lane-label&quot;&gt;RAM&lt;/div&gt;
         &lt;div class=&quot;lane-body&quot;&gt;
           &lt;div class=&quot;allocation&quot;&gt;&lt;span class=&quot;ram-mark&quot; style=&quot;flex:1&quot;&gt;8 GiB 单通道 · CPU/GPU/NPU 共用&lt;/span&gt;&lt;/div&gt;
-          &lt;div class=&quot;status-line text-small&quot;&gt;CPU 测试时系统可用内存最低仅 0.37 GiB；并发余量不足。&lt;/div&gt;
+          &lt;div class=&quot;status-line text-small&quot;&gt;CPU 测试时系统可用内存最低仅 0.37 GiB；禁止 Qwen 与 large-v3 同时重载。&lt;/div&gt;
         &lt;/div&gt;
       &lt;/div&gt;
     &lt;/div&gt;
     &lt;div class=&quot;verdict&quot;&gt;
       &lt;span class=&quot;viz-badge&quot;&gt;结论&lt;/span&gt;
-      &lt;span&gt;GPU 路径有效，NPU 已激活；下一步把 Whisper/轻量模型迁入 NPU，但 8 GiB 单通道仍限制异构并发。&lt;/span&gt;
+      &lt;span&gt;8 GiB 可以运行，但要把它当作硬边界：Qwen 走 GPU，语音换小模型走 NPU，重任务只允许单并发。&lt;/span&gt;
     &lt;/div&gt;
   &lt;/section&gt;
 
-  &lt;section class=&quot;panel&quot; data-panel=&quot;target&quot; aria-label=&quot;推荐异构协同方案&quot; hidden&gt;
-    &lt;div class=&quot;resource-map&quot; role=&quot;img&quot; aria-label=&quot;推荐 CPU GPU NPU 和内存的任务分配&quot;&gt;
+  &lt;section class=&quot;panel&quot; data-panel=&quot;target&quot; aria-label=&quot;8 GiB 异构错峰方案&quot; hidden&gt;
+    &lt;div class=&quot;resource-map&quot; role=&quot;img&quot; aria-label=&quot;8 GiB 下 CPU GPU NPU 和内存的错峰任务分配&quot;&gt;
       &lt;div class=&quot;lane&quot;&gt;
         &lt;div class=&quot;lane-label&quot;&gt;CPU&lt;/div&gt;
         &lt;div class=&quot;lane-body&quot;&gt;
           &lt;div class=&quot;allocation&quot;&gt;&lt;span class=&quot;cpu-mark&quot; style=&quot;flex:1&quot;&gt;Qt UI · 遥测 · 解码/缩放 · MediaPipe 轻任务 · 调度&lt;/span&gt;&lt;/div&gt;
-          &lt;div class=&quot;status-line text-small&quot;&gt;保留低延迟控制面，不让 Qwen 长时间占满 CPU。&lt;/div&gt;
+          &lt;div class=&quot;status-line text-small&quot;&gt;只保留控制面与轻任务；地面站运行时禁用 CPU 版 Qwen 回退。&lt;/div&gt;
         &lt;/div&gt;
       &lt;/div&gt;
       &lt;div class=&quot;lane&quot;&gt;
         &lt;div class=&quot;lane-label&quot;&gt;GPU&lt;/div&gt;
         &lt;div class=&quot;lane-body&quot;&gt;
-          &lt;div class=&quot;allocation&quot;&gt;&lt;span class=&quot;gpu-mark&quot; style=&quot;flex:1&quot;&gt;Qwen3-VL 常驻 · 图像理解 · 指令生成&lt;/span&gt;&lt;/div&gt;
-          &lt;div class=&quot;status-line text-small&quot;&gt;利用已验证的低首 token 延迟；保留编译缓存。&lt;/div&gt;
+          &lt;div class=&quot;allocation&quot;&gt;&lt;span class=&quot;gpu-mark&quot; style=&quot;flex:1&quot;&gt;Qwen3-VL 2B INT4 · batch 1 · 336/448 px&lt;/span&gt;&lt;/div&gt;
+          &lt;div class=&quot;status-line text-small&quot;&gt;唯一常驻重模型；输出建议不超过 128 token，保留编译缓存。&lt;/div&gt;
         &lt;/div&gt;
       &lt;/div&gt;
       &lt;div class=&quot;lane&quot;&gt;
         &lt;div class=&quot;lane-label&quot;&gt;NPU&lt;/div&gt;
         &lt;div class=&quot;lane-body&quot;&gt;
-          &lt;div class=&quot;allocation&quot;&gt;&lt;span class=&quot;npu-mark&quot; style=&quot;flex:1&quot;&gt;Whisper ASR · 适合 NPU 的固定图模型&lt;/span&gt;&lt;/div&gt;
-          &lt;div class=&quot;status-line text-small&quot;&gt;驱动已经补齐；下一步迁移 Whisper，Qwen3-VL 仍以 GPU 为主。&lt;/div&gt;
+          &lt;div class=&quot;allocation&quot;&gt;&lt;span class=&quot;npu-mark&quot; style=&quot;flex:1&quot;&gt;Whisper-small/base INT8/INT4 · 单路 ASR&lt;/span&gt;&lt;/div&gt;
+          &lt;div class=&quot;status-line text-small&quot;&gt;替换 large-v3；图像推理期间暂停新语音批次，避免共享内存峰值叠加。&lt;/div&gt;
         &lt;/div&gt;
       &lt;/div&gt;
       &lt;div class=&quot;lane&quot;&gt;
         &lt;div class=&quot;lane-label&quot;&gt;RAM&lt;/div&gt;
         &lt;div class=&quot;lane-body&quot;&gt;
-          &lt;div class=&quot;allocation&quot;&gt;&lt;span class=&quot;ram-mark&quot; style=&quot;flex:1&quot;&gt;最低 16 GiB 双通道&lt;/span&gt;&lt;span class=&quot;gpu-mark&quot; style=&quot;flex:1&quot;&gt;理想 32 GiB 双通道&lt;/span&gt;&lt;/div&gt;
-          &lt;div class=&quot;status-line text-small&quot;&gt;容量保证多模型常驻，双通道同时提升 CPU、核显与 NPU 的共享带宽。&lt;/div&gt;
+          &lt;div class=&quot;allocation&quot;&gt;&lt;span class=&quot;ram-mark&quot; style=&quot;flex:1&quot;&gt;8 GiB 固定&lt;/span&gt;&lt;span class=&quot;idle-mark&quot; style=&quot;flex:1&quot;&gt;可用内存红线 ≥ 1.0 GiB&lt;/span&gt;&lt;/div&gt;
+          &lt;div class=&quot;status-line text-small&quot;&gt;任务队列容量 1；低于红线暂停新 AI 任务，页面文件仅作防崩溃托底。&lt;/div&gt;
         &lt;/div&gt;
       &lt;/div&gt;
     &lt;/div&gt;
     &lt;div class=&quot;verdict&quot;&gt;
       &lt;span class=&quot;viz-badge&quot;&gt;原则&lt;/span&gt;
-      &lt;span&gt;Qwen 放 GPU、语音放 NPU、控制与轻量视觉留 CPU；通过队列错峰，避免三路同时抢内存带宽。&lt;/span&gt;
+      &lt;span&gt;不是让 GPU/NPU 同时满载，而是分流后错峰：Qwen 优先，ASR 让路，任何时刻只启动一个重推理阶段。&lt;/span&gt;
     &lt;/div&gt;
   &lt;/section&gt;
 
@@ -1043,7 +1043,7 @@ html&gt;body{padding:0}&lt;/style&gt;
       const caption = root.querySelector(&#x27;#dk2500-view-caption&#x27;);
       const captions = {
         current: &#x27;当前：GPU 已工作，NPU 已识别但尚无地面站任务，单通道内存仍是瓶颈。&#x27;,
-        target: &#x27;目标：Qwen→GPU，Whisper→NPU，控制与轻量视觉→CPU，内存升级双通道。&#x27;,
+        target: &#x27;8 GiB 固定：Qwen→GPU，小型 ASR→NPU，重任务单并发，可用内存保持至少 1.0 GiB。&#x27;,
         benchmark: &#x27;实测：GPU 的核心收益是视觉首 token 延迟与更低的系统内存压力。&#x27;
       };
 
