@@ -10,6 +10,8 @@
 - 手势识别：OK，已接入 MediaPipe 三手势识别，可触发暂停、取消候选、确认候选。
 - 视线识别：OK，已接入头部姿态 + 视线融合识别，可显示方向并触发确认/取消。
 - 手势 + 视线场景：OK，手势先选择起飞/自检/返航大类，倒数 5 秒后用视线选择三个细项。
+- 飞行巡检：OK，连接无人机图传后常驻运行人脸与中英文 OCR 小模型；命中后触发 Qwen3-VL 复核，Qwen 也会按周期主动巡检画面。
+- 巡检日志：OK，右侧“飞行记录”页签显示识别结果、Qwen3-VL 分析、飞行位置与截图，并持续追加到本地。
 
 ## 运行截图
 
@@ -72,6 +74,20 @@ install_voice_asr_deps.bat
 
 该场景流程同样使用一个 USB 摄像头，不要与其它识别窗口同时开启。
 选择“日志输出”后，会把最近一次从解锁到重新锁定期间采样到的飞行数据导出到 `ground_station/flight_logs/flight_*/flight_log.md`。
+
+## 飞行巡检与 Qwen3-VL
+
+切换到无人机图传并成功收到画面后，地面站会优先在 NPU 上启动 OpenVINO 人脸模型，同时在 CPU 上运行中英文 OCR。NPU 不可用时会自动回退 OpenCV YuNet。火源继续使用原有连续帧确认链路。小模型命中后会立即保存截图并把任务送给常驻 GPU 的 Qwen3-VL；在没有命中时，Qwen 默认每 8 秒主动复核一次当前画面。
+
+右侧窗口可在“设备 / 串口 / 网络”和“飞行记录”之间切换。每条飞行记录包含时间、识别摘要、飞行坐标与高度、Qwen 分析结果和截图。日志采用追加写入，不会因重启程序而丢失：
+
+```text
+ground_station/flight_logs/inspection_journal/inspection_log.jsonl
+ground_station/flight_logs/inspection_journal/inspection_log.md
+ground_station/flight_logs/inspection_journal/images/YYYYMMDD/
+```
+
+8GB 内存机器上，Qwen 仅在系统可用内存达到 1.4GiB 时启动；运行中若低于 0.8GiB，会暂停派发新任务但保留排队记录。周期可通过环境变量 `INTELCUP_QWEN_INTERVAL_SECONDS` 调整为 3–60 秒。
 
 如果换机器后缺少依赖，可运行：
 

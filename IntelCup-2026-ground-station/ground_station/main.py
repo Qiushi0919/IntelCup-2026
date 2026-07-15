@@ -19,6 +19,7 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QSplitter,
     QStatusBar,
+    QTabWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -26,6 +27,7 @@ from PyQt5.QtWidgets import (
 from camera_service import CameraThread
 from fire_detector import FireDetector
 from flight_log_recorder import FlightLogRecorder
+from inspection_service import InspectionCoordinator
 try:
     from drone_3d import Drone3DView
 except Exception as exc:  # pragma: no cover - depends on local OpenGL packages
@@ -68,6 +70,7 @@ from widgets import (
     CommandBar,
     CompactStatusBar,
     DevicePanel,
+    FlightInspectionLogPanel,
     GazePanel,
     GesturePanel,
     LogPanel,
@@ -197,6 +200,12 @@ class GroundStationWindow(QMainWindow):
         self.drone_3d_view = None
         self.simulation_control_window: SimulationControlWindow | None = None
         self.flight_log_recorder = FlightLogRecorder(APP_DIR / "flight_logs")
+        self.inspection_coordinator = InspectionCoordinator(
+            APP_DIR / "flight_logs" / "inspection_journal",
+            self,
+        )
+        self._inspection_vision_status = "idle"
+        self._inspection_qwen_status = "idle"
 
         self.simulator = DroneSimulator(self)
         self.simulator.state_changed.connect(self._on_state_changed)
@@ -423,7 +432,7 @@ class GroundStationWindow(QMainWindow):
         self.connect_camera_button.clicked.connect(
             lambda: self.connect_camera(suggested_amb82_url())
         )
-        device_button = QPushButton("设备")
+        device_button = QPushButton("设备/记录")
         device_button.clicked.connect(lambda: self._show_dock("device"))
         fullscreen_button = QPushButton("全屏")
         fullscreen_button.clicked.connect(self._toggle_fullscreen)
@@ -478,10 +487,43 @@ class GroundStationWindow(QMainWindow):
         self.device_panel.lens_correction_changed.connect(
             self._set_lens_correction
         )
+        self.flight_inspection_panel = FlightInspectionLogPanel(
+            self.inspection_coordinator.log_root
+        )
+        self.flight_inspection_panel.load_entries(
+            self.inspection_coordinator.saved_entries()
+        )
+        self.flight_inspection_panel.retry_qwen_requested.connect(
+            self.inspection_coordinator.retry_qwen
+        )
+
+        self.device_records_tabs = QTabWidget()
+        self.device_records_tabs.addTab(self.device_panel, "设备 / 串口 / 网络")
+        self.device_records_tabs.addTab(self.flight_inspection_panel, "飞行记录")
+
+        self.inspection_coordinator.overlay_ready.connect(
+            self.video_panel.canvas.set_inspection_detections
+        )
+        self.inspection_coordinator.entry_created.connect(
+            self.flight_inspection_panel.add_or_update_entry
+        )
+        self.inspection_coordinator.entry_updated.connect(
+            self.flight_inspection_panel.add_or_update_entry
+        )
+        self.inspection_coordinator.vision_status_changed.connect(
+            self._on_inspection_vision_status
+        )
+        self.inspection_coordinator.qwen_status_changed.connect(
+            self._on_inspection_qwen_status
+        )
+        self.inspection_coordinator.alert_raised.connect(
+            self._on_inspection_alert
+        )
+        self.inspection_coordinator.diagnostic.connect(self._append_log)
         self._add_dock(
             "device",
-            "设备、串口与网络",
-            self.device_panel,
+            "设备、串口、网络与飞行记录",
+            self.device_records_tabs,
             Qt.RightDockWidgetArea,
             True,
         )
@@ -606,6 +648,21 @@ class GroundStationWindow(QMainWindow):
         )
 
     def _update_header_status(self) -> None:
+        if self.inspection_coordinator.active:
+            ai_states = {
+                "ready": ("● AI 就绪", "chipGood"),
+                "busy": ("● AI 分析中", "chipWarn"),
+                "loading": ("● AI 加载中", "chipInfo"),
+                "memory": ("● AI 等待内存", "chipWarn"),
+                "error": ("● AI 异常", "chipWarn"),
+            }
+            ai_text, ai_style = ai_states.get(
+                self._inspection_qwen_status,
+                ("● AI 巡检中", "chipInfo"),
+            )
+        else:
+            ai_text = "● AI 就绪" if self.drone_state.ai_ready else "● AI 离线"
+            ai_style = "chipGood" if self.drone_state.ai_ready else "chipWarn"
         statuses = [
             (
                 self.flight_chip,
@@ -625,10 +682,8 @@ class GroundStationWindow(QMainWindow):
             ),
             (
                 self.ai_chip,
-                "● AI 就绪"
-                if self.drone_state.ai_ready
-                else "● AI 离线",
-                "chipGood" if self.drone_state.ai_ready else "chipWarn",
+                ai_text,
+                ai_style,
             ),
         ]
         if self.camera_state.connected:
@@ -1304,6 +1359,10 @@ class GroundStationWindow(QMainWindow):
         self.flight_log_recorder.update_latest_frame(frame)
         if self._main_view_mode != "flight":
             return
+        self.inspection_coordinator.submit_frame(
+            frame,
+            self._inspection_state_snapshot(),
+        )
         self.video_panel.canvas.set_frame(frame)
         self.video_panel.canvas.set_detections(detections)
         self.video_panel.show_live_mode()
@@ -1623,6 +1682,10 @@ class GroundStationWindow(QMainWindow):
         self.statusBar().showMessage(
             f"发现火源：置信度 {detection.confidence:.0%}", 8000
         )
+        self.inspection_coordinator.report_fire(
+            detection,
+            self._inspection_state_snapshot(),
+        )
 
     def _on_camera_status(
         self,
@@ -1654,6 +1717,7 @@ class GroundStationWindow(QMainWindow):
             and self.camera_thread.isRunning()
             and diagnostics.get("source_kind") != "stopped"
         )
+        self.inspection_coordinator.set_stream_connected(connected)
         if self._self_check_active:
             self._refresh_self_check_view()
         elif self._main_view_mode == "flight":
@@ -1679,6 +1743,43 @@ class GroundStationWindow(QMainWindow):
         ):
             self._append_log("WARNING", f"图传重连：{self.camera_state.last_error}")
         self._update_header_status()
+
+    def _inspection_state_snapshot(self) -> dict:
+        return {
+            "x": float(self.drone_state.x),
+            "y": float(self.drone_state.y),
+            "altitude": float(self.drone_state.altitude),
+            "yaw": float(self.drone_state.yaw),
+            "battery_voltage": float(self.drone_state.battery_voltage),
+            "flight_phase": str(self.drone_state.flight_phase),
+            "flight_mode": str(self.drone_state.flight_mode),
+            "camera_source": str(self.camera_state.source),
+        }
+
+    def _on_inspection_vision_status(self, status: str, message: str) -> None:
+        changed = status != self._inspection_vision_status
+        self._inspection_vision_status = status
+        self.flight_inspection_panel.set_vision_status(status, message)
+        if changed and status in {"ready", "error"}:
+            self._append_log("INFO" if status == "ready" else "ERROR", message)
+
+    def _on_inspection_qwen_status(self, status: str, message: str) -> None:
+        changed = status != self._inspection_qwen_status
+        self._inspection_qwen_status = status
+        self.flight_inspection_panel.set_qwen_status(status, message)
+        self._update_header_status()
+        if changed and status in {"ready", "memory", "error"}:
+            level = "INFO" if status == "ready" else "WARNING"
+            self._append_log(level, message)
+
+    def _on_inspection_alert(self, kind: str, summary: str) -> None:
+        dock = self.docks.get("device")
+        if dock is not None:
+            dock.setVisible(True)
+            dock.raise_()
+        self.device_records_tabs.setCurrentWidget(self.flight_inspection_panel)
+        self._append_log("WARNING", f"巡检识别：{summary}")
+        self.statusBar().showMessage(f"巡检发现{kind}：{summary}", 8000)
 
     def save_snapshot(self) -> None:
         CAPTURE_DIR.mkdir(exist_ok=True)
@@ -1865,6 +1966,7 @@ class GroundStationWindow(QMainWindow):
         widget.style().polish(widget)
 
     def closeEvent(self, event) -> None:
+        self.inspection_coordinator.stop()
         if self.camera_thread and self.camera_thread.isRunning():
             self.camera_thread.stop()
         if self.drone_3d_view is not None:

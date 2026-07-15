@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import html
 import math
 import ipaddress
 import re
@@ -19,10 +20,12 @@ from PyQt5.QtCore import (
     QRectF,
     Qt,
     QTimer,
+    QUrl,
     pyqtSignal,
 )
 from PyQt5.QtGui import (
     QColor,
+    QDesktopServices,
     QFont,
     QImage,
     QLinearGradient,
@@ -45,6 +48,7 @@ from PyQt5.QtWidgets import (
     QPlainTextEdit,
     QProgressBar,
     QPushButton,
+    QScrollArea,
     QSlider,
     QSizePolicy,
     QTabWidget,
@@ -136,6 +140,8 @@ class VideoCanvas(QWidget):
         self._demo_mode = False
         self._detections: list[FireDetection] = []
         self._detections_hold_until = 0.0
+        self._inspection_detections: list[dict] = []
+        self._inspection_hold_until = 0.0
         self._confirmed_until = 0.0
         self._frame_size = (1280, 720)
         self._display_scale = 1.0
@@ -180,6 +186,7 @@ class VideoCanvas(QWidget):
         self._frame = None
         self._pixmap = None
         self._detections = []
+        self._inspection_detections = []
         self._selected_target_id = ""
         self._hover_target_id = ""
         self.update()
@@ -244,6 +251,15 @@ class VideoCanvas(QWidget):
             self._detections = []
         self.update()
 
+    def set_inspection_detections(self, detections: list[dict]) -> None:
+        now = time.monotonic()
+        if detections:
+            self._inspection_detections = list(detections)
+            self._inspection_hold_until = now + 1.4
+        elif now >= self._inspection_hold_until:
+            self._inspection_detections = []
+        self.update()
+
     def confirm_detection(
         self, detection: FireDetection, hold_seconds: float = 6.0
     ) -> None:
@@ -258,6 +274,9 @@ class VideoCanvas(QWidget):
         if self._detections and now >= self._detections_hold_until:
             self._detections = []
             self._confirmed_until = 0.0
+            self.update()
+        if self._inspection_detections and now >= self._inspection_hold_until:
+            self._inspection_detections = []
             self.update()
 
     def set_state(self, state: DroneState) -> None:
@@ -355,6 +374,7 @@ class VideoCanvas(QWidget):
 
         if self._pixmap is not None and not self._pixmap.isNull():
             self._draw_fire_detections(painter, content_rect)
+            self._draw_inspection_detections(painter, content_rect)
 
         if self._demo_mode:
             banner_width = min(rect.width() * 0.46, 310 * scale)
@@ -608,6 +628,58 @@ class VideoCanvas(QWidget):
             )
             y += line_height
         painter.restore()
+
+    def _draw_inspection_detections(self, painter: QPainter, rect: QRectF) -> None:
+        if not self._inspection_detections:
+            return
+        frame_width, frame_height = self._frame_size
+        if frame_width <= 0 or frame_height <= 0:
+            return
+        scale_x = rect.width() / frame_width
+        scale_y = rect.height() / frame_height
+        ui_scale = min(self._display_scale, 1.5)
+        colors = {
+            "face": QColor("#55d8ff"),
+            "text": QColor("#61e49b"),
+        }
+        labels = {"face": "人脸", "text": "文字"}
+        for index, detection in enumerate(self._inspection_detections[:8], start=1):
+            bbox = detection.get("bbox", [])
+            if len(bbox) != 4:
+                continue
+            x, y, width, height = (float(value) for value in bbox)
+            box = QRectF(
+                rect.left() + x * scale_x,
+                rect.top() + y * scale_y,
+                max(2.0, width * scale_x),
+                max(2.0, height * scale_y),
+            ).intersected(rect)
+            kind = str(detection.get("kind", "face"))
+            color = colors.get(kind, QColor("#55d8ff"))
+            painter.setBrush(Qt.NoBrush)
+            painter.setPen(QPen(color, max(2, round(2 * ui_scale))))
+            painter.drawRect(box)
+            confidence = float(detection.get("confidence", 0.0))
+            label = f"{labels.get(kind, kind.upper())}-{index}  {confidence:.0%}"
+            painter.setFont(
+                QFont("Microsoft YaHei UI", max(8, round(9 * ui_scale)), QFont.Bold)
+            )
+            metrics = painter.fontMetrics()
+            label_width = metrics.horizontalAdvance(label) + 14 * ui_scale
+            label_height = max(22.0, metrics.height() + 6 * ui_scale)
+            label_rect = QRectF(
+                box.left(),
+                max(rect.top(), box.top() - label_height),
+                min(label_width, rect.right() - box.left()),
+                label_height,
+            )
+            painter.fillRect(label_rect, QColor(color.red(), color.green(), color.blue(), 205))
+            painter.setPen(QColor("#041019"))
+            painter.drawText(
+                label_rect.adjusted(6 * ui_scale, 0, -4 * ui_scale, 0),
+                Qt.AlignLeft | Qt.AlignVCenter,
+                label,
+            )
 
     def _draw_fire_detections(self, painter: QPainter, rect: QRectF) -> None:
         if not self._detections:
@@ -3197,6 +3269,225 @@ class MultimodalPanel(QWidget):
         message = "场景识别已停止" if exit_code == 0 else "场景识别已退出，请查看日志"
         self.scenario_log.appendPlainText(message)
         self.scenario_stopped.emit()
+
+
+class InspectionEventCard(QFrame):
+    def __init__(self, entry: dict, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setObjectName("card")
+        self.entry_id = str(entry.get("id", ""))
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(10, 9, 10, 10)
+        layout.setSpacing(6)
+
+        header = QHBoxLayout()
+        self.title = QLabel()
+        self.title.setObjectName("sectionTitle")
+        self.status = QLabel()
+        self.status.setAlignment(Qt.AlignCenter)
+        header.addWidget(self.title, 1)
+        header.addWidget(self.status)
+        layout.addLayout(header)
+
+        self.summary = QLabel()
+        self.summary.setWordWrap(True)
+        layout.addWidget(self.summary)
+
+        self.flight = QLabel()
+        self.flight.setObjectName("muted")
+        self.flight.setWordWrap(True)
+        layout.addWidget(self.flight)
+
+        self.analysis = QLabel()
+        self.analysis.setWordWrap(True)
+        self.analysis.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        layout.addWidget(self.analysis)
+
+        self.image = QLabel()
+        self.image.setAlignment(Qt.AlignCenter)
+        self.image.setMinimumHeight(118)
+        self.image.setMaximumHeight(185)
+        self.image.setStyleSheet(
+            "background:#050b12;border:1px solid #244158;border-radius:6px;"
+        )
+        layout.addWidget(self.image)
+        self.update_entry(entry)
+
+    def update_entry(self, entry: dict) -> None:
+        self.entry_id = str(entry.get("id", self.entry_id))
+        timestamp = str(entry.get("timestamp", "")).replace("T", " ")
+        kind = html.escape(str(entry.get("kind", "巡检事件")))
+        trigger = html.escape(str(entry.get("trigger", "自动识别")))
+        summary = html.escape(str(entry.get("summary", "暂无结果")))
+        self.title.setText(f"{timestamp[11:19]} · {kind}")
+        self.summary.setText(
+            f"<b>识别：</b>{summary}<br>"
+            f"<span style='color:#7892aa'>触发：{trigger}</span>"
+        )
+        state = entry.get("flight_state", {})
+        self.flight.setText(
+            f"位置 ({float(state.get('x', 0.0)):.0f}, {float(state.get('y', 0.0)):.0f}) cm · "
+            f"高度 {float(state.get('altitude', 0.0)):.2f} m · "
+            f"航向 {float(state.get('yaw', 0.0)):.0f}°"
+        )
+        qwen_status = str(entry.get("qwen_status", "排队中"))
+        qwen_text = html.escape(str(entry.get("qwen_analysis", "")).strip())
+        elapsed = float(entry.get("qwen_elapsed_s", 0.0))
+        if qwen_text:
+            elapsed_text = f" · {elapsed:.1f}s" if elapsed > 0 else ""
+            self.analysis.setText(
+                f"<b>Qwen-VL{elapsed_text}：</b>{qwen_text}"
+            )
+        else:
+            self.analysis.setText("<b>Qwen-VL：</b>等待分析…")
+        status_object = (
+            "miniChipGood"
+            if qwen_status == "分析完成"
+            else "miniChipWarn"
+            if qwen_status == "分析失败"
+            else "miniChipInfo"
+        )
+        self.status.setText(qwen_status)
+        self.status.setObjectName(status_object)
+        self.status.style().unpolish(self.status)
+        self.status.style().polish(self.status)
+
+        screenshot = Path(str(entry.get("screenshot", "")))
+        if screenshot.exists():
+            pixmap = QPixmap(str(screenshot))
+            if not pixmap.isNull():
+                self.image.setPixmap(
+                    pixmap.scaled(
+                        300,
+                        170,
+                        Qt.KeepAspectRatio,
+                        Qt.SmoothTransformation,
+                    )
+                )
+                self.image.setToolTip(str(screenshot))
+                return
+        self.image.setText("截图不可用")
+
+
+class FlightInspectionLogPanel(QWidget):
+    retry_qwen_requested = pyqtSignal()
+
+    def __init__(self, log_root: Path, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.log_root = log_root
+        self._cards: dict[str, InspectionEventCard] = {}
+        self._order: list[str] = []
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setSpacing(8)
+        title = QLabel("飞行巡检记录")
+        title.setObjectName("sectionTitle")
+        subtitle = QLabel("小模型识别、Qwen-VL分析、飞行状态和截图会持续追加到本地。")
+        subtitle.setObjectName("muted")
+        subtitle.setWordWrap(True)
+        layout.addWidget(title)
+        layout.addWidget(subtitle)
+
+        statuses = QHBoxLayout()
+        self.vision_status = QLabel("视觉：等待图传")
+        self.vision_status.setObjectName("miniChipInfo")
+        self.qwen_status = QLabel("Qwen：等待图传")
+        self.qwen_status.setObjectName("miniChipInfo")
+        statuses.addWidget(self.vision_status)
+        statuses.addWidget(self.qwen_status)
+        layout.addLayout(statuses)
+
+        buttons = QHBoxLayout()
+        retry = QPushButton("重试Qwen")
+        retry.clicked.connect(self.retry_qwen_requested.emit)
+        open_folder = QPushButton("打开日志目录")
+        open_folder.clicked.connect(self._open_log_folder)
+        clear_display = QPushButton("清空当前显示")
+        clear_display.clicked.connect(self.clear_display)
+        buttons.addWidget(retry)
+        buttons.addWidget(open_folder)
+        buttons.addWidget(clear_display)
+        layout.addLayout(buttons)
+
+        self.scroll = QScrollArea()
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setFrameShape(QFrame.NoFrame)
+        container = QWidget()
+        self.cards_layout = QVBoxLayout(container)
+        self.cards_layout.setContentsMargins(0, 0, 0, 0)
+        self.cards_layout.setSpacing(8)
+        self.cards_layout.setAlignment(Qt.AlignTop)
+        self.empty_label = QLabel("等待无人机图传。连接后自动启动巡检识别。")
+        self.empty_label.setObjectName("muted")
+        self.empty_label.setAlignment(Qt.AlignCenter)
+        self.empty_label.setWordWrap(True)
+        self.empty_label.setMinimumHeight(120)
+        self.cards_layout.addWidget(self.empty_label)
+        self.scroll.setWidget(container)
+        layout.addWidget(self.scroll, 1)
+
+        path_label = QLabel(f"本地日志：{log_root}")
+        path_label.setObjectName("muted")
+        path_label.setWordWrap(True)
+        layout.addWidget(path_label)
+
+    def load_entries(self, entries: list[dict]) -> None:
+        for entry in entries:
+            self.add_or_update_entry(entry)
+
+    def add_or_update_entry(self, entry: dict) -> None:
+        event_id = str(entry.get("id", ""))
+        if not event_id:
+            return
+        card = self._cards.get(event_id)
+        if card is not None:
+            card.update_entry(entry)
+            return
+        self.empty_label.hide()
+        card = InspectionEventCard(entry)
+        self._cards[event_id] = card
+        self._order.append(event_id)
+        self.cards_layout.insertWidget(0, card)
+        while len(self._order) > 60:
+            old_id = self._order.pop(0)
+            old_card = self._cards.pop(old_id, None)
+            if old_card is not None:
+                old_card.deleteLater()
+
+    def set_vision_status(self, status: str, message: str) -> None:
+        self._set_status(self.vision_status, "视觉", status, message)
+
+    def set_qwen_status(self, status: str, message: str) -> None:
+        self._set_status(self.qwen_status, "Qwen", status, message)
+
+    def clear_display(self) -> None:
+        for card in self._cards.values():
+            card.deleteLater()
+        self._cards.clear()
+        self._order.clear()
+        self.empty_label.setText("显示已清空；本地历史日志和截图没有删除。")
+        self.empty_label.show()
+
+    def _open_log_folder(self) -> None:
+        self.log_root.mkdir(parents=True, exist_ok=True)
+        QDesktopServices.openUrl(QUrl.fromLocalFile(str(self.log_root.resolve())))
+
+    @staticmethod
+    def _set_status(label: QLabel, prefix: str, status: str, message: str) -> None:
+        short_message = message if len(message) <= 24 else message[:23] + "…"
+        label.setText(f"{prefix}：{short_message}")
+        label.setToolTip(message)
+        object_name = (
+            "miniChipGood"
+            if status == "ready"
+            else "miniChipWarn"
+            if status in {"error", "memory"}
+            else "miniChipInfo"
+        )
+        label.setObjectName(object_name)
+        label.style().unpolish(label)
+        label.style().polish(label)
 
 
 class DevicePanel(QWidget):

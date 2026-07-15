@@ -91,6 +91,71 @@ class YuNetFaceDetector:
         return results
 
 
+class OpenVinoNpuFaceDetector:
+    """Static-shape SSD face detector compiled for Intel AI Boost."""
+
+    def __init__(
+        self,
+        model_path: Path,
+        score_threshold: float = 0.68,
+        device: str = "NPU",
+    ) -> None:
+        import openvino as ov
+
+        self.score_threshold = score_threshold
+        self.device = device
+        self.core = ov.Core()
+        if device not in self.core.available_devices:
+            raise RuntimeError(
+                f"OpenVINO未发现{device}，当前设备：{self.core.available_devices}"
+            )
+        cache_dir = model_path.parent / ".npu_cache"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        model = self.core.read_model(str(model_path))
+        self.compiled_model = self.core.compile_model(
+            model,
+            device,
+            {"CACHE_DIR": str(cache_dir)},
+        )
+        self.input_port = self.compiled_model.input(0)
+        self.output_port = self.compiled_model.output(0)
+        input_shape = tuple(int(value) for value in self.input_port.shape)
+        if input_shape != (1, 3, 300, 300):
+            raise RuntimeError(f"不支持的人脸模型输入形状：{input_shape}")
+
+    def detect(self, frame: np.ndarray) -> list[InspectionDetection]:
+        height, width = frame.shape[:2]
+        resized = cv2.resize(frame, (300, 300), interpolation=cv2.INTER_LINEAR)
+        tensor = np.transpose(resized, (2, 0, 1))[None, ...].astype(
+            np.float32,
+            copy=False,
+        )
+        output = self.compiled_model([tensor])[self.output_port]
+        detections: list[InspectionDetection] = []
+        for row in output.reshape(-1, 7):
+            image_id, _label, confidence, x_min, y_min, x_max, y_max = row
+            if image_id < 0:
+                break
+            confidence = float(confidence)
+            if confidence < self.score_threshold:
+                continue
+            left = max(0, min(width - 1, round(float(x_min) * width)))
+            top = max(0, min(height - 1, round(float(y_min) * height)))
+            right = max(0, min(width, round(float(x_max) * width)))
+            bottom = max(0, min(height, round(float(y_max) * height)))
+            if right <= left or bottom <= top:
+                continue
+            detections.append(
+                InspectionDetection(
+                    kind="face",
+                    bbox=(left, top, right - left, bottom - top),
+                    confidence=confidence,
+                    label="FACE/NPU",
+                )
+            )
+        return detections
+
+
 class RapidOcrDetector:
     def __init__(self, min_score: float = 0.52, max_input_side: int = 640) -> None:
         self.min_score = min_score

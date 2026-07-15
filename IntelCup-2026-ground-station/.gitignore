@@ -11,6 +11,7 @@ venv/
 captures/
 recordings/
 logs/
+flight_logs/
 work/
 *.log
 *.tmp
@@ -49,6 +50,8 @@ dist/
 *.hex
 *.bin
 !wireless_camera/firmware/*.bin
+!inspection_demo/models/face-detection-retail-0005.bin
+inspection_demo/models/.npu_cache/
 
 # Secrets and machine-local configuration
 .env

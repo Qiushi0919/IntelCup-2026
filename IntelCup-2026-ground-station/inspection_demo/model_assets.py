@@ -13,6 +13,7 @@ YUNET_URL = (
     "models/face_detection_yunet/face_detection_yunet_2023mar.onnx"
 )
 YUNET_SHA256 = "8f2383e4dd3cfbb4553ea8718107fc0423210dc964f9f4280604804ed2552fa4"
+OPENVINO_FACE_XML = "face-detection-retail-0005.xml"
 
 
 def _sha256(path: Path) -> str:
@@ -49,3 +50,15 @@ def ensure_yunet_model(model_dir: Path | None = None) -> Path:
     finally:
         temporary.unlink(missing_ok=True)
     return target
+
+
+def openvino_npu_face_model(model_dir: Path | None = None) -> Path:
+    target_dir = model_dir or MODEL_DIR
+    xml_path = target_dir / OPENVINO_FACE_XML
+    bin_path = xml_path.with_suffix(".bin")
+    if not xml_path.exists() or not bin_path.exists():
+        raise FileNotFoundError(
+            "NPU人脸模型不完整，请确认inspection_demo/models中同时存在"
+            "face-detection-retail-0005.xml和.bin"
+        )
+    return xml_path
