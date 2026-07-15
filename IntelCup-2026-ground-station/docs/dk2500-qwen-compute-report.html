@@ -5,18 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; style-src 'unsafe-inline' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
-<title>DK2500 Qwen3-VL OpenVINO 算力利用报告</title>
+<title>Dk2500 Qwen Compute Report</title>
 <style>:root{color-scheme:light dark;background:light-dark(rgb(255 255 255), rgb(24 24 24))}html,body{margin:0}body{box-sizing:border-box;padding:1rem;background:inherit}iframe{display:block;width:100%;max-width:736px;height:calc(100vh - 2rem);margin:0 auto;border:0}</style>
 </head>
 <body>
-<iframe sandbox="allow-scripts" referrerpolicy="no-referrer" title="DK2500 Qwen3-VL OpenVINO 算力利用报告" srcdoc="&lt;!doctype html&gt;
+<iframe sandbox="allow-scripts" referrerpolicy="no-referrer" title="Dk2500 Qwen Compute Report" srcdoc="&lt;!doctype html&gt;
 &lt;html lang=&quot;en&quot;&gt;
 &lt;head&gt;
 &lt;meta charset=&quot;utf-8&quot;&gt;
 &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
 &lt;meta name=&quot;referrer&quot; content=&quot;no-referrer&quot;&gt;
 &lt;meta http-equiv=&quot;Content-Security-Policy&quot; content=&quot;default-src &#x27;none&#x27;; script-src &#x27;unsafe-inline&#x27; &#x27;unsafe-eval&#x27; &#x27;wasm-unsafe-eval&#x27; blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; style-src &#x27;unsafe-inline&#x27; blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src &#x27;none&#x27;; object-src &#x27;none&#x27;; base-uri &#x27;none&#x27;; form-action &#x27;none&#x27;&quot;&gt;
-&lt;title&gt;DK2500 Qwen3-VL OpenVINO 算力利用报告&lt;/title&gt;
+&lt;title&gt;Dk2500 Qwen Compute Report&lt;/title&gt;
 &lt;style&gt;:root {
   color-scheme: light dark;
   background-color: var(--background) !important;
@@ -892,6 +892,7 @@ html&gt;body{padding:0}&lt;/style&gt;
     &lt;div class=&quot;viz-row&quot;&gt;
       &lt;span class=&quot;viz-badge&quot;&gt;2026-07-15 本机实测&lt;/span&gt;
       &lt;code&gt;Qwen3-VL-2B-Instruct · INT4 · OpenVINO 2026.1&lt;/code&gt;
+      &lt;span class=&quot;viz-badge&quot;&gt;NPU 已就绪&lt;/span&gt;
     &lt;/div&gt;
     &lt;span class=&quot;text-small text-muted&quot;&gt;权重 1.665 GiB · GPU 缓存 1.008 GiB&lt;/span&gt;
   &lt;/div&gt;
@@ -920,7 +921,7 @@ html&gt;body{padding:0}&lt;/style&gt;
       &lt;button class=&quot;btn&quot; type=&quot;button&quot; data-view=&quot;target&quot; aria-pressed=&quot;false&quot;&gt;吃满方案&lt;/button&gt;
       &lt;button class=&quot;btn&quot; type=&quot;button&quot; data-view=&quot;benchmark&quot; aria-pressed=&quot;false&quot;&gt;实测对照&lt;/button&gt;
     &lt;/div&gt;
-    &lt;div class=&quot;text-small text-muted&quot; id=&quot;dk2500-view-caption&quot;&gt;当前：GPU 已工作，NPU 未枚举，CPU 与单通道内存承担过多。&lt;/div&gt;
+    &lt;div class=&quot;text-small text-muted&quot; id=&quot;dk2500-view-caption&quot;&gt;当前：GPU 已工作，NPU 已识别但尚无地面站任务，单通道内存仍是瓶颈。&lt;/div&gt;
   &lt;/div&gt;
 
   &lt;section class=&quot;panel&quot; data-panel=&quot;current&quot; aria-label=&quot;当前算力分工&quot;&gt;
@@ -942,8 +943,8 @@ html&gt;body{padding:0}&lt;/style&gt;
       &lt;div class=&quot;lane&quot;&gt;
         &lt;div class=&quot;lane-label&quot;&gt;NPU&lt;/div&gt;
         &lt;div class=&quot;lane-body&quot;&gt;
-          &lt;div class=&quot;allocation&quot;&gt;&lt;span class=&quot;idle-mark&quot; style=&quot;flex:1&quot;&gt;无任务：OpenVINO 仅识别 CPU、GPU&lt;/span&gt;&lt;/div&gt;
-          &lt;div class=&quot;status-line text-small&quot;&gt;225U 硬件含 Intel AI Boost，但当前系统未暴露设备。&lt;/div&gt;
+          &lt;div class=&quot;allocation&quot;&gt;&lt;span class=&quot;npu-mark&quot; style=&quot;flex:1&quot;&gt;Intel AI Boost 已就绪 · OpenVINO NPU&lt;/span&gt;&lt;/div&gt;
+          &lt;div class=&quot;status-line text-small&quot;&gt;驱动 32.0.100.4778；真实 NPU 编译/推理已通过，目前尚未分配地面站任务。&lt;/div&gt;
         &lt;/div&gt;
       &lt;/div&gt;
       &lt;div class=&quot;lane&quot;&gt;
@@ -956,7 +957,7 @@ html&gt;body{padding:0}&lt;/style&gt;
     &lt;/div&gt;
     &lt;div class=&quot;verdict&quot;&gt;
       &lt;span class=&quot;viz-badge&quot;&gt;结论&lt;/span&gt;
-      &lt;span&gt;DK2500 优势仅部分发挥：GPU 路径有效，但 NPU 完全闲置，8 GiB 单通道限制异构并发。&lt;/span&gt;
+      &lt;span&gt;GPU 路径有效，NPU 已激活；下一步把 Whisper/轻量模型迁入 NPU，但 8 GiB 单通道仍限制异构并发。&lt;/span&gt;
     &lt;/div&gt;
   &lt;/section&gt;
 
@@ -980,7 +981,7 @@ html&gt;body{padding:0}&lt;/style&gt;
         &lt;div class=&quot;lane-label&quot;&gt;NPU&lt;/div&gt;
         &lt;div class=&quot;lane-body&quot;&gt;
           &lt;div class=&quot;allocation&quot;&gt;&lt;span class=&quot;npu-mark&quot; style=&quot;flex:1&quot;&gt;Whisper ASR · 适合 NPU 的固定图模型&lt;/span&gt;&lt;/div&gt;
-          &lt;div class=&quot;status-line text-small&quot;&gt;先补齐 Intel AI Boost 驱动/BIOS；Qwen3-VL 仍以 GPU 为主。&lt;/div&gt;
+          &lt;div class=&quot;status-line text-small&quot;&gt;驱动已经补齐；下一步迁移 Whisper，Qwen3-VL 仍以 GPU 为主。&lt;/div&gt;
         &lt;/div&gt;
       &lt;/div&gt;
       &lt;div class=&quot;lane&quot;&gt;
@@ -1032,7 +1033,7 @@ html&gt;body{padding:0}&lt;/style&gt;
     &lt;span&gt;&lt;strong&gt;集成状态：&lt;/strong&gt;模型已安装并可独立推理；尚未接入地面站 UI/任务链。&lt;/span&gt;
     &lt;span&gt;&lt;strong&gt;测试条件：&lt;/strong&gt;336×278 图片 · 123 输入 token · 16 输出 token&lt;/span&gt;
   &lt;/div&gt;
-  &lt;div class=&quot;source-note text-small&quot;&gt;本机证据：OpenVINO 设备 CPU/GPU；NPU 未枚举。代码证据：Whisper 默认 GPU，MediaPipe 未设 delegate，火源检测仍为 OpenCV 规则。&lt;/div&gt;
+  &lt;div class=&quot;source-note text-small&quot;&gt;本机证据：OpenVINO 设备 CPU/GPU/NPU；NPU 驱动 32.0.100.4778，冒烟推理通过。代码证据：Whisper 当前默认 GPU，MediaPipe 未设 delegate，火源检测仍为 OpenCV 规则。&lt;/div&gt;
 
   &lt;script&gt;
     (() =&gt; {
@@ -1041,7 +1042,7 @@ html&gt;body{padding:0}&lt;/style&gt;
       const panels = Array.from(root.querySelectorAll(&#x27;[data-panel]&#x27;));
       const caption = root.querySelector(&#x27;#dk2500-view-caption&#x27;);
       const captions = {
-        current: &#x27;当前：GPU 已工作，NPU 未枚举，CPU 与单通道内存承担过多。&#x27;,
+        current: &#x27;当前：GPU 已工作，NPU 已识别但尚无地面站任务，单通道内存仍是瓶颈。&#x27;,
         target: &#x27;目标：Qwen→GPU，Whisper→NPU，控制与轻量视觉→CPU，内存升级双通道。&#x27;,
         benchmark: &#x27;实测：GPU 的核心收益是视觉首 token 延迟与更低的系统内存压力。&#x27;
       };
