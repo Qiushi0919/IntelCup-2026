@@ -1,0 +1,13 @@
+.\objects\crc32.o: Driver\MSP432P4xx\crc32.c
+.\objects\crc32.o: Driver\MSP432P4xx\crc32.h
+.\objects\crc32.o: D:\software2\MDK\ARM\ARMCC\Bin\..\include\stdint.h
+.\objects\crc32.o: D:\software2\MDK\TexasInstruments\MSP432P4xx_DFP\3.2.5\Device\Include\msp.h
+.\objects\crc32.o: D:\software2\MDK\TexasInstruments\MSP432P4xx_DFP\3.2.5\Device\Include\msp432p401r.h
+.\objects\crc32.o: D:\software2\MDK\TexasInstruments\MSP432P4xx_DFP\3.2.5\Device\Include\msp_compatibility.h
+.\objects\crc32.o: D:\software2\MDK\TexasInstruments\MSP432P4xx_DFP\3.2.5\Device\Include\msp432p401r_classic.h
+.\objects\crc32.o: D:\software2\MDK\ARM\CMSIS\5.0.1\CMSIS\Include\core_cm4.h
+.\objects\crc32.o: D:\software2\MDK\ARM\CMSIS\5.0.1\CMSIS\Include\cmsis_compiler.h
+.\objects\crc32.o: D:\software2\MDK\ARM\CMSIS\5.0.1\CMSIS\Include\cmsis_armcc.h
+.\objects\crc32.o: D:\software2\MDK\TexasInstruments\MSP432P4xx_DFP\3.2.5\Device\Include\system_msp432p401r.h
+.\objects\crc32.o: .\Driver\MSP432P4xx\debug.h
+.\objects\crc32.o: .\Driver\MSP432P4xx\hw_memmap.h

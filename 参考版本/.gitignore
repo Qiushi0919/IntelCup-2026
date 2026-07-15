@@ -1,0 +1,54 @@
+# Python and runtime caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Runtime output
+work/
+captures/
+recordings/
+logs/
+*.log
+*.tmp
+camera_test_*.jpg
+
+# Local model caches
+models/
+multimodal_recognition/models/
+*/multimodal_recognition/models/
+
+# IDE / OS
+.idea/
+.vscode/
+.obsidian/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local tools and packaged installers
+.tools/
+*.exe
+*.msi
+*.cab
+*.iso
+*.rar
+*.zip
+*.7z
+*.mp4
+*.wmv
+
+# Secrets
+.env
+.env.*
+*.pem
+*.key
+*credential*
+*secret*
+SN.txt
+serial*.txt
+license*.txt
+network_config.h

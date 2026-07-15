@@ -1,0 +1,151 @@
+本文档介绍了开发环境搭建步骤，关于二次开发的详细方法参考《二次开发》手册（只提供纸质版）。
+
+
+【说明】
+	本文档旨在帮助新用户使用提供的资料搭建起开发环境。
+	推荐电脑配置：
+	Win7 纯净版(或完全版) 因为 ghost 版缺少某些系统文件，而开发中用到，会导致不稳定。
+	
+
+【使用命令行开发】
+1 安装 px4_toolchain_installer_v14_win.exe
+
+2 在 c:\px4 下新建一个文件夹 名为 src(自定义)
+
+3 拷贝以下4个文件夹(源码)文件到c:\px4\src 下
+	ardupilot
+	PX4Firmware
+	PX4Nuttx
+	
+4 生成 config.mk 配置文件
+	打开 开始->所有程序->PX4 Toolchain->PX4 Console
+	通过 cd 命令进入 ardupilot\ArduCopter 文件夹
+	执行 make configure 命令
+	
+5 修改 config.mk 文件
+	执行 make configure 命令后会提示生成的 config.mk 的保存路径
+	**************************** /c/px4/src/ardupilot/ArduCopter
+	$ make configure
+	fatal: Not a git repository (or any of the parent directories): .git
+	../mk/configure.mk:2: WARNING - A /c/px4/src/ardupilot/config.mk file
+	has been written
+	../mk/configure.mk:2: Please edit the file to match your system configuration, 
+	if you use a different board or port
+	
+	根据提示的路径打开该文件 使用记事本等文本编辑器 修改 PX4_ROOT 和 NUTTX_SRC。
+	(如果以上操作均按照操作说明进行 则不必修改)
+		如下是我根据自己的情况修改的:
+		
+		# PX4Firmware tree: fill in the path to PX4Firmware repository from github.com/diydrones:
+		PX4_ROOT=../PX4Firmware
+
+		# PX4NuttX tree: fill in the path to PX4NuttX repository from github.com/diydrones:
+		NUTTX_SRC=../PX4NuttX/nuttx
+
+6 使用命令行编译代码
+	在(使用cd命令进入) c/px4/src/ardupilot/ArduCopter 路径下
+	执行:
+		  命令							功能
+								
+		make px4-v2				编译出适用于 Pixhawk 四旋翼的固件
+								仅更新 ArduCopter-v2.px4 文件
+								
+		make px4-v2-upload		编译并下载固件到 Pixhawk 硬件
+								(也可以通过地面站软件MissionPlanner将.px4文件烧写到Pixhawk)
+								
+		make clean				清理 ardupilot 文件夹
+		make px4-clean			清理 Pixhawk 和 PX4Nuttx 文件夹 (下次编译时 重新编译)
+	【注意】:
+		首次编译耗时非常大，配置中等偏上的机器可能需要1h左右。
+		编译过程中并不会持续弹出提示，看到串口没有提示，不用着急——继续等待！
+*******************************************************************************								
+	如果熟悉命令行操作及Linux,则再配合SourceInsight等工具即可。
+	如果喜欢IDE(Integrated Development Environment)下开发，请继续看:
+*******************************************************************************																
+								
+【使用IDE(Eclipse)开发】
+
+7 安装 JRE 
+	Eclipse 的运行基于 JRE
+	直接安装提供的JRE文件 
+	或者PC联网访问 http://www.java.com (看到的就是“免费Java下载”链接按钮 根据提示完成安装)
+	
+8 创建工程:
+	打开 开始->所有程序->PX4 Toolchain->PX4 Eclipse.
+	在 Eclipse 用鼠标依次操作：
+		File ->
+		New ->
+		Makefile Project with Exiting Code ->
+	通过[Browse...] 找到 拷贝过来的 ardupilot\ArduCopter 文件夹
+	上面的"Project Name"应该自动变成了"ArduCopter" (如果没有 自己起个简短、没有空格的英文名)
+	选中下面的"Cross GCC"项
+	点击 [Finish]
+	
+9 让 Eclipse 把 .pde 文件当做 C++ 文件
+	这个操作是为了让 .pde 格式的文件在 Eclipse 下视图优化(代码字体、颜色、注释文本)
+	但会导致"误判断"的警告，因为 Eclipse 不能看到部分内容的声明(但GCC编译器能找到)。
+	具体操作：
+		Window ->
+		Preferences ->
+		C/C++ ->
+		File Types ->
+		New ->
+			Pattern[*.pde]
+			Type:  [C++ Source File]
+		[OK]
+		[OK]
+		
+10 设置 按下 Tab 时使用 空格(Spaces)代替
+	需要两步操作：
+	第 1/2 步：
+		Window ->
+		Preferences ->
+		General ->
+		Editors ->
+		Text Editors ->
+		Insert spaces for tabs.
+		[OK]
+	第 2/2 步：
+		Window ->
+		Preferences ->
+		C/C++ ->
+		Code Style ->
+		Formatter ->
+			[New]
+			名称填写为 K&R Tab
+			弹出的对话框 选择 [Spaces only]
+		
+11 使用 Eclipse 编译代码
+	在左边的"Project Explorer"下的"ardupilot"文件夹上右击鼠标
+	选择"Properties"
+	弹出的对话框中 展开 C/C++ Build
+	通过 [File system] 定位到 ardupilot\ArduCopter 文件夹
+	(Build directory:选项就设定为刚才选定的目录了)
+	
+12 创建 make file 命令
+	在右边的"Make Target"选项卡下有和工程名相同的一个文件夹图标
+	在这里可以创建带不同参数(执行不同功能的)编译命令
+	下面有3个图标
+		绿圈：			新建 make 命令
+		带铅笔的绿圈：	修改已创建的 make 命令
+		带绿圈的锤子：	执行选中的 make 命令
+	创建方法：
+		点击第一个绿圈图标(New Make Target)
+		填写 命令行中 make 后面的参数即可
+		(例如填写 clean, 点击锤子的时候就相当于命令行下执行了 make clean)
+		
+	鼠标选中该文件夹，依次创建如下编译命令
+		px4-v2			编译出适用于 Pixhawk 四旋翼的固件
+						仅更新 ArduCopter-v2.px4 文件
+								
+		px4-v2-upload	编译并下载固件到 Pixhawk 硬件
+						(也可以通过地面站软件MissionPlanner将.px4文件烧写到Pixhawk)
+								
+		clean			清理 ardupilot 文件夹
+		px4-clean		清理 Pixhawk 和 PX4Nuttx 文件夹 (下次编译时 重新编译)
+	
+【总结】
+	如果使用命令行开发，可以不装 JAVA(或JRE)
+	如果使用Eclipse开发，至少需要 JRE 或JDK (Java Run Environment / Java Develop Kit).
+	如果你想和官网保持同步，可以安装、注册、使用GitHub.
+
