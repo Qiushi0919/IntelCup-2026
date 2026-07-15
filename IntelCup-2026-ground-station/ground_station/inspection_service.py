@@ -149,8 +149,21 @@ class InspectionCoordinator(QObject):
         self._qwen_stderr = ""
         self._qwen_ready = False
         self._qwen_busy = False
+        self._qwen_enabled = False
         self._current_request_id = ""
+        self._current_item: tuple[dict[str, Any], str] | None = None
+        self._qwen_started_at = 0.0
+        self._last_qwen_analysis = ""
         self._qwen_queue: deque[tuple[dict[str, Any], str]] = deque()
+        for entry in list(self._entries.values())[-24:]:
+            if entry.get("qwen_status") != "排队中":
+                continue
+            prompt = (
+                self._periodic_prompt(entry)
+                if entry.get("kind") in {"周期巡检", "手动分析"}
+                else self._event_prompt(entry)
+            )
+            self._qwen_queue.append((entry, prompt))
 
         interval = float(os.environ.get("INTELCUP_QWEN_INTERVAL_SECONDS", "8"))
         self.periodic_timer = QTimer(self)
@@ -161,6 +174,10 @@ class InspectionCoordinator(QObject):
         self.resource_timer.setInterval(5000)
         self.resource_timer.timeout.connect(self._resource_tick)
 
+        self.analysis_timer = QTimer(self)
+        self.analysis_timer.setInterval(1000)
+        self.analysis_timer.timeout.connect(self._analysis_tick)
+
     @property
     def log_root(self) -> Path:
         return self.store.root
@@ -168,6 +185,31 @@ class InspectionCoordinator(QObject):
     @property
     def active(self) -> bool:
         return self._active
+
+    @property
+    def qwen_enabled(self) -> bool:
+        return self._qwen_enabled
+
+    @property
+    def has_frame(self) -> bool:
+        return self._latest_frame is not None
+
+    def qwen_display_state(self) -> dict[str, Any]:
+        current_entry = self._current_item[0] if self._current_item else {}
+        return {
+            "enabled": self._qwen_enabled,
+            "busy": self._qwen_busy,
+            "queue_count": len(self._qwen_queue),
+            "current_kind": str(current_entry.get("kind", "")),
+            "current_summary": str(current_entry.get("summary", "")),
+            "elapsed_s": max(
+                0.0,
+                time.monotonic() - self._qwen_started_at,
+            )
+            if self._qwen_busy
+            else 0.0,
+            "last_analysis": self._last_qwen_analysis,
+        }
 
     def saved_entries(self) -> list[dict[str, Any]]:
         return self.store.load_entries(limit=60)
@@ -178,9 +220,11 @@ class InspectionCoordinator(QObject):
         self._active = True
         if not self.vision_thread.isRunning():
             self.vision_thread.start()
-        self.periodic_timer.start()
         self.resource_timer.start()
-        self._ensure_qwen_process()
+        self.qwen_status_changed.emit(
+            "disabled",
+            "Qwen推理未开启，小模型命中结果将保留在队列",
+        )
 
     def set_stream_connected(self, connected: bool) -> None:
         self._stream_connected = bool(connected)
@@ -189,19 +233,58 @@ class InspectionCoordinator(QObject):
 
     def stop(self) -> None:
         self._active = False
+        self._qwen_enabled = False
         self.periodic_timer.stop()
         self.resource_timer.stop()
+        self.analysis_timer.stop()
         if self.vision_thread.isRunning():
             self.vision_thread.stop()
-        process = self._qwen_process
-        self._qwen_process = None
-        self._qwen_ready = False
-        self._qwen_busy = False
-        if process is not None and process.state() != QProcess.NotRunning:
-            process.closeWriteChannel()
-            if not process.waitForFinished(1800):
-                process.kill()
-                process.waitForFinished(1200)
+        self._stop_qwen_process(preserve_current=False)
+
+    def set_qwen_enabled(self, enabled: bool) -> None:
+        enabled = bool(enabled)
+        if enabled == self._qwen_enabled:
+            if not enabled:
+                self.qwen_status_changed.emit(
+                    "disabled",
+                    f"Qwen推理未开启，保留 {len(self._qwen_queue)} 个排队任务",
+                )
+            return
+        self._qwen_enabled = enabled
+        if not enabled:
+            self.periodic_timer.stop()
+            self.analysis_timer.stop()
+            self._stop_qwen_process(preserve_current=True)
+            if self._active and not self.vision_thread.isRunning():
+                self.vision_thread.start()
+            self.qwen_status_changed.emit(
+                "disabled",
+                f"Qwen推理已关闭，保留 {len(self._qwen_queue)} 个排队任务",
+            )
+            return
+        if not self._active:
+            self.qwen_status_changed.emit("waiting", "等待图传画面后启动Qwen")
+            return
+        if self.vision_thread.isRunning():
+            self.vision_thread.stop()
+        if not self._qwen_queue and self._latest_frame is not None:
+            entry = self.store.create_entry(
+                "手动分析",
+                "Qwen推理开关",
+                "手动启动Qwen-VL复核最后一帧图传画面",
+                self._latest_frame,
+                self._latest_state,
+                [],
+            )
+            self._entries[entry["id"]] = entry
+            self.entry_created.emit(entry)
+            self._qwen_queue.append((entry, self._periodic_prompt(entry)))
+        self.periodic_timer.start()
+        self.qwen_status_changed.emit(
+            "loading",
+            f"Qwen推理已开启，等待处理 {len(self._qwen_queue)} 个任务",
+        )
+        self._ensure_qwen_process()
 
     def submit_frame(self, frame, flight_state: dict[str, Any]) -> None:
         if not self._active or not self._stream_connected or frame is None:
@@ -227,6 +310,9 @@ class InspectionCoordinator(QObject):
         self._create_event("火源", "小模型命中", summary, [payload], flight_state)
 
     def retry_qwen(self) -> None:
+        if not self._qwen_enabled:
+            self.qwen_status_changed.emit("disabled", "请先打开Qwen推理开关")
+            return
         self._ensure_qwen_process()
 
     def _on_vision_result(self, result: dict[str, Any]) -> None:
@@ -335,10 +421,21 @@ class InspectionCoordinator(QObject):
             self._qwen_queue.appendleft(item)
         else:
             self._qwen_queue.append(item)
-        self._dispatch_qwen()
+        if self._qwen_enabled:
+            self._dispatch_qwen()
+        else:
+            self.qwen_status_changed.emit(
+                "disabled",
+                f"Qwen推理未开启，已有 {len(self._qwen_queue)} 个任务排队",
+            )
 
     def _dispatch_qwen(self) -> None:
-        if not self._qwen_ready or self._qwen_busy or not self._qwen_queue:
+        if (
+            not self._qwen_enabled
+            or not self._qwen_ready
+            or self._qwen_busy
+            or not self._qwen_queue
+        ):
             return
         if not self._mock_enabled() and self._available_memory_gib() < 0.8:
             self.qwen_status_changed.emit("memory", "内存低于0.8GiB，Qwen任务暂缓")
@@ -362,11 +459,14 @@ class InspectionCoordinator(QObject):
         }
         self._qwen_busy = True
         self._current_request_id = entry["id"]
+        self._current_item = (entry, prompt)
+        self._qwen_started_at = time.monotonic()
+        self.analysis_timer.start()
         self.qwen_status_changed.emit("busy", f"Qwen正在分析：{entry['kind']}")
         process.write((json.dumps(request, ensure_ascii=False) + "\n").encode("utf-8"))
 
     def _ensure_qwen_process(self) -> None:
-        if not self._active:
+        if not self._active or not self._qwen_enabled:
             return
         if self._qwen_process is not None and self._qwen_process.state() != QProcess.NotRunning:
             return
@@ -464,9 +564,13 @@ class InspectionCoordinator(QObject):
                     error=str(payload.get("message", "Qwen分析失败")),
                 )
             self._entries[request_id] = updated
+            self._last_qwen_analysis = str(updated.get("qwen_analysis", ""))
             self.entry_updated.emit(updated)
         self._qwen_busy = False
         self._current_request_id = ""
+        self._current_item = None
+        self._qwen_started_at = 0.0
+        self.analysis_timer.stop()
         self.qwen_status_changed.emit("ready", "Qwen3-VL GPU已就绪")
         self._dispatch_qwen()
 
@@ -486,22 +590,51 @@ class InspectionCoordinator(QObject):
     def _qwen_process_error(self, _error) -> None:
         self._qwen_ready = False
         self._qwen_busy = False
+        self.analysis_timer.stop()
         self.qwen_status_changed.emit("error", "Qwen进程启动失败")
 
     def _qwen_process_finished(self, exit_code: int, _status) -> None:
         self._qwen_ready = False
         self._qwen_busy = False
         self._qwen_process = None
-        if self._active:
+        self.analysis_timer.stop()
+        if self._active and self._qwen_enabled:
             self.qwen_status_changed.emit("error", f"Qwen进程已退出，代码 {exit_code}")
 
     def _resource_tick(self) -> None:
-        if not self._active:
+        if not self._active or not self._qwen_enabled:
             return
         if self._qwen_process is None or self._qwen_process.state() == QProcess.NotRunning:
             self._ensure_qwen_process()
         elif self._qwen_ready and not self._qwen_busy:
             self._dispatch_qwen()
+
+    def _analysis_tick(self) -> None:
+        if not self._qwen_busy or self._current_item is None:
+            self.analysis_timer.stop()
+            return
+        elapsed = time.monotonic() - self._qwen_started_at
+        kind = self._current_item[0].get("kind", "巡检任务")
+        self.qwen_status_changed.emit(
+            "busy",
+            f"Qwen正在分析{kind}，已用时 {elapsed:.0f} 秒",
+        )
+
+    def _stop_qwen_process(self, preserve_current: bool) -> None:
+        if preserve_current and self._current_item is not None:
+            self._qwen_queue.appendleft(self._current_item)
+        self._current_item = None
+        self._current_request_id = ""
+        self._qwen_started_at = 0.0
+        self._qwen_ready = False
+        self._qwen_busy = False
+        process = self._qwen_process
+        self._qwen_process = None
+        if process is not None and process.state() != QProcess.NotRunning:
+            process.closeWriteChannel()
+            if not process.waitForFinished(1800):
+                process.kill()
+                process.waitForFinished(1200)
 
     @staticmethod
     def _event_prompt(entry: dict[str, Any]) -> str:

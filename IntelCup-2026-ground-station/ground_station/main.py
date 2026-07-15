@@ -206,6 +206,11 @@ class GroundStationWindow(QMainWindow):
         )
         self._inspection_vision_status = "idle"
         self._inspection_qwen_status = "idle"
+        self._inspection_qwen_message = "Qwen推理未开启"
+        self._qwen_inference_mode = False
+        self._qwen_resume_url = suggested_amb82_url()
+        self._resume_camera_pending = False
+        self._qwen_start_pending = False
 
         self.simulator = DroneSimulator(self)
         self.simulator.state_changed.connect(self._on_state_changed)
@@ -496,6 +501,9 @@ class GroundStationWindow(QMainWindow):
         self.flight_inspection_panel.retry_qwen_requested.connect(
             self.inspection_coordinator.retry_qwen
         )
+        self.flight_inspection_panel.qwen_toggled.connect(
+            self._set_qwen_inference_enabled
+        )
 
         self.device_records_tabs = QTabWidget()
         self.device_records_tabs.addTab(self.device_panel, "设备 / 串口 / 网络")
@@ -655,6 +663,8 @@ class GroundStationWindow(QMainWindow):
                 "loading": ("● AI 加载中", "chipInfo"),
                 "memory": ("● AI 等待内存", "chipWarn"),
                 "error": ("● AI 异常", "chipWarn"),
+                "disabled": ("● AI 排队模式", "chipInfo"),
+                "waiting": ("● AI 等待画面", "chipInfo"),
             }
             ai_text, ai_style = ai_states.get(
                 self._inspection_qwen_status,
@@ -686,7 +696,10 @@ class GroundStationWindow(QMainWindow):
                 ai_style,
             ),
         ]
-        if self.camera_state.connected:
+        if self._qwen_inference_mode:
+            camera_text = "● 图传 已暂停"
+            camera_style = "chipInfo"
+        elif self.camera_state.connected:
             camera_text = f"● 图传 {self.camera_state.fps:.1f} FPS"
             camera_style = "chipGood"
         elif self._camera_connecting:
@@ -1299,7 +1312,19 @@ class GroundStationWindow(QMainWindow):
         self.camera_thread.frame_ready.connect(self._on_camera_frame)
         self.camera_thread.fire_confirmed.connect(self._on_fire_confirmed)
         self.camera_thread.status_changed.connect(self._on_camera_status)
+        self.camera_thread.finished.connect(self._on_camera_thread_finished)
         self.camera_thread.start()
+
+    def _on_camera_thread_finished(self) -> None:
+        self.camera_thread = None
+        if self._qwen_start_pending and self._qwen_inference_mode:
+            self._qwen_start_pending = False
+            self.inspection_coordinator.set_qwen_enabled(True)
+            self._refresh_qwen_inference_view()
+            return
+        if self._resume_camera_pending and not self._qwen_inference_mode:
+            self._resume_camera_pending = False
+            QTimer.singleShot(150, lambda: self.connect_camera(self._qwen_resume_url))
 
     def _toggle_lens_correction(self, enabled: bool) -> None:
         self._set_lens_correction(enabled, self.lens_correction_strength)
@@ -1727,14 +1752,18 @@ class GroundStationWindow(QMainWindow):
         thread_active = bool(
             self.camera_thread and self.camera_thread.isRunning()
         )
-        self.connect_camera_button.setEnabled(not thread_active)
-        self.connect_camera_button.setText(
-            "相机已连接"
-            if connected
-            else "重连中…"
-            if thread_active
-            else "重新连接"
-        )
+        if self._qwen_inference_mode:
+            self.connect_camera_button.setEnabled(False)
+            self.connect_camera_button.setText("Qwen推理中")
+        else:
+            self.connect_camera_button.setEnabled(not thread_active)
+            self.connect_camera_button.setText(
+                "相机已连接"
+                if connected
+                else "重连中…"
+                if thread_active
+                else "重新连接"
+            )
         if connected and not was_connected:
             self._append_log("INFO", f"相机在线：{fps:.1f} FPS · {message}")
         elif (
@@ -1766,8 +1795,11 @@ class GroundStationWindow(QMainWindow):
     def _on_inspection_qwen_status(self, status: str, message: str) -> None:
         changed = status != self._inspection_qwen_status
         self._inspection_qwen_status = status
+        self._inspection_qwen_message = message
         self.flight_inspection_panel.set_qwen_status(status, message)
         self._update_header_status()
+        if self._qwen_inference_mode:
+            self._refresh_qwen_inference_view()
         if changed and status in {"ready", "memory", "error"}:
             level = "INFO" if status == "ready" else "WARNING"
             self._append_log(level, message)
@@ -1780,6 +1812,77 @@ class GroundStationWindow(QMainWindow):
         self.device_records_tabs.setCurrentWidget(self.flight_inspection_panel)
         self._append_log("WARNING", f"巡检识别：{summary}")
         self.statusBar().showMessage(f"巡检发现{kind}：{summary}", 8000)
+
+    def _set_qwen_inference_enabled(self, enabled: bool) -> None:
+        if enabled:
+            if not self.inspection_coordinator.has_frame:
+                self.flight_inspection_panel.set_qwen_enabled(False)
+                QMessageBox.information(
+                    self,
+                    "暂无图传画面",
+                    "请先连接无人机图传并收到至少一帧画面，再启动Qwen推理。",
+                )
+                return
+            self._qwen_inference_mode = True
+            self._main_view_mode = "qwen"
+            if self.camera_thread is not None:
+                self._qwen_resume_url = self.camera_thread.url
+            self.flight_inspection_panel.set_qwen_enabled(True)
+            if self.camera_thread and self.camera_thread.isRunning():
+                self._qwen_start_pending = True
+                self._inspection_qwen_status = "waiting"
+                self._inspection_qwen_message = "正在停止图传，完成后启动Qwen"
+                self.flight_inspection_panel.set_qwen_status(
+                    "waiting",
+                    self._inspection_qwen_message,
+                )
+                self._refresh_qwen_inference_view()
+                self.camera_thread.request_stop()
+            else:
+                self.inspection_coordinator.set_qwen_enabled(True)
+                self._refresh_qwen_inference_view()
+            self._append_log(
+                "INFO",
+                "已进入Qwen推理模式：暂停图传和OpenCV，开始处理保留队列",
+            )
+            return
+
+        self._qwen_inference_mode = False
+        self._qwen_start_pending = False
+        self.inspection_coordinator.set_qwen_enabled(False)
+        self.flight_inspection_panel.set_qwen_enabled(False)
+        if self._main_view_mode == "qwen":
+            self._main_view_mode = "flight"
+            self.video_panel.show_returning_mode("恢复无人机图传")
+        self._resume_camera_pending = True
+        if self.camera_thread is None or not self.camera_thread.isRunning():
+            self.camera_thread = None
+            self._resume_camera_pending = False
+            QTimer.singleShot(150, lambda: self.connect_camera(self._qwen_resume_url))
+        self._append_log("INFO", "已关闭Qwen推理，正在恢复无人机图传与OpenCV巡检")
+
+    def _refresh_qwen_inference_view(self) -> None:
+        state = self.inspection_coordinator.qwen_display_state()
+        lines = [
+            f"运行阶段：{self._inspection_qwen_message}",
+            f"排队任务：{int(state.get('queue_count', 0))} 个",
+        ]
+        current_kind = str(state.get("current_kind", ""))
+        current_summary = str(state.get("current_summary", ""))
+        if current_kind:
+            lines.append(f"当前任务：{current_kind} · {current_summary}")
+        if state.get("busy"):
+            lines.append(f"推理耗时：{float(state.get('elapsed_s', 0.0)):.0f} 秒")
+            lines.append("分析进度：视觉编码与文字生成中，请稍候…")
+        last_analysis = str(state.get("last_analysis", "")).strip()
+        if last_analysis:
+            lines += ["", f"最近一次模型输出：{last_analysis}"]
+        lines += [
+            "",
+            "资源策略：图传读取和OpenCV已暂停，Qwen独占当前推理资源",
+            "关闭飞行记录中的Qwen开关后，将自动恢复图传。",
+        ]
+        self.video_panel.show_qwen_mode(self._inspection_qwen_status, lines)
 
     def save_snapshot(self) -> None:
         CAPTURE_DIR.mkdir(exist_ok=True)

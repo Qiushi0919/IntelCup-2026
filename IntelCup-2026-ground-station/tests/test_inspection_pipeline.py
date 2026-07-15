@@ -77,6 +77,24 @@ class InspectionPipelineTests(unittest.TestCase):
             self.assertEqual(payloads[1]["type"], "result")
             self.assertEqual(payloads[1]["request_id"], "demo-1")
 
+    def test_pending_queue_is_restored_from_append_log(self) -> None:
+        app = QCoreApplication.instance() or QCoreApplication([])
+        with tempfile.TemporaryDirectory() as directory:
+            store = InspectionLogStore(Path(directory))
+            store.create_entry(
+                "人脸",
+                "小模型命中",
+                "识别到1张人脸",
+                np.zeros((80, 120, 3), dtype=np.uint8),
+                {"x": 0, "y": 0, "altitude": 0, "yaw": 0},
+                [],
+            )
+            coordinator = InspectionCoordinator(Path(directory))
+            self.assertFalse(coordinator.qwen_enabled)
+            self.assertEqual(coordinator.qwen_display_state()["queue_count"], 1)
+            coordinator.stop()
+        app.processEvents()
+
     @unittest.skipUnless(
         QWEN_PYTHON.exists() and QWEN_MODEL_DIR.exists(),
         "Local Qwen runtime is not installed",
@@ -99,6 +117,9 @@ class InspectionPipelineTests(unittest.TestCase):
                     SimpleNamespace(bbox=(20, 30, 40, 50), confidence=0.88),
                     {"x": 35, "y": 35, "altitude": 1.2, "yaw": 20},
                 )
+                self.assertFalse(coordinator.qwen_enabled)
+                self.assertEqual(coordinator.qwen_display_state()["queue_count"], 1)
+                coordinator.set_qwen_enabled(True)
 
                 loop = QEventLoop()
                 coordinator.entry_updated.connect(lambda _entry: loop.quit())

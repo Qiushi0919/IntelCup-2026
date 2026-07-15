@@ -108,9 +108,12 @@ class CameraThread(QThread):
             )
 
     def stop(self) -> None:
+        self.request_stop()
+        self.wait(5000)
+
+    def request_stop(self) -> None:
         self._stop_requested = True
         self.requestInterruption()
-        self.wait(5000)
 
     def set_lens_correction(self, enabled: bool, strength: int) -> None:
         self.lens_corrector.configure(enabled, strength)

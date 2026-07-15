@@ -65,8 +65,8 @@ from models import (
 )
 
 
-DEFAULT_AMB82_RTSP_URL = "rtsp://192.168.0.102:554"
-DEFAULT_AMB82_IP = "192.168.0.102"
+DEFAULT_AMB82_RTSP_URL = "rtsp://10.51.117.2:554"
+DEFAULT_AMB82_IP = "10.51.117.2"
 DEFAULT_AMB82_PORT = "554"
 CAMERA_SETTINGS_PATH = Path(__file__).resolve().parent / "camera_settings.json"
 
@@ -1756,6 +1756,27 @@ class VideoPanel(QFrame):
         )
         self.hint.setText("双击检测框可将目标加入候选任务")
 
+    def show_qwen_mode(self, status: str, lines: list[str]) -> None:
+        self.map_confirm_panel.hide()
+        self.attitude_3d_panel.hide()
+        self.parameter_check_panel.hide()
+        self.simulation_host.hide()
+        self.canvas.show()
+        self.canvas.set_demo_mode(False)
+        self.canvas.set_detections([])
+        self.canvas.set_inspection_detections([])
+        self.canvas.show_status_report("Qwen-VL 推理工作台", lines)
+        self.view_title.setText("Qwen-VL 图像分析")
+        self.mode_label.setText("GPU 推理模式")
+        self.camera_status.setText("● 图传读取已暂停 · 使用已保存截图")
+        self.camera_status.setObjectName(
+            "chipWarn" if status in {"loading", "busy", "memory"} else "chipGood"
+        )
+        self.hint.setText("关闭 Qwen 推理开关后，将自动重新连接无人机图传")
+        self.info_bar.setText(f"Qwen推理 | {status} | 图传与OpenCV已暂停")
+        self.camera_status.style().unpolish(self.camera_status)
+        self.camera_status.style().polish(self.camera_status)
+
     def show_returning_mode(self, task_label: str = "") -> None:
         self.map_confirm_panel.hide()
         self.attitude_3d_panel.hide()
@@ -3371,6 +3392,7 @@ class InspectionEventCard(QFrame):
 
 class FlightInspectionLogPanel(QWidget):
     retry_qwen_requested = pyqtSignal()
+    qwen_toggled = pyqtSignal(bool)
 
     def __init__(self, log_root: Path, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -3383,7 +3405,9 @@ class FlightInspectionLogPanel(QWidget):
         layout.setSpacing(8)
         title = QLabel("飞行巡检记录")
         title.setObjectName("sectionTitle")
-        subtitle = QLabel("小模型识别、Qwen-VL分析、飞行状态和截图会持续追加到本地。")
+        subtitle = QLabel(
+            "默认只跑小模型并保留Qwen队列；手动开启Qwen后暂停图传进行分析。"
+        )
         subtitle.setObjectName("muted")
         subtitle.setWordWrap(True)
         layout.addWidget(title)
@@ -3399,13 +3423,14 @@ class FlightInspectionLogPanel(QWidget):
         layout.addLayout(statuses)
 
         buttons = QHBoxLayout()
-        retry = QPushButton("重试Qwen")
-        retry.clicked.connect(self.retry_qwen_requested.emit)
+        self.qwen_toggle = QPushButton("启动 Qwen 推理")
+        self.qwen_toggle.setCheckable(True)
+        self.qwen_toggle.toggled.connect(self._on_qwen_toggled)
         open_folder = QPushButton("打开日志目录")
         open_folder.clicked.connect(self._open_log_folder)
         clear_display = QPushButton("清空当前显示")
         clear_display.clicked.connect(self.clear_display)
-        buttons.addWidget(retry)
+        buttons.addWidget(self.qwen_toggle)
         buttons.addWidget(open_folder)
         buttons.addWidget(clear_display)
         layout.addLayout(buttons)
@@ -3413,7 +3438,9 @@ class FlightInspectionLogPanel(QWidget):
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setFrameShape(QFrame.NoFrame)
+        self.scroll.setStyleSheet("QScrollArea { background: #071321; border: none; }")
         container = QWidget()
+        container.setStyleSheet("background: #071321;")
         self.cards_layout = QVBoxLayout(container)
         self.cards_layout.setContentsMargins(0, 0, 0, 0)
         self.cards_layout.setSpacing(8)
@@ -3461,6 +3488,17 @@ class FlightInspectionLogPanel(QWidget):
     def set_qwen_status(self, status: str, message: str) -> None:
         self._set_status(self.qwen_status, "Qwen", status, message)
 
+    def set_qwen_enabled(self, enabled: bool) -> None:
+        self.qwen_toggle.blockSignals(True)
+        self.qwen_toggle.setChecked(enabled)
+        self.qwen_toggle.setText(
+            "关闭 Qwen 推理" if enabled else "启动 Qwen 推理"
+        )
+        self.qwen_toggle.setObjectName("warningButton" if enabled else "primaryButton")
+        self.qwen_toggle.style().unpolish(self.qwen_toggle)
+        self.qwen_toggle.style().polish(self.qwen_toggle)
+        self.qwen_toggle.blockSignals(False)
+
     def clear_display(self) -> None:
         for card in self._cards.values():
             card.deleteLater()
@@ -3472,6 +3510,10 @@ class FlightInspectionLogPanel(QWidget):
     def _open_log_folder(self) -> None:
         self.log_root.mkdir(parents=True, exist_ok=True)
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(self.log_root.resolve())))
+
+    def _on_qwen_toggled(self, enabled: bool) -> None:
+        self.set_qwen_enabled(enabled)
+        self.qwen_toggled.emit(enabled)
 
     @staticmethod
     def _set_status(label: QLabel, prefix: str, status: str, message: str) -> None:
@@ -3503,7 +3545,7 @@ class DevicePanel(QWidget):
         form = QFormLayout()
         saved_ip, saved_port = load_camera_endpoint()
         self.camera_ip = QLineEdit(saved_ip)
-        self.camera_ip.setPlaceholderText("例如 192.168.0.102")
+        self.camera_ip.setPlaceholderText("例如 10.51.117.2")
         self.camera_port = QLineEdit(saved_port)
         self.camera_port.setPlaceholderText("例如 554")
         camera_endpoint_row = QHBoxLayout()

@@ -17,7 +17,7 @@ from tkinter import messagebox, ttk
 APP_DIR = Path(__file__).resolve().parent
 CAPTURE_DIR = APP_DIR / "captures"
 RECORD_DIR = APP_DIR / "recordings"
-DEFAULT_CAMERA_URL = "rtsp://172.25.135.2:554"
+DEFAULT_CAMERA_URL = "rtsp://10.51.117.2:554"
 
 
 class CameraWorker:

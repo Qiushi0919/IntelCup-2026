@@ -251,7 +251,12 @@ class AMB82Camera:
                 )
                 if host not in hosts and address.packed[3] != 2:
                     hosts.append(host)
-        for host in ("10.127.156.2", "172.25.135.2", "10.75.128.2"):
+        for host in (
+            "10.51.117.2",
+            "10.127.156.2",
+            "172.25.135.2",
+            "10.75.128.2",
+        ):
             if host not in hosts:
                 hosts.append(host)
         return hosts
