@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="description" content="智驭低空枢纽作品集动态封面与功能汇总" />
+  <title>智驭低空枢纽 · 作品集封面预览</title>
+  <style>
+    :root{--blue:#0878d5;--navy:#09263f;--muted:#637b90;--line:#d9e7f2;--paper:#fff;--bg:#f6f9fc}
+    *{box-sizing:border-box}html{color-scheme:light}body{margin:0;background:var(--bg);color:#112b43;font-family:Inter,"PingFang SC","Microsoft YaHei",system-ui,sans-serif}
+    a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
+    .page{width:min(1180px,calc(100% - 40px));margin:0 auto;padding:68px 0 90px}
+    .page-head{margin-bottom:28px}.page-head small{display:block;color:#7d91a2;font-weight:760;letter-spacing:.08em;text-transform:uppercase}.page-head h1{margin:7px 0 8px;font-size:clamp(28px,4vw,44px);letter-spacing:-.04em}.page-head p{margin:0;color:var(--muted)}
+    .project-card{position:relative;display:grid;grid-template-columns:330px minmax(0,1fr);gap:38px;align-items:center;padding:30px;background:var(--paper);border:1px solid var(--line);border-radius:27px;box-shadow:0 22px 60px rgba(20,53,82,.09)}
+    .cover-trigger{position:relative;display:block;width:100%;aspect-ratio:1;padding:0;overflow:hidden;border:0;border-radius:20px;background:#061421;cursor:zoom-in;box-shadow:0 14px 34px rgba(7,31,52,.22);transition:transform .28s ease,box-shadow .28s ease}
+    .cover-trigger:hover,.cover-trigger:focus-visible{transform:scale(1.035);box-shadow:0 20px 48px rgba(7,31,52,.3)}
+    .cover-trigger video{width:100%;height:100%;display:block;object-fit:cover;pointer-events:none}
+    .cover-hint{position:absolute;right:12px;top:12px;padding:7px 10px;border-radius:999px;background:rgba(4,20,34,.72);backdrop-filter:blur(8px);color:#fff;font-size:11px;font-weight:800;letter-spacing:.03em}
+    .project-copy h2{margin:0;color:var(--blue);font-size:clamp(25px,3vw,38px);line-height:1.15;letter-spacing:-.025em}.project-copy .en{display:block;margin-top:5px;color:#8296a8;font-size:.45em;font-weight:700;letter-spacing:.015em}
+    .project-copy .authors{margin:15px 0 5px;color:#2c5677;font-size:18px}.project-copy .meta{margin:0 0 18px;font-style:italic;font-weight:800}.project-copy .summary{max-width:700px;margin:0 0 20px;color:#405d75;font-size:17px;line-height:1.72}
+    .links{display:flex;flex-wrap:wrap;gap:16px;font-weight:820}
+    .feature-overlay{position:fixed;left:50%;top:50%;z-index:100;width:min(1080px,94vw);max-height:92vh;overflow:auto;padding:18px;border:1px solid rgba(255,255,255,.5);border-radius:28px;background:rgba(239,247,255,.97);backdrop-filter:blur(18px);box-shadow:0 0 0 100vmax rgba(4,18,31,.68),0 35px 110px rgba(0,0,0,.38);opacity:0;visibility:hidden;pointer-events:none;transform:translate(-50%,-50%) scale(.36);transform-origin:center;transition:opacity .22s ease,transform .36s cubic-bezier(.2,.8,.2,1),visibility .36s}
+    .project-card.is-open .feature-overlay{opacity:1;visibility:visible;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+    .overlay-head{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:6px 5px 15px}.overlay-head h3{margin:0;color:var(--navy);font-size:25px;line-height:1.15}.overlay-head h3 span{display:block;margin-top:4px;color:#7890a4;font-size:12px;letter-spacing:.04em}.close{width:38px;height:38px;border:1px solid #c9dcea;border-radius:50%;background:#fff;color:#24455f;font-size:23px;cursor:pointer}
+    .feature-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.feature{position:relative;overflow:hidden;aspect-ratio:16/10;border-radius:16px;background:#071625;box-shadow:0 10px 26px rgba(15,45,70,.12)}.feature video{width:100%;height:100%;display:block;object-fit:cover}.feature.flight video{object-fit:contain}.feature b{position:absolute;left:10px;bottom:9px;padding:7px 10px;border-radius:10px;background:rgba(4,18,31,.76);backdrop-filter:blur(7px);color:white;font-size:13px}
+    .overlay-foot{display:flex;flex-wrap:wrap;gap:8px;padding:14px 4px 2px}.overlay-foot span{padding:7px 10px;border:1px solid #cfe0ed;border-radius:999px;background:#fff;color:#315a79;font-size:11px;font-weight:800}
+    body.overlay-open{overflow:hidden}
+    :focus-visible{outline:3px solid rgba(8,120,213,.48);outline-offset:3px}
+    @media(max-width:760px){.page{width:min(100% - 24px,1180px);padding-top:30px}.project-card{grid-template-columns:1fr;gap:24px;padding:18px}.cover-trigger{max-width:360px}.feature-overlay{padding:11px;border-radius:20px}.feature-grid{grid-template-columns:repeat(2,1fr)}.feature{aspect-ratio:4/3}.overlay-head h3{font-size:20px}}
+    @media(max-width:460px){.feature-grid{grid-template-columns:1fr}.feature{aspect-ratio:16/9}}
+    @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}.cover-trigger,.feature-overlay{transition:none}}
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="page-head">
+      <small>Portfolio Cover Interaction</small>
+      <h1>作品集封面交互预览</h1>
+      <p>鼠标移入封面，或使用键盘聚焦后按 Enter，即可查看完整功能汇总。</p>
+    </header>
+
+    <article class="project-card" id="projectCard">
+      <button class="cover-trigger" id="coverTrigger" type="button" aria-expanded="false" aria-controls="featureOverlay" aria-label="展开智驭低空枢纽完整功能汇总">
+        <video autoplay muted loop playsinline preload="metadata" poster="assets/portfolio-cover/portfolio-cover-poster.jpg" src="assets/portfolio-cover/portfolio-cover.mp4"></video>
+        <span class="cover-hint">悬停放大 ↗</span>
+      </button>
+
+      <div class="project-copy">
+        <h2>智驭低空枢纽<span class="en">Multimodal Ground Station for Low-Altitude Fire Patrol</span></h2>
+        <p class="authors">谢秋实 · 朱拓源 · 庞亚宸</p>
+        <p class="meta">Intel Cup Embedded AI Track, 2026</p>
+        <p class="summary">基于 Intel DK-2500 的多模态无人机地面站：用手势与视线生成任务，完成仿真规划、自主巡逻、目标识别、安全确认和全过程记录。</p>
+        <div class="links"><a href="index.html">项目主页</a><a href="https://github.com/Qiushi0919/IntelCup-2026" target="_blank" rel="noopener">项目仓库</a></div>
+      </div>
+
+      <section class="feature-overlay" id="featureOverlay" aria-label="智驭低空枢纽功能汇总">
+        <div class="overlay-head">
+          <h3>智驭低空枢纽 · 核心功能<span>Six real system demonstrations</span></h3>
+          <button class="close" id="closeOverlay" type="button" aria-label="关闭功能汇总">×</button>
+        </div>
+        <div class="feature-grid">
+          <div class="feature"><video autoplay muted loop playsinline preload="metadata" src="assets/portfolio-cover/gesture-gaze.mp4"></video><b>手势 · 视线输入</b></div>
+          <div class="feature"><video autoplay muted loop playsinline preload="metadata" src="assets/nationals/demos/self-check.mp4"></video><b>姿态自检</b></div>
+          <div class="feature"><video autoplay muted loop playsinline preload="metadata" src="assets/portfolio-cover/simulation.mp4"></video><b>仿真飞行</b></div>
+          <div class="feature"><video autoplay muted loop playsinline preload="metadata" src="assets/portfolio-cover/free-route.mp4"></video><b>自由选点巡逻</b></div>
+          <div class="feature flight"><video autoplay muted loop playsinline preload="metadata" src="assets/portfolio-cover/flight-summary.mp4"></video><b>起飞 · 巡航 · 降落</b></div>
+          <div class="feature"><video autoplay muted loop playsinline preload="metadata" src="assets/portfolio-cover/text-recognition.mp4"></video><b>文字识别</b></div>
+        </div>
+        <div class="overlay-foot"><span>多模态交互</span><span>三维仿真</span><span>自主路线规划</span><span>低空巡检</span><span>边缘视觉识别</span><span>安全飞行管理</span></div>
+      </section>
+    </article>
+  </main>
+
+  <script>
+    const card = document.getElementById('projectCard');
+    const trigger = document.getElementById('coverTrigger');
+    const closeButton = document.getElementById('closeOverlay');
+    const canHover = window.matchMedia('(hover:hover) and (pointer:fine)').matches;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+    const setOpen = open => {
+      card.classList.toggle('is-open', open);
+      trigger.setAttribute('aria-expanded', String(open));
+      document.body.classList.toggle('overlay-open', open);
+    };
+
+    if (canHover) {
+      card.addEventListener('pointerenter', () => setOpen(true));
+      card.addEventListener('pointerleave', () => setOpen(false));
+    }
+    trigger.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        setOpen(true);
+      }
+    });
+    trigger.addEventListener('click', () => canHover ? setOpen(true) : setOpen(!card.classList.contains('is-open')));
+    closeButton.addEventListener('click', event => { event.stopPropagation(); trigger.focus(); setOpen(false); });
+    document.addEventListener('keydown', event => { if (event.key === 'Escape') { trigger.focus(); setOpen(false); } });
+    card.addEventListener('focusout', event => { if (!card.contains(event.relatedTarget)) setOpen(false); });
+    if (reduceMotion) document.querySelectorAll('video').forEach(video => video.pause());
+  </script>
+</body>
+</html>
