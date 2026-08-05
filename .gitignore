@@ -1,3 +1,4 @@
 演示视频.mp4
 *.mp4
 !assets/nationals/national-finals-demo.mp4
+!assets/nationals/demos/*.mp4
