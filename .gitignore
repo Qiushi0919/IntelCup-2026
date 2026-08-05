@@ -2,3 +2,4 @@
 *.mp4
 !assets/nationals/national-finals-demo.mp4
 !assets/nationals/demos/*.mp4
+!assets/nationals/ppt-slides/*.mp4
