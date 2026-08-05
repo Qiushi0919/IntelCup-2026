@@ -3,217 +3,120 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>智驭低空枢纽 | 多模态无人机地面站系统</title>
-  <meta name="description" content="智驭低空枢纽：面向低空巡检与火源识别的多模态无人机地面站系统项目展示页。" />
+  <title>智驭低空枢纽 | 面向低空消防巡检的多模态地面站系统</title>
+  <meta name="description" content="华中科技大学 2026 英特尔杯全国评审项目：基于 Intel DK-2500 的低空消防巡检、多模态交互、自主飞行与目标识别系统。" />
+  <meta name="theme-color" content="#005bac" />
+  <meta property="og:title" content="智驭低空枢纽 · 2026 英特尔杯全国评审版" />
+  <meta property="og:description" content="从多模态任务输入到自主巡逻、目标识别、安全控制与报告导出的完整闭环。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://qiushi0919.github.io/IntelCup-2026/" />
+  <meta property="og:image" content="https://qiushi0919.github.io/IntelCup-2026/assets/nationals/team-at-national-finals-2.jpg" />
   <style>
     :root {
-      --hust:#005BAC;
+      --hust:#005bac;
       --hust-dark:#073e78;
-      --blue:#1a73e8;
-      --sky:#eaf5ff;
-      --cyan:#05a9c7;
-      --green:#18a66a;
-      --orange:#ff7a1a;
-      --red:#df3d32;
-      --ink:#152437;
-      --muted:#64748b;
-      --soft:#f5f8fc;
-      --paper:rgba(255,255,255,.88);
-      --line:#dce7f2;
-      --shadow:0 20px 60px rgba(10,45,90,.12);
-      --radius:24px;
+      --blue:#247ee8;
+      --cyan:#08a4c7;
+      --green:#168f66;
+      --orange:#f37a20;
+      --ink:#14283d;
+      --muted:#60758a;
+      --line:#d9e6f2;
+      --soft:#f3f8fd;
+      --paper:rgba(255,255,255,.9);
+      --shadow:0 20px 60px rgba(17,58,96,.12);
+      --radius:26px;
     }
     *{box-sizing:border-box}
-    html{scroll-behavior:smooth}
-    body{margin:0;color:var(--ink);background:
-      radial-gradient(circle at 12% 0%, rgba(0,91,172,.16), transparent 28%),
-      radial-gradient(circle at 88% 10%, rgba(5,169,199,.15), transparent 30%),
-      linear-gradient(180deg,#f8fbff 0%,#eef5fb 54%,#f8fbff 100%);
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei","PingFang SC","Noto Sans CJK SC",Arial,sans-serif;line-height:1.65;}
-    a{color:var(--hust);text-decoration:none} a:hover{text-decoration:underline}
+    html{scroll-behavior:smooth;scroll-padding-top:96px}
+    body{margin:0;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei","PingFang SC","Noto Sans CJK SC",Arial,sans-serif;line-height:1.65;background:radial-gradient(circle at 10% 0%,rgba(53,137,226,.17),transparent 28%),radial-gradient(circle at 92% 12%,rgba(0,180,210,.14),transparent 29%),linear-gradient(180deg,#f9fcff 0%,#edf5fb 52%,#f8fbfe 100%)}
+    body::before,body::after{content:"";position:fixed;z-index:-1;border-radius:50%;filter:blur(10px);pointer-events:none}
+    body::before{width:340px;height:340px;left:-120px;top:18%;background:radial-gradient(circle,rgba(38,132,225,.2),transparent 68%)}
+    body::after{width:440px;height:440px;right:-160px;top:34%;background:radial-gradient(circle,rgba(7,173,194,.18),transparent 68%)}
+    a{color:var(--hust);text-decoration:none}
+    a:hover{text-decoration:underline}
+    button,input{font:inherit}
     img{max-width:100%}
-    .container{max-width:1220px;margin:0 auto;padding:0 26px}
-    .topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.86);backdrop-filter:blur(18px);border-bottom:1px solid rgba(220,231,242,.88)}
-    .nav{height:72px;display:flex;align-items:center;justify-content:space-between;gap:22px}
-    .brand{display:flex;align-items:center;gap:14px;min-width:0;color:var(--ink)}
-    .brand img{height:42px;width:auto;display:block}
-    .brand-title{font-weight:900;letter-spacing:.02em;white-space:nowrap}
-    .navlinks{display:flex;gap:18px;align-items:center;font-size:14px;white-space:nowrap}
-    .navlinks a{color:#334155;font-weight:650}
-    .hero{padding:72px 0 46px}
-    .hero-grid{display:grid;grid-template-columns:minmax(0,1.02fr) minmax(420px,.98fr);gap:34px;align-items:center}
-    .logo-strip{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:22px}
-    .hust-logo-card{background:white;border:1px solid var(--line);border-radius:18px;padding:12px 18px;box-shadow:0 12px 32px rgba(18,50,82,.08)}
-    .hust-logo-card img{height:58px;display:block}
-    .contest-card{display:flex;align-items:center;gap:10px;background:white;border:1px solid var(--line);border-radius:18px;padding:9px 14px;box-shadow:0 12px 32px rgba(18,50,82,.08)}
-    .contest-card img{height:50px;width:auto}
-    .contest-card span{font-size:13px;color:#475569;font-weight:700;line-height:1.2}
-    .eyebrow{display:inline-flex;gap:8px;align-items:center;border:1px solid rgba(0,91,172,.18);background:rgba(255,255,255,.75);border-radius:999px;padding:8px 14px;color:#1e4f83;font-weight:750;font-size:14px;box-shadow:0 10px 28px rgba(0,91,172,.08)}
-    h1{font-size:clamp(36px,5.4vw,64px);line-height:1.12;margin:18px 0 14px;letter-spacing:-.045em}
-    .subtitle{font-size:clamp(17px,2vw,23px);color:#365775;line-height:1.45;margin:0 0 18px;max-width:820px}
-    .authors{font-size:18px;margin:18px 0 4px;color:#20364c} .authors strong{font-weight:850}
-    .meta{display:flex;gap:10px;flex-wrap:wrap;color:#5f7185;font-size:14px}
-    .meta span{background:rgba(255,255,255,.7);border:1px solid var(--line);border-radius:999px;padding:6px 10px}
-    .author-note{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:14px;color:#41556a;font-size:15px;font-weight:650}
-    .author-note > span{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border-radius:999px;background:rgba(255,255,255,.72);border:1px solid var(--line);box-shadow:0 8px 20px rgba(18,50,82,.05)}
-    .author-note a{color:var(--hust);font-weight:800}
-    .quick-links{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
-    .quick-link{display:flex;align-items:center;gap:14px;background:white;border:1px solid var(--line);border-radius:22px;padding:18px 18px;box-shadow:0 14px 34px rgba(18,50,82,.07);color:inherit;text-decoration:none}
-    .quick-link:hover{text-decoration:none;transform:translateY(-5px);box-shadow:0 18px 40px rgba(18,50,82,.12)}
-    .ql-icon{width:50px;height:50px;border-radius:16px;display:grid;place-items:center;background:linear-gradient(135deg,#eaf5ff,#f4fbff);font-size:24px;flex:0 0 auto}
-    .quick-link b{display:block;font-size:18px;margin-bottom:3px;color:#183552}
-    .quick-link small{display:block;color:#6b7d8f;font-size:13px;line-height:1.45}
-    .author-name{display:inline-flex;align-items:center;gap:6px;vertical-align:middle}
-    .leader-author{position:relative}
-    .leader-badge{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:999px;background:linear-gradient(135deg,#ffb020,#ff7a1a);color:white;font-size:16px;font-weight:950;box-shadow:0 8px 18px rgba(255,122,26,.24);transform:translateY(-2px)}
-    .leader-note-mark{display:inline-grid;place-items:center;width:24px;height:24px;min-width:24px;padding:0;border-radius:999px;background:linear-gradient(135deg,#ffb020,#ff7a1a);color:white;font-weight:950;font-size:14px;box-shadow:0 6px 14px rgba(255,122,26,.22)}
-    .demo-video-card{background:white;border:1px solid var(--line);border-radius:30px;box-shadow:var(--shadow);overflow:hidden}
-    .demo-video-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;padding:24px 26px 16px;background:linear-gradient(135deg,#f7fbff,#eef8ff)}
-    .demo-video-head h3{margin:0;font-size:24px;color:#153858;letter-spacing:-.02em}
-    .demo-video-head p{margin:4px 0 0;color:#64748b}
-    .demo-video-wrap{padding:18px 22px 22px;background:#081827}
-    .demo-video-card.reveal{opacity:1;transform:none}
-    .demo-video-wrap video{width:100%;display:block;border-radius:20px;background:#020817;box-shadow:0 18px 45px rgba(0,0,0,.26);aspect-ratio:16/9;max-height:680px}
-
-    .buttons{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
-    .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 18px;border-radius:999px;border:1px solid #c7d9ea;background:white;color:#17314c;font-weight:800;box-shadow:0 10px 25px rgba(24,58,96,.09)}
-    .btn.primary{background:linear-gradient(135deg,var(--hust),#2e8df5);color:white;border-color:transparent}
-    .btn.disabled{opacity:.55;cursor:not-allowed}
-    .hero-visual{background:white;border:1px solid var(--line);border-radius:32px;box-shadow:var(--shadow);padding:14px;position:relative;overflow:hidden}
-    .browser-bar{height:38px;display:flex;align-items:center;gap:8px;padding:0 6px 10px;color:#64748b;font-size:13px;font-weight:700}
-    .dot{width:11px;height:11px;border-radius:999px;background:#e85d5d;display:inline-block} .dot:nth-child(2){background:#f3c451} .dot:nth-child(3){background:#62c370}
-    .hero-visual img{width:100%;display:block;border-radius:22px;background:#061422}
-    .hero-carousel{position:relative;border-radius:24px;overflow:hidden;background:#081827;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}
-    .hero-slides{position:relative;min-height:460px}
-    .hero-slide{position:absolute;inset:0;opacity:0;pointer-events:none;transform:scale(1.02);transition:opacity .75s ease,transform 1s ease;background:#081827}
+    .container{width:min(1240px,calc(100% - 48px));margin:0 auto}
+    .topbar{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.88);backdrop-filter:blur(18px);border-bottom:1px solid rgba(215,229,242,.9)}
+    .nav{height:72px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+    .brand{display:flex;align-items:center;gap:12px;color:var(--ink);font-weight:900;white-space:nowrap}
+    .brand:hover{text-decoration:none}
+    .brand img{height:42px;width:auto}
+    .navlinks{display:flex;align-items:center;gap:17px;font-size:14px;white-space:nowrap}
+    .navlinks a{color:#385069;font-weight:720}
+    .hero{padding:68px 0 48px}
+    .hero-grid{display:grid;grid-template-columns:minmax(0,.92fr) minmax(500px,1.08fr);gap:38px;align-items:center}
+    .logo-strip{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+    .logo-card,.contest-card{display:flex;align-items:center;background:white;border:1px solid var(--line);border-radius:17px;box-shadow:0 12px 28px rgba(18,52,86,.08)}
+    .logo-card{padding:10px 16px}.logo-card img{height:54px}
+    .contest-card{gap:10px;padding:8px 13px}.contest-card img{height:46px}.contest-card span{font-size:12px;line-height:1.25;color:#52667a;font-weight:780}
+    .eyebrow{display:inline-flex;align-items:center;gap:8px;padding:8px 13px;border-radius:999px;border:1px solid #cfe1f2;background:rgba(255,255,255,.78);color:#22547f;font-size:14px;font-weight:800}
+    h1{font-size:clamp(40px,5.5vw,68px);line-height:1.08;letter-spacing:-.05em;margin:18px 0 13px}
+    .subtitle{font-size:clamp(17px,1.9vw,22px);line-height:1.5;color:#365875;margin:0 0 18px}
+    .subtitle-en{display:block;margin-top:5px;color:#6b8094;font-size:.76em}
+    .authors{font-size:18px;color:#20394f;margin-top:18px}.authors strong{font-weight:900}.leader{color:var(--hust)}
+    .meta{display:flex;flex-wrap:wrap;gap:9px;margin-top:10px}.meta span{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.76);border:1px solid var(--line);font-size:13px;color:#597086;font-weight:700}
+    .buttons{display:flex;flex-wrap:wrap;gap:11px;margin-top:25px}
+    .btn{display:inline-flex;align-items:center;gap:7px;padding:11px 17px;border-radius:999px;background:white;border:1px solid #c9dced;color:#173550;font-weight:820;box-shadow:0 9px 24px rgba(22,59,95,.08);transition:.25s ease}
+    .btn:hover{text-decoration:none;transform:translateY(-3px);box-shadow:0 15px 30px rgba(22,59,95,.13)}
+    .btn.primary{color:white;border-color:transparent;background:linear-gradient(135deg,var(--hust),#318ff2)}
+    .hero-visual{padding:13px;background:white;border:1px solid var(--line);border-radius:31px;box-shadow:var(--shadow)}
+    .browser-bar{height:38px;display:flex;align-items:center;gap:8px;padding:0 7px 9px;color:#667b8e;font-size:13px;font-weight:750}
+    .dot{width:11px;height:11px;border-radius:50%;background:#ec6969}.dot:nth-child(2){background:#f3c35b}.dot:nth-child(3){background:#63c879}
+    .hero-carousel{position:relative;overflow:hidden;border-radius:23px;background:#091827}
+    .hero-slides{position:relative;aspect-ratio:16/9}
+    .hero-slide{position:absolute;inset:0;width:100%;height:100%;padding:0;border:0;opacity:0;pointer-events:none;background:#091827;cursor:zoom-in;transition:opacity .55s ease,transform .75s ease;transform:scale(1.018)}
     .hero-slide.active{opacity:1;pointer-events:auto;transform:scale(1)}
-    .hero-slide img{width:100%;height:460px;object-fit:contain;border-radius:0;background:linear-gradient(180deg,#0a1623,#0d2031)}
-    .carousel-overlay{position:absolute;left:18px;right:18px;bottom:18px;padding:14px 16px;border-radius:18px;background:linear-gradient(180deg,rgba(7,18,31,.18),rgba(7,18,31,.72));backdrop-filter:blur(10px);color:#eef6ff;box-shadow:0 12px 34px rgba(0,0,0,.16)}
-    .carousel-kicker{font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#9fd3ff;margin-bottom:6px}
-    .carousel-caption{font-size:15px;line-height:1.45;font-weight:700;color:#f6fbff;max-width:86%}
-    .carousel-arrow{position:absolute;top:50%;transform:translateY(-50%);width:42px;height:42px;border-radius:999px;border:1px solid rgba(255,255,255,.26);background:rgba(8,20,34,.5);backdrop-filter:blur(12px);color:white;font-size:28px;line-height:1;display:grid;place-items:center;cursor:pointer;z-index:3;transition:all .25s ease}
-    .carousel-arrow:hover{background:rgba(0,91,172,.78);border-color:transparent;transform:translateY(-50%) scale(1.05)}
-    .carousel-arrow.prev{left:16px}
-    .carousel-arrow.next{right:16px}
-    .carousel-dots{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:9px;z-index:3}
-    .carousel-dot{width:11px;height:11px;border-radius:999px;border:0;background:rgba(255,255,255,.38);cursor:pointer;transition:all .25s ease;box-shadow:0 0 0 1px rgba(255,255,255,.2)}
-    .carousel-dot.active{width:28px;background:white}
-
-    .hero-badges{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}
-    .hero-badge{background:#f8fbff;border:1px solid #deebf8;border-radius:18px;padding:13px;text-align:center}
-    .hero-badge b{display:block;font-size:22px;color:var(--hust);line-height:1.1} .hero-badge span{font-size:12px;color:#64748b;font-weight:700}
-    section{padding:46px 0}
-    .section-title{text-align:center;margin-bottom:26px}
-    .section-title h2{font-size:34px;margin:0 0 8px;letter-spacing:-.03em}
-    .section-title p{margin:0 auto;color:#64748b;max-width:820px}
-    .paper{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:30px;box-shadow:0 14px 38px rgba(18,50,82,.08)}
-    .abstract{font-size:17px;color:#32495f;max-width:980px;margin:0 auto}
-    .abstract strong{color:#0b3d72}
-    .keywords{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
-    .pill{padding:8px 12px;border-radius:999px;background:#eaf5ff;border:1px solid #cfe3f7;color:#23527e;font-size:13px;font-weight:800}
-    .news-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-    .news-card{background:white;border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:0 12px 30px rgba(18,50,82,.06)}
-    .news-card b{display:block;color:var(--hust);margin-bottom:6px} .news-card p{margin:0;color:#52677c;font-size:14px}
-    .flow-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;align-items:stretch}
-    .step{position:relative;background:white;border:1px solid #d6e7f7;border-radius:18px;padding:16px 10px;text-align:center;box-shadow:0 10px 26px rgba(18,50,82,.06)}
-    .step:not(:last-child)::after{content:'→';position:absolute;right:-14px;top:40%;font-size:24px;color:var(--hust);font-weight:900;z-index:3}
-    .step .num{width:28px;height:28px;border-radius:999px;background:linear-gradient(135deg,var(--hust),#31a3ff);color:white;display:inline-grid;place-items:center;font-weight:900;font-size:13px;margin-bottom:8px}
-    .step b{display:block;font-size:15px} .step span{display:block;color:#64748b;font-size:12px;line-height:1.35;margin-top:4px}
-    .grid{display:grid;gap:18px} .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))} .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))} .grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
-    .feature{background:white;border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:0 14px 34px rgba(18,50,82,.07)}
-    .feature .icon{width:48px;height:48px;border-radius:16px;display:grid;place-items:center;background:linear-gradient(135deg,#eaf5ff,#effff8);font-size:24px;margin-bottom:12px}
-    .feature h3{margin:0 0 8px;font-size:19px} .feature p{margin:0;color:#556b80;font-size:15px}
-    .diagram-card{background:white;border:1px solid var(--line);border-radius:28px;box-shadow:var(--shadow);overflow:hidden}
-    .diagram-card img{display:block;width:100%;background:#f6f9fc}
-    .diagram-card .body{padding:18px 20px} .diagram-card h3{margin:0 0 6px;font-size:19px} .diagram-card p{margin:0;color:#64748b}
-    .showcase-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
-    .showcase-card{background:white;border:1px solid var(--line);border-radius:26px;box-shadow:0 16px 42px rgba(18,50,82,.09);overflow:hidden}
-    .figure-button{display:block;width:100%;border:0;background:#f8fafc;padding:0;cursor:zoom-in;text-align:left}
-    .showcase-card img{width:100%;height:310px;object-fit:contain;display:block;padding:10px}
-    .showcase-body{padding:18px 20px} .showcase-body span{color:var(--hust);font-weight:900;font-size:13px} .showcase-body h3{margin:5px 0 7px;font-size:20px} .showcase-body p{margin:0;color:#5b7186}
-    .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-    .metric{background:white;border:1px solid var(--line);border-radius:22px;padding:22px;text-align:center;box-shadow:0 14px 34px rgba(18,50,82,.07)}
-    .metric .value{font-size:36px;font-weight:950;color:var(--hust);line-height:1} .metric .label{font-weight:850;margin-top:8px} .metric .note{font-size:13px;color:#64748b;margin-top:6px}
-    table{width:100%;border-collapse:collapse;background:white;border-radius:18px;overflow:hidden;box-shadow:0 12px 30px rgba(18,50,82,.06)}
-    th,td{padding:14px 15px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top} th{background:#edf6ff;color:#163d64} td{color:#425a70} tr:last-child td{border-bottom:none}
-    .filter-panel{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:0 0 24px}
-    .filter-chip{border:1px solid #cbddec;background:white;border-radius:999px;padding:9px 13px;font-weight:850;color:#38556f;cursor:pointer;box-shadow:0 8px 20px rgba(18,50,82,.05)}
-    .filter-chip.active{background:linear-gradient(135deg,var(--hust),#2d8df3);color:white;border-color:transparent}
-    .figure-wall{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
-    .figure-card{background:white;border:1px solid var(--line);border-radius:22px;box-shadow:0 14px 34px rgba(18,50,82,.075);overflow:hidden;display:flex;flex-direction:column}
-    .figure-card img{width:100%;height:220px;object-fit:contain;display:block;padding:10px;background:#f8fafc}
-    .figure-meta{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:13px 16px 0}
-    .tag{font-size:12px;font-weight:900;color:var(--hust);background:#eaf5ff;border:1px solid #d6e7f7;border-radius:999px;padding:4px 8px}
-    .pixels{font-size:12px;color:#94a3b8;font-weight:700}
-    .figure-card h3{font-size:17px;line-height:1.35;margin:10px 16px 6px}
-    .figure-card p{font-size:14px;color:#63788c;margin:0 16px 18px;line-height:1.55}
-    .code{background:#0d1d2e;color:#dff4ff;border-radius:20px;padding:20px;overflow:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;font-size:13px;line-height:1.55;box-shadow:0 16px 42px rgba(13,29,46,.2)}
-    footer{padding:44px 0 62px;text-align:center;color:#6b7d8f} .footer-title{font-weight:900;color:#16324d;margin-bottom:8px}
-    .backtop{position:fixed;right:22px;bottom:22px;width:46px;height:46px;border-radius:999px;display:grid;place-items:center;background:white;border:1px solid var(--line);box-shadow:0 10px 26px rgba(19,57,93,.18);font-weight:950;color:var(--hust)}
-    .lightbox{position:fixed;inset:0;background:rgba(8,19,31,.86);z-index:100;display:none;align-items:center;justify-content:center;padding:28px}
-    .lightbox.open{display:flex}
-    .lightbox-inner{background:white;border-radius:22px;max-width:min(1180px,96vw);max-height:94vh;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.45)}
-    .lightbox-head{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:12px 16px;border-bottom:1px solid #e2e8f0;color:#1e293b;font-weight:900}
-    .lightbox-close{border:0;background:#eef4fb;border-radius:999px;width:36px;height:36px;font-size:22px;cursor:pointer;color:#1e293b}
-    .lightbox img{display:block;max-width:96vw;max-height:calc(94vh - 65px);object-fit:contain;background:white}
-    
-    body::before,body::after{content:"";position:fixed;inset:auto;z-index:-1;pointer-events:none;border-radius:999px;filter:blur(8px);opacity:.7;animation:floatBlob 18s ease-in-out infinite}
-    body::before{width:320px;height:320px;left:-80px;top:120px;background:radial-gradient(circle,rgba(66,153,225,.28),transparent 68%)}
-    body::after{width:420px;height:420px;right:-120px;top:280px;background:radial-gradient(circle,rgba(5,169,199,.24),transparent 68%);animation-delay:-7s}
-    .hero{position:relative;overflow:visible}
-    .hero::before{content:"";position:absolute;right:6%;top:20px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(0,91,172,.12),transparent 68%);filter:blur(2px);animation:pulseGlow 9s ease-in-out infinite}
-    .navlinks a{position:relative;transition:.25s ease}
-    .navlinks a::after{content:"";position:absolute;left:0;bottom:-6px;width:0;height:2px;background:linear-gradient(90deg,var(--hust),#45b3ff);transition:width .25s ease}
-    .navlinks a:hover{text-decoration:none;color:var(--hust)}
-    .navlinks a:hover::after{width:100%}
-    .btn,.news-card,.feature,.diagram-card,.showcase-card,.metric,.figure-card,.hust-logo-card,.contest-card,.paper,.link-card{transition:transform .35s ease,box-shadow .35s ease,border-color .35s ease,background .35s ease}
-    .btn:hover,.news-card:hover,.feature:hover,.diagram-card:hover,.showcase-card:hover,.metric:hover,.figure-card:hover,.link-card:hover{transform:translateY(-6px);box-shadow:0 18px 46px rgba(18,50,82,.14);text-decoration:none}
-    .btn.primary{position:relative;overflow:hidden}
-    .btn.primary::before{content:"";position:absolute;inset:-40% auto -40% -110%;width:70%;transform:skewX(-22deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);animation:shine 3.8s ease-in-out infinite}
-    .hero-visual{isolation:isolate}
-    .hero-visual::before{content:"";position:absolute;inset:-1px;border-radius:32px;padding:1px;background:linear-gradient(135deg,rgba(0,91,172,.34),rgba(5,169,199,.18),rgba(0,91,172,.06));-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
-    .hero-badge{position:relative;overflow:hidden}
-    .hero-badge:nth-child(1){animation:floatCard 5s ease-in-out infinite}
-    .hero-badge:nth-child(2){animation:floatCard 6s ease-in-out infinite -.8s}
-    .hero-badge:nth-child(3){animation:floatCard 5.5s ease-in-out infinite -1.5s}
-    .hero-badge:nth-child(4){animation:floatCard 6.2s ease-in-out infinite -2s}
-    .section-title h2{background:linear-gradient(135deg,#102a44,var(--hust));-webkit-background-clip:text;background-clip:text;color:transparent}
-    .showcase-card,.figure-card,.metric,.feature,.news-card,.link-card{position:relative;overflow:hidden}
-    .showcase-card::after,.figure-card::after,.metric::after,.feature::after,.news-card::after,.link-card::after{content:"";position:absolute;inset:auto -120px -120px auto;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(34,123,233,.10),transparent 68%);pointer-events:none}
-    .figure-button img,.showcase-card img,.diagram-card img{transition:transform .45s ease,filter .45s ease}
-    .figure-button:hover img,.showcase-card:hover img,.diagram-card:hover img{transform:scale(1.02);filter:saturate(1.05)}
-    .reveal{opacity:0;transform:translateY(28px) scale(.985);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.2,1)}
-    .reveal.inview{opacity:1;transform:translateY(0) scale(1)}
-    .link-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-bottom:22px}
-    .link-card{display:block;background:white;border:1px solid var(--line);border-radius:24px;padding:22px;box-shadow:0 14px 34px rgba(18,50,82,.07);color:inherit}
-    .link-icon{width:52px;height:52px;border-radius:18px;display:grid;place-items:center;font-size:24px;background:linear-gradient(135deg,#eaf5ff,#f1fbff);margin-bottom:12px}
-    .link-card h3{margin:0 0 6px;font-size:19px}
-    .link-card p{margin:0 0 10px;color:#556b80}
-    .link-card span{font-size:13px;font-weight:800;color:var(--hust)}
-    .code-wrap{background:white;border:1px solid var(--line);border-radius:24px;box-shadow:0 16px 40px rgba(18,50,82,.08);overflow:hidden}
-    .code-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 18px;background:linear-gradient(180deg,#f7fbff,#eff5fb);border-bottom:1px solid var(--line);font-weight:900;color:#12395d}
-    .copy-btn{border:1px solid #cfe0ef;background:white;border-radius:999px;padding:10px 14px;font-weight:850;color:#193758;cursor:pointer;box-shadow:0 8px 20px rgba(18,50,82,.05);transition:all .25s ease}
-    .copy-btn:hover{transform:translateY(-2px);box-shadow:0 12px 22px rgba(18,50,82,.08)}
-    .copy-btn.done{background:linear-gradient(135deg,var(--hust),#2e8df5);color:white;border-color:transparent}
-    pre.code{margin:0;white-space:pre-wrap;word-break:break-word;border-radius:0;box-shadow:none;background:#0f172a;color:#dbeafe;padding:24px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px;line-height:1.6}
-    .backtop{transition:transform .25s ease,box-shadow .25s ease,background .25s ease}
-    .backtop:hover{transform:translateY(-4px);background:linear-gradient(135deg,var(--hust),#2e8df5);box-shadow:0 18px 30px rgba(0,91,172,.25)}
-    @keyframes floatBlob{0%,100%{transform:translateY(0) translateX(0)}50%{transform:translateY(24px) translateX(12px)}}
-    @keyframes pulseGlow{0%,100%{transform:scale(1);opacity:.55}50%{transform:scale(1.1);opacity:.9}}
-    @keyframes shine{0%{left:-110%}55%,100%{left:130%}}
-    @keyframes floatCard{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
-
-    @media (max-width:980px){.hero-grid{grid-template-columns:1fr}.nav{height:auto;padding:14px 0}.navlinks{display:none}.hero-badges,.metrics,.news-grid,.grid-4,.link-grid,.quick-links{grid-template-columns:repeat(2,1fr)}.flow-strip{grid-template-columns:1fr}.step:not(:last-child)::after{content:'↓';right:auto;left:50%;transform:translateX(-50%);top:auto;bottom:-21px}.showcase-grid,.grid-2,.grid-3,.figure-wall{grid-template-columns:1fr}.showcase-card img,.figure-card img{height:auto;max-height:420px}.hero-slides{min-height:320px}.hero-slide img{height:320px}.carousel-caption{max-width:100%;font-size:14px}}
-    @media (max-width:560px){.container{padding:0 18px}.hero{padding-top:42px}.hust-logo-card img{height:46px}.hero-badges,.metrics,.news-grid,.grid-4,.link-grid,.quick-links{grid-template-columns:1fr}h1{font-size:34px}.paper{padding:22px}.code-head{flex-direction:column;align-items:flex-start}.carousel-arrow{width:38px;height:38px;font-size:24px}.carousel-overlay{left:12px;right:12px;bottom:12px;padding:12px 14px}}
+    .hero-slide img{width:100%;height:100%;display:block;object-fit:contain;background:linear-gradient(180deg,#0c1c2b,#081522)}
+    .carousel-label{position:absolute;left:16px;bottom:15px;max-width:calc(100% - 105px);padding:9px 13px;border-radius:13px;background:rgba(7,22,36,.72);backdrop-filter:blur(10px);color:#f4f9ff;font-size:14px;font-weight:800;z-index:3}
+    .carousel-arrow{position:absolute;top:50%;z-index:4;width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.28);background:rgba(7,22,36,.54);color:white;font-size:27px;display:grid;place-items:center;cursor:pointer;transform:translateY(-50%)}
+    .carousel-arrow:hover{background:rgba(0,91,172,.85)}.carousel-arrow.prev{left:14px}.carousel-arrow.next{right:14px}
+    .carousel-dots{position:absolute;right:16px;bottom:17px;z-index:4;display:flex;gap:7px}.carousel-dot{width:9px;height:9px;padding:0;border:0;border-radius:50%;background:rgba(255,255,255,.42);cursor:pointer}.carousel-dot.active{width:25px;border-radius:999px;background:white}
+    .hero-caption-panel{margin-top:13px;padding:14px 15px;border:1px solid #d9e8f5;border-radius:17px;background:linear-gradient(135deg,#f8fbff,#eef7ff)}
+    .hero-caption-panel small{display:block;margin-bottom:3px;color:var(--hust);font-size:11px;letter-spacing:.1em;font-weight:900;text-transform:uppercase}
+    .hero-caption-panel b{display:block;font-size:16px;color:#173b5e}.hero-caption-panel p{margin:3px 0 0;color:#60778c;font-size:13px;line-height:1.5}
+    section{padding:47px 0}
+    .section-title{text-align:center;margin:0 auto 27px;max-width:850px}.section-title h2{margin:0 0 7px;font-size:clamp(29px,3.6vw,39px);line-height:1.2;letter-spacing:-.035em;background:linear-gradient(135deg,#17324c,var(--hust));background-clip:text;-webkit-background-clip:text;color:transparent}.section-title p{margin:0;color:var(--muted)}
+    .paper{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 15px 40px rgba(18,52,86,.08)}
+    .quick-links{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
+    .quick-link{display:flex;align-items:center;gap:12px;padding:16px;background:white;border:1px solid var(--line);border-radius:20px;color:inherit;box-shadow:0 11px 28px rgba(18,52,86,.065);transition:.25s ease}.quick-link:hover{text-decoration:none;transform:translateY(-4px);box-shadow:0 17px 38px rgba(18,52,86,.12)}
+    .ql-icon{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;flex:0 0 auto;background:linear-gradient(135deg,#e6f3ff,#f0fbff);font-size:21px}.quick-link b{display:block;color:#173a59;font-size:15px}.quick-link small{display:block;color:#73869a;font-size:12px;line-height:1.35}
+    .video-card{overflow:hidden}.video-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;padding:24px 26px 17px;background:linear-gradient(135deg,#f8fbff,#ecf7ff)}.video-head h3{margin:0;font-size:24px;color:#153a5b}.video-head p{margin:4px 0 0;color:var(--muted)}
+    .video-tabs{display:flex;gap:8px;padding:5px;background:white;border:1px solid var(--line);border-radius:999px;box-shadow:0 8px 20px rgba(18,52,86,.07)}
+    .video-tab{border:0;border-radius:999px;padding:9px 13px;background:transparent;color:#506981;font-weight:820;cursor:pointer}.video-tab[aria-selected="true"]{background:linear-gradient(135deg,var(--hust),#318cf0);color:white;box-shadow:0 7px 18px rgba(0,91,172,.22)}
+    .video-wrap{padding:18px 21px 15px;background:#081522}.video-wrap video{display:block;width:100%;aspect-ratio:16/9;border-radius:18px;background:#020812;box-shadow:0 18px 40px rgba(0,0,0,.24)}
+    .video-foot{display:flex;justify-content:space-between;gap:18px;align-items:center;padding:0 22px 21px;background:#081522;color:#c9dae8;font-size:13px}.video-foot b{display:block;color:white;font-size:15px}.video-foot p{margin:2px 0 0;color:#9eb4c6}.video-foot a{color:#8ed2ff;font-weight:800;white-space:nowrap}
+    .abstract{padding:29px;font-size:17px;color:#334e66}.abstract p{margin:0}.abstract p+p{margin-top:13px}.abstract strong{color:#0d477d}.keywords{display:flex;gap:9px;flex-wrap:wrap;margin-top:19px}.pill{padding:7px 11px;border-radius:999px;background:#e8f4ff;border:1px solid #cee3f5;color:#24567f;font-size:12px;font-weight:850}
+    .pipeline-visual{overflow:hidden}.visual-button{display:block;width:100%;border:0;padding:0;background:#f8fbff;cursor:zoom-in}.visual-button img{width:100%;display:block;object-fit:contain}.visual-body{padding:18px 21px}.visual-body h3{margin:0 0 5px;font-size:20px}.visual-body p{margin:0;color:var(--muted)}
+    .stage-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-top:16px}.stage{position:relative;padding:17px 14px;background:white;border:1px solid #d8e7f4;border-radius:18px;box-shadow:0 10px 25px rgba(18,52,86,.055)}.stage:not(:last-child)::after{content:"→";position:absolute;right:-12px;top:29px;z-index:3;color:var(--hust);font-size:20px;font-weight:950}.stage span{display:inline-grid;place-items:center;width:27px;height:27px;border-radius:50%;background:linear-gradient(135deg,var(--hust),#3d9bf2);color:white;font-size:12px;font-weight:900}.stage b{display:block;margin-top:9px;font-size:15px}.stage p{margin:3px 0 0;color:#6b8094;font-size:12px;line-height:1.45}
+    .architecture-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.architecture-card{overflow:hidden}.architecture-card.primary{grid-column:1/-1}.architecture-card img{display:block;width:100%;height:330px;object-fit:contain;background:#f7fafc;padding:10px}.architecture-card.primary img{height:auto;max-height:620px}.architecture-card .visual-body{border-top:1px solid var(--line)}
+    .shift-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px}.shift-card{padding:21px;background:white;border:1px solid var(--line);border-radius:21px;box-shadow:0 12px 30px rgba(18,52,86,.065)}.shift-card .icon{font-size:24px}.shift-card h3{margin:9px 0 6px;font-size:18px}.shift-card p{margin:0;color:#5d748a;font-size:14px}.foundation{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:18px 21px;border-radius:20px;color:white;background:linear-gradient(135deg,#064d91,#1587d7);box-shadow:0 16px 36px rgba(0,91,172,.22)}.foundation b{font-size:19px}.foundation span{color:#d8efff;font-size:14px}
+    .filter-panel{display:flex;justify-content:center;gap:9px;flex-wrap:wrap;margin-bottom:22px}.filter-chip{border:1px solid #cbddec;background:white;border-radius:999px;padding:8px 13px;color:#3d5972;font-weight:820;cursor:pointer}.filter-chip.active{color:white;border-color:transparent;background:linear-gradient(135deg,var(--hust),#2e8df0)}
+    .figure-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:17px}.figure-card{overflow:hidden;display:flex;flex-direction:column}.figure-card .visual-button{height:225px}.figure-card img{width:100%;height:100%;object-fit:contain;padding:9px;background:#f7fafc}.figure-card.team img{object-fit:cover;padding:0}.figure-meta{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:13px 16px 0}.tag{padding:4px 8px;border-radius:999px;background:#e8f4ff;border:1px solid #d1e5f6;color:var(--hust);font-size:11px;font-weight:900}.legacy-tag{background:#fff4e9;border-color:#f5dcc4;color:#a85719}.figure-card h3{margin:9px 16px 5px;font-size:17px;line-height:1.35}.figure-card p{margin:0 16px 17px;color:#63798e;font-size:13px;line-height:1.5}
+    .result-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}.result-metric{padding:21px;text-align:center;background:white;border:1px solid var(--line);border-radius:21px;box-shadow:0 12px 29px rgba(18,52,86,.065)}.result-metric b{display:block;color:var(--hust);font-size:34px;line-height:1}.result-metric span{display:block;margin-top:7px;font-weight:850}.result-metric small{display:block;margin-top:3px;color:#71869a}
+    .table-wrap{overflow-x:auto;border-radius:22px;box-shadow:0 13px 32px rgba(18,52,86,.07)}table{width:100%;min-width:930px;border-collapse:collapse;background:white}th,td{padding:13px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{background:#eaf5ff;color:#153f65;font-size:13px}td{color:#405a71;font-size:13px}td:first-child{font-weight:900;color:var(--hust);text-align:center}tr:last-child td{border-bottom:0}.done{color:var(--green);font-weight:900;white-space:nowrap}
+    .result-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px;margin-top:18px}.result-gallery article{overflow:hidden}.result-gallery img{display:block;width:100%;height:330px;object-fit:contain;background:#f7fafc;padding:8px}.result-gallery .visual-body{border-top:1px solid var(--line)}
+    .finals-grid{display:grid;grid-template-columns:minmax(330px,.72fr) minmax(0,1.28fr);gap:18px}.poster-card,.team-gallery{overflow:hidden}.poster-card .visual-button{height:690px}.poster-card img{height:100%;width:100%;object-fit:contain;padding:12px;background:#edf4fa}.team-gallery{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px}.team-gallery button{min-height:280px;border-radius:17px;overflow:hidden}.team-gallery img{width:100%;height:100%;object-fit:cover}.team-gallery .team-main{grid-column:1/-1;min-height:360px}.finals-note{grid-column:1/-1;padding:17px 19px;border-radius:19px;border:1px solid #d5e6f4;background:linear-gradient(135deg,#f8fbff,#edf7ff);color:#4d687f}.finals-note b{color:#173f61}
+    .citation{overflow:hidden}.citation-head{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:15px 18px;background:#edf6fe;border-bottom:1px solid var(--line);font-weight:900}.copy-btn{border:1px solid #c8dced;background:white;border-radius:999px;padding:8px 12px;color:#244760;font-weight:820;cursor:pointer}.copy-btn.done{background:var(--hust);color:white;border-color:transparent}pre{margin:0;padding:22px;overflow:auto;white-space:pre-wrap;word-break:break-word;background:#0c1a2a;color:#d9efff;font:13px/1.65 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    footer{padding:45px 0 64px;text-align:center;color:#6b8094}.footer-title{font-weight:900;color:#17364f;margin-bottom:5px}.footer-title img{height:40px;vertical-align:middle;margin-right:8px}
+    .backtop{position:fixed;right:20px;bottom:20px;z-index:50;width:45px;height:45px;border-radius:50%;display:grid;place-items:center;background:white;border:1px solid var(--line);box-shadow:0 10px 28px rgba(18,52,86,.18);font-weight:950}.backtop:hover{text-decoration:none}
+    .lightbox{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(5,17,29,.88)}.lightbox.open{display:flex}.lightbox-inner{overflow:hidden;max-width:min(1280px,96vw);max-height:94vh;background:white;border-radius:20px;box-shadow:0 28px 90px rgba(0,0,0,.48)}.lightbox-head{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:11px 15px;border-bottom:1px solid var(--line);font-weight:900}.lightbox-close{width:36px;height:36px;border:0;border-radius:50%;background:#edf4fa;font-size:22px;cursor:pointer}.lightbox img{display:block;max-width:96vw;max-height:calc(94vh - 60px);object-fit:contain;background:white}
+    .reveal{opacity:0;transform:translateY(22px);transition:opacity .65s ease,transform .65s ease}.reveal.inview{opacity:1;transform:none}
+    :focus-visible{outline:3px solid rgba(30,132,230,.48);outline-offset:3px}
+    @media(max-width:1040px){.hero-grid{grid-template-columns:1fr}.quick-links{grid-template-columns:repeat(3,1fr)}.figure-grid{grid-template-columns:repeat(2,1fr)}.finals-grid{grid-template-columns:1fr}.poster-card .visual-button{height:620px}}
+    @media(max-width:760px){.container{width:min(100% - 30px,1240px)}.nav{height:auto;align-items:flex-start;flex-direction:column;padding:10px 0 8px;gap:8px}.brand img{height:36px}.navlinks{width:100%;overflow-x:auto;padding:2px 0 7px;gap:14px}.hero{padding-top:43px}.hero-grid{gap:25px}.hero-slides{aspect-ratio:4/3}.hero-slide img{object-fit:contain}.quick-links,.shift-grid,.result-metrics{grid-template-columns:repeat(2,1fr)}.stage-grid{grid-template-columns:1fr}.stage:not(:last-child)::after{content:"↓";right:auto;left:50%;top:auto;bottom:-18px}.architecture-grid,.result-gallery{grid-template-columns:1fr}.architecture-card.primary{grid-column:auto}.architecture-card img,.result-gallery img{height:auto;max-height:430px}.figure-grid{grid-template-columns:1fr}.figure-card .visual-button{height:auto;min-height:220px}.video-head{align-items:flex-start;flex-direction:column}.video-tabs{width:100%}.video-tab{flex:1}.video-foot{align-items:flex-start;flex-direction:column}.finals-grid{grid-template-columns:1fr}.team-gallery{grid-template-columns:1fr}.team-gallery .team-main{grid-column:auto}.poster-card .visual-button{height:560px}.foundation{align-items:flex-start;flex-direction:column}.carousel-label{font-size:12px}.carousel-arrow{width:38px;height:38px}}
+    @media(max-width:470px){.quick-links,.shift-grid,.result-metrics{grid-template-columns:1fr}h1{font-size:38px}.hero-caption-panel{padding:12px}.poster-card .visual-button{height:470px}.team-gallery button,.team-gallery .team-main{min-height:230px}.buttons .btn{width:100%;justify-content:center}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.reveal{opacity:1;transform:none;transition:none}.hero-slide{transition:none}}
   </style>
 </head>
 <body>
   <div class="topbar">
     <div class="container nav">
-      <a class="brand" href="#top"><img src="assets/hust_logo.png" alt="华中科技大学校徽" /><span class="brand-title">智驭低空枢纽</span></a>
-      <div class="navlinks">
-        <a href="#links">项目资源</a><a href="#demo-video">演示视频</a><a href="#abstract">简介</a><a href="#pipeline">闭环流程</a><a href="#system">系统</a><a href="#figures">图像展示</a><a href="#results">测试结果</a><a href="#citation">引用</a><a href="https://github.com/Qiushi0919/IntelCup-2026" target="_blank" rel="noopener">项目仓库 ↗</a><a href="https://github.com/Qiushi0919" target="_blank" rel="noopener">作者主页 ↗</a>
-      </div>
+      <a class="brand" href="#top"><img src="assets/hust_logo.png" alt="华中科技大学" /><span>智驭低空枢纽</span></a>
+      <nav class="navlinks" aria-label="页面导航">
+        <a href="#demo-video">演示视频</a><a href="#pipeline">闭环流程</a><a href="#system">系统架构</a><a href="#figures">功能展示</a><a href="#results">测试结果</a><a href="#finals">国赛现场</a><a href="#citation">引用</a><a href="https://github.com/Qiushi0919/IntelCup-2026" target="_blank" rel="noopener">项目仓库 ↗</a>
+      </nav>
     </div>
   </div>
 
@@ -222,699 +125,338 @@
       <div class="hero-grid">
         <div>
           <div class="logo-strip">
-            <div class="hust-logo-card"><img src="assets/hust_logo.png" alt="华中科技大学" /></div>
-            <div class="contest-card"><img src="assets/figures/fig_01.webp" alt="Intel Cup 标识" /><span>2026 Intel Cup<br>Embedded AI Track</span></div>
+            <div class="logo-card"><img src="assets/hust_logo.png" alt="华中科技大学" /></div>
+            <div class="contest-card"><img src="assets/figures/fig_01.webp" alt="英特尔杯专题赛标识" /><span>2026 Intel Cup<br>National Finals Edition</span></div>
           </div>
-          <div class="eyebrow">🚁 多模态无人机地面站 · 低空巡检与火源识别</div>
+          <div class="eyebrow">🚁 2026 全国评审版 · 嵌入式 AI 专题赛</div>
           <h1>智驭低空枢纽</h1>
-          <p class="subtitle">面向低空巡检与火源识别的多模态无人机地面站系统<br>Low-Altitude Intelligent Hub: A Multimodal UAV Ground Station System for Patrol and Fire Detection</p>
-          <div class="authors"><strong class="author-name leader-author">&#x8C22;&#x79CB;&#x5B9E; <span class="leader-badge">&#x2020;</span></strong> &middot; <strong class="author-name">&#x6731;&#x62D3;&#x6E90;</strong> &middot; <strong class="author-name">&#x5E9E;&#x4E9A;&#x5BB8;</strong></div>
-          <div class="meta"><span>华中科技大学</span><span>指导教师：夏景圆</span><span>第十三届英特尔杯嵌入式 AI 专题赛</span></div>
-          <div class="author-note"><span><span class="leader-note-mark">&#x2020;</span> 队长 / Project Lead</span><span>&#x2709; <a href="mailto:qiushi1152@gmail.com">qiushi1152@gmail.com</a></span></div>
+          <p class="subtitle">面向低空消防巡检的多模态地面站系统<span class="subtitle-en">A Multimodal Ground Station System for Low-Altitude Fire Patrol</span></p>
+          <div class="authors"><strong class="leader">谢秋实 †</strong> · <strong>朱拓源</strong> · <strong>庞亚宸</strong></div>
+          <div class="meta"><span>华中科技大学</span><span>指导教师：夏景圆</span><span>† 队长 / Project Lead</span><span>编号 S36</span></div>
           <div class="buttons">
-            <a class="btn primary" href="中文报告.pdf" target="_blank">📄 作品设计报告</a>
-            <a class="btn" href="作品简介.pdf" target="_blank">🧾 作品简介</a>
+            <a class="btn primary" href="#demo-video">▶ 查看国赛演示</a>
+            <a class="btn" href="中文报告.pdf" target="_blank" rel="noopener">📄 作品设计报告</a>
+            <a class="btn" href="作品简介.pdf" target="_blank" rel="noopener">🧾 作品简介</a>
             <a class="btn" href="https://github.com/Qiushi0919/IntelCup-2026" target="_blank" rel="noopener">💻 项目仓库</a>
-            <a class="btn" href="https://github.com/Qiushi0919" target="_blank" rel="noopener">👤 作者主页</a>
           </div>
         </div>
+
         <div class="hero-visual">
-          <div class="browser-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span>ground-station.demo / live view</span></div>
-          <div class="hero-carousel" id="heroCarousel">
+          <div class="browser-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span>ground-station.demo / national finals</span></div>
+          <div class="hero-carousel" id="heroCarousel" tabindex="0" aria-label="新版系统核心图轮播">
             <div class="hero-slides">
-              <button class="figure-button hero-slide active" data-full="assets/figures/fig_20.webp" data-title="地面站整体运行界面" data-caption="地面站整体运行界面 · 主图传、状态栏、任务地图与安全命令中心">
-                <img src="assets/figures/fig_20.webp" alt="地面站整体运行界面" />
+              <button class="hero-slide active" type="button" data-full="assets/nationals/ground-station-overview.png" data-title="地面站整体运行界面" data-caption="系统自检、无人机姿态参数、三维轨迹、任务地图与安全飞行控制集中在同一界面。">
+                <img src="assets/nationals/ground-station-overview.png" alt="新版地面站整体运行界面" />
               </button>
-              <button class="figure-button hero-slide" data-full="assets/figures/fig_05.webp" data-title="系统整体架构图" data-caption="系统整体架构图 · 多模态输入、地面站、外设设备、图传链路和无人机飞控协同工作">
-                <img src="assets/figures/fig_05.webp" alt="系统整体架构图" />
+              <button class="hero-slide" type="button" data-full="assets/nationals/system-architecture.jpg" data-title="系统整体架构图" data-caption="多模态输入、DK-2500 地面站、外设设备、图传链路和无人机飞控协同工作。">
+                <img src="assets/nationals/system-architecture.jpg" alt="新版系统整体架构图" />
               </button>
-              <button class="figure-button hero-slide" data-full="assets/figures/fig_07.webp" data-title="软件总体架构图" data-caption="软件总体架构图 · 图像、语音、手势、视线输入先进入感知与候选环节，再由安全命令中心确认">
-                <img src="assets/figures/fig_07.webp" alt="软件总体架构图" />
+              <button class="hero-slide" type="button" data-full="assets/nationals/software-architecture.png" data-title="软件总体架构图" data-caption="输入采集、目标识别、路线规划、安全控制、日志与报告导出共同构成软件闭环。">
+                <img src="assets/nationals/software-architecture.png" alt="新版软件总体架构图" />
               </button>
             </div>
             <button class="carousel-arrow prev" type="button" aria-label="上一张">‹</button>
             <button class="carousel-arrow next" type="button" aria-label="下一张">›</button>
-            <div class="carousel-overlay">
-              <div class="carousel-kicker">Featured Preview</div>
-              <div class="carousel-caption" id="heroCarouselCaption">地面站整体运行界面 · 主图传、状态栏、任务地图与安全命令中心</div>
-            </div>
-            <div class="carousel-dots" id="heroCarouselDots">
-              <button class="carousel-dot active" type="button" aria-label="第 1 张"></button>
-              <button class="carousel-dot" type="button" aria-label="第 2 张"></button>
-              <button class="carousel-dot" type="button" aria-label="第 3 张"></button>
+            <div class="carousel-label" id="heroLabel">Featured Preview · 地面站整体运行界面</div>
+            <div class="carousel-dots" aria-label="轮播分页">
+              <button class="carousel-dot active" type="button" aria-label="显示第 1 张"></button>
+              <button class="carousel-dot" type="button" aria-label="显示第 2 张"></button>
+              <button class="carousel-dot" type="button" aria-label="显示第 3 张"></button>
             </div>
           </div>
-          <div class="hero-badges"><div class="hero-badge"><b>15 FPS</b><span>图传刷新</span></div><div class="hero-badge"><b>31 ms</b><span>链路延迟</span></div><div class="hero-badge"><b>92–94%</b><span>火源置信度</span></div><div class="hero-badge"><b>3 帧</b><span>连续确认</span></div></div>
+          <div class="hero-caption-panel" aria-live="polite">
+            <small>Featured Preview · 国赛答辩 PPT</small>
+            <b id="heroCaptionTitle">图 1 · 地面站整体运行界面</b>
+            <p id="heroCaptionText">系统自检、无人机姿态参数、三维轨迹、任务地图与安全飞行控制集中在同一界面。</p>
+          </div>
         </div>
       </div>
     </header>
 
-        <section id="links" class="container">
-      <div class="section-title"><h2>项目资源 / Project Resources</h2><p>快速访问作品文档、项目仓库与作者主页。</p></div>
+    <section id="links" class="container">
+      <div class="section-title"><h2>项目资源 / Project Resources</h2><p>新版国赛演示、设计文档、完成度与现场资料集中在同一页面。</p></div>
       <div class="quick-links">
-        <a class="quick-link" href="中文报告.pdf" target="_blank" rel="noopener"><span class="ql-icon">📄</span><div><b>作品设计报告</b><small>完整设计报告与附录</small></div></a>
-        <a class="quick-link" href="作品简介.pdf" target="_blank" rel="noopener"><span class="ql-icon">🧾</span><div><b>作品简介</b><small>项目摘要与队伍信息</small></div></a>
-        <a class="quick-link" href="#demo-video"><span class="ql-icon">🎬</span><div><b>演示视频</b><small>系统运行与闭环演示</small></div></a>
-        <a class="quick-link" href="https://github.com/Qiushi0919/IntelCup-2026" target="_blank" rel="noopener"><span class="ql-icon">💻</span><div><b>项目仓库</b><small>源码、结构与后续更新</small></div></a>
-        <a class="quick-link" href="https://github.com/Qiushi0919" target="_blank" rel="noopener"><span class="ql-icon">👤</span><div><b>作者主页</b><small>GitHub 个人主页</small></div></a>
+        <a class="quick-link" href="#demo-video"><span class="ql-icon">🎬</span><span><b>双版本视频</b><small>默认国赛版，可切换复赛版</small></span></a>
+        <a class="quick-link" href="中文报告.pdf" target="_blank" rel="noopener"><span class="ql-icon">📄</span><span><b>设计报告</b><small>完整方案与附录</small></span></a>
+        <a class="quick-link" href="#results"><span class="ql-icon">✅</span><span><b>功能演示表</b><small>9 项计划目标全部实现</small></span></a>
+        <a class="quick-link" href="#finals"><span class="ql-icon">🏆</span><span><b>国赛现场</b><small>海报与团队合照</small></span></a>
+        <a class="quick-link" href="https://github.com/Qiushi0919/IntelCup-2026" target="_blank" rel="noopener"><span class="ql-icon">💻</span><span><b>项目仓库</b><small>源码、文档与后续更新</small></span></a>
       </div>
     </section>
 
     <section id="demo-video" class="container">
-      <div class="demo-video-card reveal">
-        <div class="demo-video-head">
-          <div>
-            <h3>&#x1F3AC; &#x9879;&#x76EE;&#x6F14;&#x793A;&#x89C6;&#x9891; / Demo Video</h3>
-            <p>&#x5C55;&#x793A;&#x4F4E;&#x7A7A;&#x5DE1;&#x68C0;&#x3001;&#x56FE;&#x4F20;&#x63A5;&#x5165;&#x3001;&#x706B;&#x6E90;&#x8BC6;&#x522B;&#x3001;&#x591A;&#x6A21;&#x6001;&#x6307;&#x4EE4;&#x4E0E;&#x5B89;&#x5168;&#x786E;&#x8BA4;&#x95ED;&#x73AF;&#x3002;</p>
+      <div class="paper video-card reveal">
+        <div class="video-head">
+          <div><h3>🎬 项目演示视频 / Demo Video</h3><p>新版默认播放；保留旧版，便于查看系统从复赛到国赛的完整演进。</p></div>
+          <div class="video-tabs" role="tablist" aria-label="选择演示视频版本">
+            <button class="video-tab" type="button" role="tab" aria-selected="true" data-version="national">国赛新版</button>
+            <button class="video-tab" type="button" role="tab" aria-selected="false" data-version="regional">复赛旧版</button>
           </div>
         </div>
-        <div class="demo-video-wrap">
-          <video controls preload="metadata" poster="assets/figures/fig_20.webp" src="https://media.githubusercontent.com/media/Qiushi0919/IntelCup-2026/documents/%E5%A4%8D%E8%B5%9B-%E6%9C%80%E7%BB%88%E6%8F%90%E4%BA%A4%E6%96%87%E4%BB%B6/%E6%BC%94%E7%A4%BA%E8%A7%86%E9%A2%91-%E5%B0%8F%E4%BA%8E512MB.mp4">
-            &#x5F53;&#x524D;&#x6D4F;&#x89C8;&#x5668;&#x4E0D;&#x652F;&#x6301;&#x76F4;&#x63A5;&#x64AD;&#x653E;&#x89C6;&#x9891;&#xFF0C;&#x53EF;&#x901A;&#x8FC7;&#x4E0B;&#x65B9;&#x94FE;&#x63A5;&#x6253;&#x5F00;&#x3002;
-          </video>
+        <div class="video-wrap">
+          <video id="demoVideo" controls preload="metadata" poster="assets/nationals/national-finals-video-poster.jpg" src="assets/nationals/national-finals-demo.mp4">当前浏览器不支持直接播放视频。</video>
+        </div>
+        <div class="video-foot">
+          <div><b id="videoTitle">2026 国赛新版 · 03:48</b><p id="videoDescription">覆盖参数自检、六航点巡逻、自由选点、安全飞行管理、火源/人脸/文字识别与日志报告导出。</p></div>
+          <a id="videoDirectLink" href="assets/nationals/national-finals-demo.mp4" target="_blank" rel="noopener">单独打开视频 ↗</a>
         </div>
       </div>
     </section>
 
-<section id="abstract" class="container">
-      <div class="section-title"><h2>作品简介 / Abstract</h2><p>根据作品简介与设计报告整理的项目主页版本，突出系统目标、闭环流程与应用价值。</p></div>
-      <div class="paper abstract">
-        <p><strong>“智驭低空枢纽”</strong>面向低空巡检与火源识别场景，设计并实现了一套多模态无人机地面站系统。系统以 Intel DK-2500 地面端为核心，接入 AMB82 实时图传，结合镜头校正、火源检测、连续帧确认、任务地图、事件日志和 OpenVINO Whisper 语音识别，构建“图传感知—目标识别—候选指令—安全确认—飞控执行—状态回传—事件记录”的完整闭环。</p>
-        <p>作品将语音、手势、视线和面板按钮统一转化为候选任务，并对起飞、巡线、返航、降落等高风险动作设置二次确认，降低误触发风险。相比只展示单一算法，本系统更强调低成本模块化飞行端、低培训任务级交互和安全可追溯闭环。</p>
-        <div class="keywords"><span class="pill">无人机地面站</span><span class="pill">低空巡检</span><span class="pill">火源识别</span><span class="pill">多模态交互</span><span class="pill">人机协同</span><span class="pill">安全可追溯闭环</span></div>
+    <section id="abstract" class="container">
+      <div class="section-title"><h2>作品简介 / Abstract</h2><p>以 Intel DK-2500 为智能底座，把复杂飞行控制转化为可感知、可规划、可确认、可复盘的任务闭环。</p></div>
+      <div class="paper abstract reveal">
+        <p><strong>“智驭低空枢纽”</strong>面向低空消防巡检场景，在 Intel DK-2500 上完成地面站交互、飞行状态解构、三维姿态与轨迹渲染、自由路线规划、目标识别、安全控制以及事件报告导出。鼠标、手势和视线输入统一生成任务意图，再由地面站组织为可执行的飞行任务。</p>
+        <p>系统支持六航点自主巡逻与自由选点巡逻，结合光流、IMU 与高度数据保障室内飞行；在巡逻过程中实时识别火源、人脸和文字，并把识别结果与航迹、地图位置、事件日志关联。异常情况下，高优先级安全指令可抢占当前任务并触发保护或返航。</p>
+        <div class="keywords"><span class="pill">Intel DK-2500</span><span class="pill">多模态交互</span><span class="pill">自由路线规划</span><span class="pill">无人机姿态仿真</span><span class="pill">多目标识别</span><span class="pill">安全飞行管理</span><span class="pill">报告自动导出</span></div>
       </div>
     </section>
 
     <section id="pipeline" class="container">
-      <div class="section-title"><h2>闭环流程 / Closed-loop Pipeline</h2><p>核心展示点不是单一功能，而是从感知到执行再到记录的完整任务闭环。</p></div>
-      <div class="paper">
-        <div class="flow-strip">
-          <div class="step"><div class="num">1</div><b>图传感知</b><span>AMB82 RTSP / Snapshot</span></div>
-          <div class="step"><div class="num">2</div><b>目标识别</b><span>火源检测 + 镜头校正</span></div>
-          <div class="step"><div class="num">3</div><b>候选生成</b><span>连续 3 帧确认</span></div>
-          <div class="step"><div class="num">4</div><b>安全确认</b><span>风险分级 + 二次确认</span></div>
-          <div class="step"><div class="num">5</div><b>飞控执行</b><span>起飞 / 巡线 / 返航</span></div>
-          <div class="step"><div class="num">6</div><b>状态回传</b><span>ACK / 航点 / 电量</span></div>
-          <div class="step"><div class="num">7</div><b>事件记录</b><span>日志留痕与复盘</span></div>
-        </div>
+      <div class="section-title"><h2>闭环流程 / Closed-loop Pipeline</h2><p>新版闭环从“单点功能堆叠”升级为“四个转变 + 一个底座”，让 AI 成为低空巡检的第二飞手。</p></div>
+      <article class="paper pipeline-visual reveal">
+        <button class="visual-button" type="button" data-full="assets/nationals/four-shifts-one-foundation.png" data-title="四个转变 + 一个底座"><img src="assets/nationals/four-shifts-one-foundation.png" alt="四个转变加一个底座的系统闭环" loading="lazy" /></button>
+        <div class="visual-body"><h3>四个转变 + 一个底座</h3><p>自然交互、任务级管理、自主安全飞行、全过程记录都汇聚到 DK-2500 边缘智能平台。</p></div>
+      </article>
+      <div class="stage-grid">
+        <div class="stage"><span>1</span><b>任务输入</b><p>鼠标、手势、视线统一生成候选任务。</p></div>
+        <div class="stage"><span>2</span><b>状态解构</b><p>解析姿态、电量、高度、速度与设备状态。</p></div>
+        <div class="stage"><span>3</span><b>自主规划</b><p>六航点或自由选点，生成可执行巡逻路线。</p></div>
+        <div class="stage"><span>4</span><b>识别与保护</b><p>识别目标；安全状态机可抢占当前任务。</p></div>
+        <div class="stage"><span>5</span><b>留痕复盘</b><p>航迹、目标、日志与报告统一保存到本地。</p></div>
       </div>
     </section>
 
     <section id="system" class="container">
-      <div class="section-title"><h2>系统概览 / System Overview</h2><p>低成本模块化飞行端 + Intel DK-2500 地面智能枢纽 + 安全命令中心。</p></div>
-      <div class="grid grid-2">
-        <article class="diagram-card"><button class="figure-button" data-full="assets/figures/fig_05.webp" data-title="系统整体架构"><img src="assets/figures/fig_05.webp" alt="系统整体架构" /></button><div class="body"><h3>系统整体架构</h3><p>多模态输入、地面站、外设设备、图传链路和无人机飞控形成协同架构。</p></div></article>
-        <article class="diagram-card"><button class="figure-button" data-full="assets/figures/fig_07.webp" data-title="软件总体架构与任务流程"><img src="assets/figures/fig_07.webp" alt="软件总体架构" /></button><div class="body"><h3>软件总体架构</h3><p>图像、语音、手势、视线等输入先进入感知与候选环节，再由安全命令中心确认。</p></div></article>
+      <div class="section-title"><h2>系统架构 / System Architecture</h2><p>用新版答辩 PPT 中的完整架构替换旧版示意图，呈现硬件连接、软件工作流与飞行端协同关系。</p></div>
+      <div class="architecture-grid">
+        <article class="paper architecture-card primary reveal"><button class="visual-button" type="button" data-full="assets/nationals/system-architecture.jpg" data-title="系统整体架构图"><img src="assets/nationals/system-architecture.jpg" alt="系统整体架构图" loading="lazy" /></button><div class="visual-body"><h3>系统整体架构图</h3><p>多模态输入进入 Intel 板卡地面站，外设、图传与无人机飞控在统一任务链路中协同。</p></div></article>
+        <article class="paper architecture-card reveal"><button class="visual-button" type="button" data-full="assets/nationals/hardware-architecture.png" data-title="基于 DK-2500 的无人机空地双链路架构"><img src="assets/nationals/hardware-architecture.png" alt="基于 DK-2500 的无人机空地双链路硬件架构" loading="lazy" /></button><div class="visual-body"><h3>硬件总体架构</h3><p>DK-2500、无人机、图传、数传、飞控与摄像设备构成空地双链路。</p></div></article>
+        <article class="paper architecture-card reveal"><button class="visual-button" type="button" data-full="assets/nationals/software-architecture.png" data-title="软件总体架构与系统工作流程"><img src="assets/nationals/software-architecture.png" alt="软件总体架构与系统工作流程" loading="lazy" /></button><div class="visual-body"><h3>软件总体架构</h3><p>参数自检、多模态交互、仿真飞行、自主巡逻、安全管理、目标识别与日志导出组成完整软件工作流。</p></div></article>
       </div>
     </section>
 
-    <section class="container">
-      <div class="section-title"><h2>方案亮点 / Highlights</h2><p>把评委最关心的“成本、培训、步骤、安全”放到首页核心区域。</p></div>
-      <div class="grid grid-4">
-        <div class="feature"><div class="icon">💰</div><h3>低成本模块化</h3><p>智能能力集中在地面站，飞行端保持低成本、可拆换、易维护。</p></div>
-        <div class="feature"><div class="icon">🧑‍✈️</div><h3>低培训门槛</h3><p>通过语音、手势、视线三卡片和按钮，把复杂飞控操作变成任务级选择。</p></div>
-        <div class="feature"><div class="icon">⚡</div><h3>预封装任务</h3><p>预热、自检、低空起飞、巡线、火源确认、返航和降落统一封装。</p></div>
-        <div class="feature"><div class="icon">🛡️</div><h3>安全可追溯</h3><p>高风险动作经候选、确认、执行回执和日志记录，便于复盘。</p></div>
+    <section id="highlights" class="container">
+      <div class="section-title"><h2>国赛版创新点 / National Finals Highlights</h2><p>从“遥控器操作”转向“任务级人机协同”，同时保留对安全、证据与复盘的工程约束。</p></div>
+      <div class="shift-grid">
+        <div class="shift-card"><div class="icon">🖱️</div><h3>传统遥控 → 自然交互</h3><p>鼠标、手势和视线直接选择任务，降低专业飞控训练门槛。</p></div>
+        <div class="shift-card"><div class="icon">🧭</div><h3>飞行参数 → 任务态势</h3><p>把高度、速度、电量、姿态与航迹组织为实时任务界面。</p></div>
+        <div class="shift-card"><div class="icon">🛡️</div><h3>飞手操控 → 自主安全</h3><p>自由巡逻、状态机与高优先级应急保护共同约束飞行。</p></div>
+        <div class="shift-card"><div class="icon">📚</div><h3>黑箱任务 → 全程记录</h3><p>目标、航迹、设备状态与事件日志自动进入本地报告。</p></div>
+        <div class="foundation"><b>一个底座：Intel DK-2500 边缘智能平台</b><span>负责状态解构、AI 推理、路线规划、界面交互、仿真渲染与报告生成。</span></div>
       </div>
     </section>
 
     <section id="figures" class="container">
-      <div class="section-title"><h2>核心展示图 / Featured Figures</h2><p>优先展示最能体现系统完成度的界面截图、流程图和任务地图。</p></div>
-      <div class="showcase-grid">
-
-        <article class="showcase-card" data-cat="ui">
-          <button class="figure-button" data-full="assets/figures/fig_20.webp" data-title="图 20 · 地面站整体运行界面">
-            <img src="assets/figures/fig_20.webp" alt="地面站整体运行界面" loading="lazy" />
-          </button>
-          <div class="showcase-body"><span>地面站 UI</span><h3>图 20 · 地面站整体运行界面</h3><p>主图传、状态栏、设备健康、任务地图、安全命令中心与日志区。</p></div>
-        </article>
-
-        <article class="showcase-card" data-cat="system">
-          <button class="figure-button" data-full="assets/figures/fig_05.webp" data-title="图 5 · 系统整体架构">
-            <img src="assets/figures/fig_05.webp" alt="系统整体架构" loading="lazy" />
-          </button>
-          <div class="showcase-body"><span>系统架构</span><h3>图 5 · 系统整体架构</h3><p>Intel DK-2500 地面站连接多模态输入、AMB82 图传、飞控数传和安全命令中心。</p></div>
-        </article>
-
-        <article class="showcase-card" data-cat="hardware">
-          <button class="figure-button" data-full="assets/figures/fig_06.webp" data-title="图 6 · 板卡端 / 无人机端硬件对应">
-            <img src="assets/figures/fig_06.webp" alt="板卡端 / 无人机端硬件对应" loading="lazy" />
-          </button>
-          <div class="showcase-body"><span>硬件平台</span><h3>图 6 · 板卡端 / 无人机端硬件对应</h3><p>DK-2500、AMB82、数传模块、飞控开发板、动力系统和无人机平台的部署关系。</p></div>
-        </article>
-
-        <article class="showcase-card" data-cat="interaction">
-          <button class="figure-button" data-full="assets/figures/fig_10.webp" data-title="图 10 · 手势 + 视线三卡片选择">
-            <img src="assets/figures/fig_10.webp" alt="手势 + 视线三卡片选择" loading="lazy" />
-          </button>
-          <div class="showcase-body"><span>多模态交互</span><h3>图 10 · 手势 + 视线三卡片选择</h3><p>手势确定任务组，视线/头部方向选择左、中、右候选任务。</p></div>
-        </article>
-
-        <article class="showcase-card" data-cat="mission">
-          <button class="figure-button" data-full="assets/figures/fig_18.webp" data-title="图 18 · 巡线过程中识别到火源">
-            <img src="assets/figures/fig_18.webp" alt="巡线过程中识别到火源" loading="lazy" />
-          </button>
-          <div class="showcase-body"><span>巡线与火源识别</span><h3>图 18 · 巡线过程中识别到火源</h3><p>主图传画面叠加火源检测框并联动任务状态。</p></div>
-        </article>
-
-        <article class="showcase-card" data-cat="mission">
-          <button class="figure-button" data-full="assets/figures/fig_19.webp" data-title="图 19 · 识别成功后地图标记">
-            <img src="assets/figures/fig_19.webp" alt="识别成功后地图标记" loading="lazy" />
-          </button>
-          <div class="showcase-body"><span>巡线与火源识别</span><h3>图 19 · 识别成功后地图标记</h3><p>火源点位在任务地图中由蓝色切换为红色告警状态。</p></div>
-        </article>
-
-        <article class="showcase-card" data-cat="mission">
-          <button class="figure-button" data-full="assets/figures/fig_16.webp" data-title="图 16 · 巡线路线与任务地图">
-            <img src="assets/figures/fig_16.webp" alt="巡线路线与任务地图" loading="lazy" />
-          </button>
-          <div class="showcase-body"><span>巡线与火源识别</span><h3>图 16 · 巡线路线与任务地图</h3><p>48 dm × 40 dm 场地、障碍区、航点和火源候选点可视化。</p></div>
-        </article>
-
-        <article class="showcase-card" data-cat="mission">
-          <button class="figure-button" data-full="assets/figures/fig_23.webp" data-title="图 23 · 六航点巡逻与火源识别流程">
-            <img src="assets/figures/fig_23.webp" alt="六航点巡逻与火源识别流程" loading="lazy" />
-          </button>
-          <div class="showcase-body"><span>巡线与火源识别</span><h3>图 23 · 六航点巡逻与火源识别流程</h3><p>任务从起飞、逐点巡逻、到点悬停、识别火源到返航复盘。</p></div>
-        </article>
+      <div class="section-title"><h2>功能展示 / Featured Figures</h2><p>新版功能图优先展示；复赛阶段的手势、视线与安全确认截图继续保留，体现系统迭代与开发工作量。</p></div>
+      <div class="filter-panel" role="group" aria-label="功能图筛选">
+        <button class="filter-chip active" type="button" data-filter="all">全部</button>
+        <button class="filter-chip" type="button" data-filter="national">国赛新版</button>
+        <button class="filter-chip" type="button" data-filter="legacy">迭代留存</button>
+      </div>
+      <div class="figure-grid">
+        <article class="paper figure-card" data-cat="national"><button class="visual-button" type="button" data-full="assets/nationals/ground-station-overview.png" data-title="地面站整体运行界面"><img src="assets/nationals/ground-station-overview.png" alt="地面站整体运行界面" loading="lazy" /></button><div class="figure-meta"><span class="tag">国赛新版</span><small>系统总览</small></div><h3>地面站整体运行界面</h3><p>参数、航迹、地图、任务与安全控制统一呈现。</p></article>
+        <article class="paper figure-card" data-cat="national"><button class="visual-button" type="button" data-full="assets/nationals/simulation-flight-ui.png" data-title="无人机空间运动状态仿真"><img src="assets/nationals/simulation-flight-ui.png" alt="无人机空间运动状态仿真界面" loading="lazy" /></button><div class="figure-meta"><span class="tag">国赛新版</span><small>仿真飞行</small></div><h3>空间运动状态仿真</h3><p>三维位置、航点和运动轨迹实时渲染。</p></article>
+        <article class="paper figure-card" data-cat="national"><button class="visual-button" type="button" data-full="assets/nationals/route-planning-ui.png" data-title="六航点与自由选点路线规划"><img src="assets/nationals/route-planning-ui.png" alt="六航点与自由选点路线规划" loading="lazy" /></button><div class="figure-meta"><span class="tag">国赛新版</span><small>自主巡逻</small></div><h3>六航点与自由选点巡逻</h3><p>支持预设航点，也支持在地图中自由规划路线。</p></article>
+        <article class="paper figure-card" data-cat="national"><button class="visual-button" type="button" data-full="assets/nationals/multimodal-ui.png" data-title="手势与视线多模态任务选择"><img src="assets/nationals/multimodal-ui.png" alt="手势与视线多模态任务选择" loading="lazy" /></button><div class="figure-meta"><span class="tag">国赛新版</span><small>多模态交互</small></div><h3>手势 + 视线任务选择</h3><p>先选任务组，再以视线或头部方向选择候选任务。</p></article>
+        <article class="paper figure-card" data-cat="national"><button class="visual-button" type="button" data-full="assets/nationals/safety-confirmation-ui.png" data-title="高风险候选动作安全确认"><img src="assets/nationals/safety-confirmation-ui.png" alt="高风险候选动作安全确认" loading="lazy" /></button><div class="figure-meta"><span class="tag">国赛新版</span><small>安全确认</small></div><h3>高风险动作确认</h3><p>识别输入只生成候选，执行前进入安全确认流程。</p></article>
+        <article class="paper figure-card" data-cat="national"><button class="visual-button" type="button" data-full="assets/nationals/target-recognition-slide.png" data-title="火源、人脸与文字目标识别"><img src="assets/nationals/target-recognition-slide.png" alt="火源、人脸与文字目标识别结果" loading="lazy" /></button><div class="figure-meta"><span class="tag">国赛新版</span><small>目标识别</small></div><h3>火源、人脸与文字识别</h3><p>识别结果结合目标位置写入任务地图和事件日志。</p></article>
+        <article class="paper figure-card" data-cat="legacy"><button class="visual-button" type="button" data-full="assets/figures/fig_09.webp" data-title="早期手势识别示例"><img src="assets/figures/fig_09.webp" alt="早期手势识别示例" loading="lazy" /></button><div class="figure-meta"><span class="tag legacy-tag">迭代留存</span><small>复赛阶段</small></div><h3>手势识别示例</h3><p>保留实际开发与调试照片，体现多模态输入的实现过程。</p></article>
+        <article class="paper figure-card" data-cat="legacy"><button class="visual-button" type="button" data-full="assets/figures/fig_10.webp" data-title="早期手势与视线三卡片选择"><img src="assets/figures/fig_10.webp" alt="早期手势与视线三卡片选择" loading="lazy" /></button><div class="figure-meta"><span class="tag legacy-tag">迭代留存</span><small>复赛阶段</small></div><h3>手势 + 视线三卡片选择</h3><p>早期版本已完成候选任务组与方向选择联动。</p></article>
+        <article class="paper figure-card" data-cat="legacy"><button class="visual-button" type="button" data-full="assets/figures/fig_11.webp" data-title="早期高风险候选动作确认"><img src="assets/figures/fig_11.webp" alt="早期高风险候选动作确认" loading="lazy" /></button><div class="figure-meta"><span class="tag legacy-tag">迭代留存</span><small>复赛阶段</small></div><h3>安全确认机制迭代</h3><p>从复赛阶段起，高风险候选就不会绕过人工确认。</p></article>
       </div>
     </section>
 
     <section id="results" class="container">
-      <div class="section-title"><h2>闭环测试结果 / Test Results</h2><p>保留关键测试指标，便于快速判断工程闭环完成度。</p></div>
-      <div class="metrics">
-        <div class="metric"><div class="value">15 FPS</div><div class="label">图传刷新</div><div class="note">AMB82 视频接入</div></div>
-        <div class="metric"><div class="value">31 ms</div><div class="label">链路延迟</div><div class="note">状态栏观测结果</div></div>
-        <div class="metric"><div class="value">92–94%</div><div class="label">火源置信度</div><div class="note">受控红橙色目标</div></div>
-        <div class="metric"><div class="value">3 帧</div><div class="label">连续确认</div><div class="note">过滤单帧误检</div></div>
+      <div class="section-title"><h2>功能完成度与测试结果 / Validation</h2><p>依据国赛功能演示表与答辩 PPT 更新：9 项计划目标均已实现，并形成可现场演示的完整闭环。</p></div>
+      <div class="result-metrics">
+        <div class="result-metric"><b>9 / 9</b><span>计划目标完成</span><small>功能演示表全部“已实现”</small></div>
+        <div class="result-metric"><b>6</b><span>预设巡逻航点</span><small>同时支持自由选点</small></div>
+        <div class="result-metric"><b>3 类</b><span>实时目标识别</span><small>火源 / 人脸 / 文字</small></div>
+        <div class="result-metric"><b>4</b><span>关键能力转变</span><small>自然交互到全程记录</small></div>
       </div>
-      <div style="height:18px"></div>
-      <table>
-        <thead><tr><th>模块</th><th>测试内容</th><th>结果摘要</th></tr></thead>
-        <tbody>
-          <tr><td>图传链路</td><td>相机连接、帧率、画面比例、异常处理</td><td>图传接入稳定，主画面保持 16:9，异常可记录。</td></tr>
-          <tr><td>火源识别</td><td>候选框输出、连续帧确认、地图联动</td><td>识别结果可叠加到图传，并同步写入任务地图与日志。</td></tr>
-          <tr><td>多模态交互</td><td>语音、手势、视线、按钮候选命令</td><td>所有输入统一进入 CommandIntent，不绕过安全流程。</td></tr>
-          <tr><td>飞控闭环</td><td>起飞、巡线、暂停、返航、降落</td><td>高风险动作确认后下发，ACK 与任务阶段同步记录。</td></tr>
-        </tbody>
-      </table>
+      <div class="table-wrap reveal">
+        <table>
+          <thead><tr><th>#</th><th>计划目标</th><th>国赛版技术实现</th><th>完成状态</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>DK-2500 地面站与手势、视线输入</td><td>PyQt5 + OpenCV + MediaPipe Hand/Face Landmarker，统一生成任务意图。</td><td class="done">✓ 已实现</td></tr>
+            <tr><td>2</td><td>解构无人机姿态并搭建实时姿态模型</td><td>依据 NCLink 解析姿态，使用 PyQtGraph 构建三维动态模型。</td><td class="done">✓ 已实现</td></tr>
+            <tr><td>3</td><td>高自由度路线规划与自主巡逻</td><td>光流、IMU、高度信息融合，建立场地坐标系并执行多航点任务。</td><td class="done">✓ 已实现</td></tr>
+            <tr><td>4</td><td>实时显示高度、速度、电量等状态</td><td>飞控采样与地面站实时数值、指示灯、曲线和低电压告警联动。</td><td class="done">✓ 已实现</td></tr>
+            <tr><td>5</td><td>飞行中识别火源、人脸、文字</td><td>LAB/HSV Blob、YuNet + SFace、PP-OCRv3 + CRNN ONNX 组成实时视觉链路。</td><td class="done">✓ 已实现</td></tr>
+            <tr><td>6</td><td>显示航迹并在地图标识目标</td><td>二维坐标映射结合时空信息融合，把航迹与识别结果同步到任务地图。</td><td class="done">✓ 已实现</td></tr>
+            <tr><td>7</td><td>生成事件日志并导出本地报告</td><td>事件驱动记录飞行状态、航迹、设备信息和识别图像，自动生成 Markdown 报告。</td><td class="done">✓ 已实现</td></tr>
+            <tr><td>8</td><td>突发状况下传输紧急保护指令</td><td>高优先级抢占巡逻状态机结合 PID 闭环，可立即中断任务并触发保护或返航。</td><td class="done">✓ 已实现</td></tr>
+            <tr><td>9</td><td>渲染并仿真无人机空间运动状态</td><td>离散飞行动力学、航点分段插值与 OpenGL 实时渲染三维位置和轨迹。</td><td class="done">✓ 已实现</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="result-gallery">
+        <article class="paper reveal"><button class="visual-button" type="button" data-full="assets/nationals/test-summary-slide.png" data-title="国赛功能演示汇总"><img src="assets/nationals/test-summary-slide.png" alt="国赛功能演示汇总表" loading="lazy" /></button><div class="visual-body"><h3>功能演示汇总</h3><p>开发套件运行、姿态解构、路线规划与飞行状态显示均完成。</p></div></article>
+        <article class="paper reveal"><button class="visual-button" type="button" data-full="assets/nationals/test-cases-slide.png" data-title="国赛功能演示用例"><img src="assets/nationals/test-cases-slide.png" alt="国赛功能演示用例表" loading="lazy" /></button><div class="visual-body"><h3>功能演示用例</h3><p>目标识别、航迹标识、事件日志、安全指令与空间运动仿真均完成。</p></div></article>
+        <article class="paper reveal"><button class="visual-button" type="button" data-full="assets/nationals/recognition-results-a.png" data-title="目标识别测试结果 A"><img src="assets/nationals/recognition-results-a.png" alt="目标识别测试结果前半部分" loading="lazy" /></button><div class="visual-body"><h3>目标识别测试 · A</h3><p>火源、人脸与文字识别用例按统一记录格式完成验证。</p></div></article>
+        <article class="paper reveal"><button class="visual-button" type="button" data-full="assets/nationals/recognition-results-b.png" data-title="目标识别测试结果 B"><img src="assets/nationals/recognition-results-b.png" alt="目标识别测试结果后半部分" loading="lazy" /></button><div class="visual-body"><h3>目标识别测试 · B</h3><p>识别结果与地图位置、报告文件和现场目标完成对应。</p></div></article>
+      </div>
     </section>
 
-    <section class="container">
-      <div class="section-title"><h2>报告图集 / Figure Gallery</h2><p>集中展示报告中的图像材料，支持分类筛选与点击放大查看。🖼️</p></div>
-      <div class="filter-panel">
-          <button class="filter-chip active" data-filter="all">全部图像</button>
-          <button class="filter-chip" data-filter="system">系统架构</button>
-          <button class="filter-chip" data-filter="hardware">硬件平台</button>
-          <button class="filter-chip" data-filter="interaction">多模态交互</button>
-          <button class="filter-chip" data-filter="safety">安全确认</button>
-          <button class="filter-chip" data-filter="mission">巡线与火源识别</button>
-          <button class="filter-chip" data-filter="ui">地面站 UI</button>
-          <button class="filter-chip" data-filter="communication">数传通信</button>
-          <button class="filter-chip" data-filter="appendix">附录流程图</button>
-      </div>
-      <div class="figure-wall">
-
-        <article class="figure-card" data-cat="system">
-          <button class="figure-button" data-full="assets/figures/fig_03.webp" data-title="图 3 · 现有低空巡检系统痛点">
-            <img src="assets/figures/fig_03.webp" alt="现有低空巡检系统痛点" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">系统架构</span><span class="pixels">1448×1086</span></div>
-          <h3>图 3 · 现有低空巡检系统痛点</h3>
-          <p>信息分散、目标确认不清、安全命令风险、多模态输入割裂与事件追踪不足。</p>
+    <section id="finals" class="container">
+      <div class="section-title"><h2>国赛海报与团队现场 / National Finals</h2><p>补充全国评审现场材料，展示项目的正式呈现与团队协作。</p></div>
+      <div class="finals-grid">
+        <article class="paper poster-card reveal"><button class="visual-button" type="button" data-full="assets/nationals/national-finals-poster.jpg" data-title="2026 英特尔杯国赛海报"><img src="assets/nationals/national-finals-poster.jpg" alt="2026 英特尔杯国赛项目海报" loading="lazy" /></button><div class="visual-body"><h3>国赛项目海报</h3><p>系统定位、总体架构、核心功能与验证结果的正式展示版本。</p></div></article>
+        <article class="paper team-gallery reveal">
+          <button class="visual-button team-main" type="button" data-full="assets/nationals/team-at-national-finals-2.jpg" data-title="团队与无人机系统合照"><img src="assets/nationals/team-at-national-finals-2.jpg" alt="团队成员与无人机系统国赛现场合照" loading="lazy" /></button>
+          <button class="visual-button" type="button" data-full="assets/nationals/team-at-national-finals-1.jpg" data-title="团队在国赛调试现场"><img src="assets/nationals/team-at-national-finals-1.jpg" alt="团队在国赛调试现场合照" loading="lazy" /></button>
+          <button class="visual-button" type="button" data-full="assets/nationals/ground-station-overview.png" data-title="国赛现场使用的新版地面站"><img src="assets/nationals/ground-station-overview.png" alt="国赛现场使用的新版地面站界面" loading="lazy" /></button>
         </article>
-
-        <article class="figure-card" data-cat="system">
-          <button class="figure-button" data-full="assets/figures/fig_04.webp" data-title="图 4 · 传统飞手操作 vs 任务级交互">
-            <img src="assets/figures/fig_04.webp" alt="传统飞手操作 vs 任务级交互" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">系统架构</span><span class="pixels">1774×887</span></div>
-          <h3>图 4 · 传统飞手操作 vs 任务级交互</h3>
-          <p>把复杂飞控流程转化为任务级选择与安全确认。</p>
-        </article>
-
-        <article class="figure-card" data-cat="system">
-          <button class="figure-button" data-full="assets/figures/fig_05.webp" data-title="图 5 · 系统整体架构">
-            <img src="assets/figures/fig_05.webp" alt="系统整体架构" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">系统架构</span><span class="pixels">1672×941</span></div>
-          <h3>图 5 · 系统整体架构</h3>
-          <p>Intel DK-2500 地面站连接多模态输入、AMB82 图传、飞控数传和安全命令中心。</p>
-        </article>
-
-        <article class="figure-card" data-cat="hardware">
-          <button class="figure-button" data-full="assets/figures/fig_06.webp" data-title="图 6 · 板卡端 / 无人机端硬件对应">
-            <img src="assets/figures/fig_06.webp" alt="板卡端 / 无人机端硬件对应" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">硬件平台</span><span class="pixels">1448×1086</span></div>
-          <h3>图 6 · 板卡端 / 无人机端硬件对应</h3>
-          <p>DK-2500、AMB82、数传模块、飞控开发板、动力系统和无人机平台的部署关系。</p>
-        </article>
-
-        <article class="figure-card" data-cat="system">
-          <button class="figure-button" data-full="assets/figures/fig_07.webp" data-title="图 7 · 软件总体架构与任务流程">
-            <img src="assets/figures/fig_07.webp" alt="软件总体架构与任务流程" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">系统架构</span><span class="pixels">1672×941</span></div>
-          <h3>图 7 · 软件总体架构与任务流程</h3>
-          <p>多模态采集、地面站感知、候选确认、飞控执行与日志记录。</p>
-        </article>
-
-        <article class="figure-card" data-cat="interaction">
-          <button class="figure-button" data-full="assets/figures/fig_08.webp" data-title="图 8 · 语音识别候选指令生成">
-            <img src="assets/figures/fig_08.webp" alt="语音识别候选指令生成" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">多模态交互</span><span class="pixels">1280×720</span></div>
-          <h3>图 8 · 语音识别候选指令生成</h3>
-          <p>识别文本、候选动作、置信度、风险等级与确认入口集中显示。</p>
-        </article>
-
-        <article class="figure-card" data-cat="interaction">
-          <button class="figure-button" data-full="assets/figures/fig_09.webp" data-title="图 9 · 手势识别示例">
-            <img src="assets/figures/fig_09.webp" alt="手势识别示例" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">多模态交互</span><span class="pixels">1426×2604</span></div>
-          <h3>图 9 · 手势识别示例</h3>
-          <p>张开手掌、握拳等稳定手势用于选择任务大类。</p>
-        </article>
-
-        <article class="figure-card" data-cat="interaction">
-          <button class="figure-button" data-full="assets/figures/fig_10.webp" data-title="图 10 · 手势 + 视线三卡片选择">
-            <img src="assets/figures/fig_10.webp" alt="手势 + 视线三卡片选择" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">多模态交互</span><span class="pixels">1800×972</span></div>
-          <h3>图 10 · 手势 + 视线三卡片选择</h3>
-          <p>手势确定任务组，视线/头部方向选择左、中、右候选任务。</p>
-        </article>
-
-        <article class="figure-card" data-cat="safety">
-          <button class="figure-button" data-full="assets/figures/fig_11.webp" data-title="图 11 · 高风险候选动作确认">
-            <img src="assets/figures/fig_11.webp" alt="高风险候选动作确认" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">安全确认</span><span class="pixels">1800×966</span></div>
-          <h3>图 11 · 高风险候选动作确认</h3>
-          <p>识别输入只生成候选，执行前必须进入安全确认流程。</p>
-        </article>
-
-        <article class="figure-card" data-cat="safety">
-          <button class="figure-button" data-full="assets/figures/fig_12.webp" data-title="图 12 · 鼠标二次确认机制">
-            <img src="assets/figures/fig_12.webp" alt="鼠标二次确认机制" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">安全确认</span><span class="pixels">1800×966</span></div>
-          <h3>图 12 · 鼠标二次确认机制</h3>
-          <p>高风险命令通过弹窗和命令中心进行二次确认。</p>
-        </article>
-
-        <article class="figure-card" data-cat="mission">
-          <button class="figure-button" data-full="assets/figures/fig_13.webp" data-title="图 13 · 一键起飞低空飞行画面">
-            <img src="assets/figures/fig_13.webp" alt="一键起飞低空飞行画面" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">巡线与火源识别</span><span class="pixels">1800×966</span></div>
-          <h3>图 13 · 一键起飞低空飞行画面</h3>
-          <p>低空起飞流程中的摄像头/图传展示。</p>
-        </article>
-
-        <article class="figure-card" data-cat="mission">
-          <button class="figure-button" data-full="assets/figures/fig_14.webp" data-title="图 14 · 系统自检报告">
-            <img src="assets/figures/fig_14.webp" alt="系统自检报告" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">巡线与火源识别</span><span class="pixels">1800×966</span></div>
-          <h3>图 14 · 系统自检报告</h3>
-          <p>陀螺仪、IMU、电机、摄像头和图传状态集中展示。</p>
-        </article>
-
-        <article class="figure-card" data-cat="mission">
-          <button class="figure-button" data-full="assets/figures/fig_15.webp" data-title="图 15 · 一键返航运行画面">
-            <img src="assets/figures/fig_15.webp" alt="一键返航运行画面" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">巡线与火源识别</span><span class="pixels">1800×966</span></div>
-          <h3>图 15 · 一键返航运行画面</h3>
-          <p>返航流程通过候选命令、确认和状态栏反馈完成闭环。</p>
-        </article>
-
-        <article class="figure-card" data-cat="mission">
-          <button class="figure-button" data-full="assets/figures/fig_16.webp" data-title="图 16 · 巡线路线与任务地图">
-            <img src="assets/figures/fig_16.webp" alt="巡线路线与任务地图" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">巡线与火源识别</span><span class="pixels">1800×1491</span></div>
-          <h3>图 16 · 巡线路线与任务地图</h3>
-          <p>48 dm × 40 dm 场地、障碍区、航点和火源候选点可视化。</p>
-        </article>
-
-        <article class="figure-card" data-cat="mission">
-          <button class="figure-button" data-full="assets/figures/fig_17.webp" data-title="图 17 · 火源识别算法示例">
-            <img src="assets/figures/fig_17.webp" alt="火源识别算法示例" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">巡线与火源识别</span><span class="pixels">1800×1491</span></div>
-          <h3>图 17 · 火源识别算法示例</h3>
-          <p>红框圈出模拟火源，并与场地地图位置对应。</p>
-        </article>
-
-        <article class="figure-card" data-cat="mission">
-          <button class="figure-button" data-full="assets/figures/fig_18.webp" data-title="图 18 · 巡线过程中识别到火源">
-            <img src="assets/figures/fig_18.webp" alt="巡线过程中识别到火源" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">巡线与火源识别</span><span class="pixels">1800×1012</span></div>
-          <h3>图 18 · 巡线过程中识别到火源</h3>
-          <p>主图传画面叠加火源检测框并联动任务状态。</p>
-        </article>
-
-        <article class="figure-card" data-cat="mission">
-          <button class="figure-button" data-full="assets/figures/fig_19.webp" data-title="图 19 · 识别成功后地图标记">
-            <img src="assets/figures/fig_19.webp" alt="识别成功后地图标记" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">巡线与火源识别</span><span class="pixels">1800×1012</span></div>
-          <h3>图 19 · 识别成功后地图标记</h3>
-          <p>火源点位在任务地图中由蓝色切换为红色告警状态。</p>
-        </article>
-
-        <article class="figure-card" data-cat="ui">
-          <button class="figure-button" data-full="assets/figures/fig_20.webp" data-title="图 20 · 地面站整体运行界面">
-            <img src="assets/figures/fig_20.webp" alt="地面站整体运行界面" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">地面站 UI</span><span class="pixels">1800×1012</span></div>
-          <h3>图 20 · 地面站整体运行界面</h3>
-          <p>主图传、状态栏、设备健康、任务地图、安全命令中心与日志区。</p>
-        </article>
-
-        <article class="figure-card" data-cat="hardware">
-          <button class="figure-button" data-full="assets/figures/fig_21.webp" data-title="图 21 · F260-T432 四旋翼平台">
-            <img src="assets/figures/fig_21.webp" alt="F260-T432 四旋翼平台" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">硬件平台</span><span class="pixels">487×324</span></div>
-          <h3>图 21 · F260-T432 四旋翼平台</h3>
-          <p>无人机端作为低空巡检任务执行节点。</p>
-        </article>
-
-        <article class="figure-card" data-cat="hardware">
-          <button class="figure-button" data-full="assets/figures/fig_22.webp" data-title="图 22 · F260-T432 硬件组成框图">
-            <img src="assets/figures/fig_22.webp" alt="F260-T432 硬件组成框图" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">硬件平台</span><span class="pixels">1448×1086</span></div>
-          <h3>图 22 · F260-T432 硬件组成框图</h3>
-          <p>飞控、惯性测量、电机电调、图传、数传与地面站关系。</p>
-        </article>
-
-        <article class="figure-card" data-cat="mission">
-          <button class="figure-button" data-full="assets/figures/fig_23.webp" data-title="图 23 · 六航点巡逻与火源识别流程">
-            <img src="assets/figures/fig_23.webp" alt="六航点巡逻与火源识别流程" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">巡线与火源识别</span><span class="pixels">1800×859</span></div>
-          <h3>图 23 · 六航点巡逻与火源识别流程</h3>
-          <p>任务从起飞、逐点巡逻、到点悬停、识别火源到返航复盘。</p>
-        </article>
-
-        <article class="figure-card" data-cat="communication">
-          <button class="figure-button" data-full="assets/figures/fig_24.webp" data-title="图 24 · MAVLink 数传协议栈">
-            <img src="assets/figures/fig_24.webp" alt="MAVLink 数传协议栈" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">数传通信</span><span class="pixels">800×580</span></div>
-          <h3>图 24 · MAVLink 数传协议栈</h3>
-          <p>应用层、协议层、传输层和硬件层的分层思想。</p>
-        </article>
-
-        <article class="figure-card" data-cat="communication">
-          <button class="figure-button" data-full="assets/figures/fig_25.webp" data-title="图 25 · 数传测试与上位机示意">
-            <img src="assets/figures/fig_25.webp" alt="数传测试与上位机示意" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">数传通信</span><span class="pixels">487×324</span></div>
-          <h3>图 25 · 数传测试与上位机示意</h3>
-          <p>通过上位机工具观察通信状态、任务进度与 ACK 回执。</p>
-        </article>
-
-        <article class="figure-card" data-cat="appendix">
-          <button class="figure-button" data-full="assets/figures/fig_26.webp" data-title="图 26 · 地面站主程序运行流程">
-            <img src="assets/figures/fig_26.webp" alt="地面站主程序运行流程" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">附录流程图</span><span class="pixels">1674×1278</span></div>
-          <h3>图 26 · 地面站主程序运行流程</h3>
-          <p>初始化 UI、加载地图、连接设备、生成候选任务并安全确认。</p>
-        </article>
-
-        <article class="figure-card" data-cat="appendix">
-          <button class="figure-button" data-full="assets/figures/fig_27.webp" data-title="图 27 · 图传接入与画面处理流程">
-            <img src="assets/figures/fig_27.webp" alt="图传接入与画面处理流程" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">附录流程图</span><span class="pixels">1674×972</span></div>
-          <h3>图 27 · 图传接入与画面处理流程</h3>
-          <p>AMB82 接入、RTSP 优先、快照回退、镜头校正与 HUD 叠加。</p>
-        </article>
-
-        <article class="figure-card" data-cat="appendix">
-          <button class="figure-button" data-full="assets/figures/fig_28.webp" data-title="图 28 · 镜头畸变校正对比 A">
-            <img src="assets/figures/fig_28.webp" alt="镜头畸变校正对比 A" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">附录流程图</span><span class="pixels">1444×947</span></div>
-          <h3>图 28 · 镜头畸变校正对比 A</h3>
-          <p>展示去畸变前后画面几何形变差异。</p>
-        </article>
-
-        <article class="figure-card" data-cat="appendix">
-          <button class="figure-button" data-full="assets/figures/fig_29.webp" data-title="图 29 · 镜头畸变校正对比 B">
-            <img src="assets/figures/fig_29.webp" alt="镜头畸变校正对比 B" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">附录流程图</span><span class="pixels">1444×947</span></div>
-          <h3>图 29 · 镜头畸变校正对比 B</h3>
-          <p>校正强度用于适应不同摄像头安装与广角畸变。</p>
-        </article>
-
-        <article class="figure-card" data-cat="appendix">
-          <button class="figure-button" data-full="assets/figures/fig_30.webp" data-title="图 30 · 火源识别流程">
-            <img src="assets/figures/fig_30.webp" alt="火源识别流程" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">附录流程图</span><span class="pixels">1674×972</span></div>
-          <h3>图 30 · 火源识别流程</h3>
-          <p>颜色空间分析、形态学滤波、连通域筛选和连续帧确认。</p>
-        </article>
-
-        <article class="figure-card" data-cat="appendix">
-          <button class="figure-button" data-full="assets/figures/fig_31.webp" data-title="图 31 · 语音识别候选任务流程">
-            <img src="assets/figures/fig_31.webp" alt="语音识别候选任务流程" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">附录流程图</span><span class="pixels">1674×972</span></div>
-          <h3>图 31 · 语音识别候选任务流程</h3>
-          <p>语音转写、关键词匹配、候选生成与安全确认。</p>
-        </article>
-
-        <article class="figure-card" data-cat="appendix">
-          <button class="figure-button" data-full="assets/figures/fig_32.webp" data-title="图 32 · 视线与头部姿态识别流程">
-            <img src="assets/figures/fig_32.webp" alt="视线与头部姿态识别流程" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">附录流程图</span><span class="pixels">1674×666</span></div>
-          <h3>图 32 · 视线与头部姿态识别流程</h3>
-          <p>头部偏转为主、眼部方向为辅，实现左中右选择。</p>
-        </article>
-
-        <article class="figure-card" data-cat="appendix">
-          <button class="figure-button" data-full="assets/figures/fig_33.webp" data-title="图 33 · 三卡片第一阶段选择流程">
-            <img src="assets/figures/fig_33.webp" alt="三卡片第一阶段选择流程" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">附录流程图</span><span class="pixels">1674×666</span></div>
-          <h3>图 33 · 三卡片第一阶段选择流程</h3>
-          <p>第一阶段只选择候选任务，不直接控制无人机。</p>
-        </article>
-
-        <article class="figure-card" data-cat="appendix">
-          <button class="figure-button" data-full="assets/figures/fig_34.webp" data-title="图 34 · 任务状态机转换流程">
-            <img src="assets/figures/fig_34.webp" alt="任务状态机转换流程" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">附录流程图</span><span class="pixels">1242×666</span></div>
-          <h3>图 34 · 任务状态机转换流程</h3>
-          <p>不同任务之间按合法状态转换，避免冲突执行。</p>
-        </article>
-
-        <article class="figure-card" data-cat="appendix">
-          <button class="figure-button" data-full="assets/figures/fig_35.webp" data-title="图 35 · 一键起飞任务流程">
-            <img src="assets/figures/fig_35.webp" alt="一键起飞任务流程" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">附录流程图</span><span class="pixels">1674×972</span></div>
-          <h3>图 35 · 一键起飞任务流程</h3>
-          <p>预热、自检、低空起飞与高空起飞流程封装。</p>
-        </article>
-
-        <article class="figure-card" data-cat="appendix">
-          <button class="figure-button" data-full="assets/figures/fig_36.webp" data-title="图 36 · 一键返航任务流程">
-            <img src="assets/figures/fig_36.webp" alt="一键返航任务流程" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">附录流程图</span><span class="pixels">1674×972</span></div>
-          <h3>图 36 · 一键返航任务流程</h3>
-          <p>发现火源或任务结束后触发返航，并记录状态。</p>
-        </article>
-
-        <article class="figure-card" data-cat="appendix">
-          <button class="figure-button" data-full="assets/figures/fig_37.webp" data-title="图 37 · 通信链路异常处理流程">
-            <img src="assets/figures/fig_37.webp" alt="通信链路异常处理流程" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">附录流程图</span><span class="pixels">1674×666</span></div>
-          <h3>图 37 · 通信链路异常处理流程</h3>
-          <p>通过心跳包判断链路状态，异常时限制高风险命令。</p>
-        </article>
-
-        <article class="figure-card" data-cat="appendix">
-          <button class="figure-button" data-full="assets/figures/fig_38.webp" data-title="图 38 · 安全命令候选确认流程 A">
-            <img src="assets/figures/fig_38.webp" alt="安全命令候选确认流程 A" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">附录流程图</span><span class="pixels">1242×666</span></div>
-          <h3>图 38 · 安全命令候选确认流程 A</h3>
-          <p>候选命令进入风险判断与人工确认。</p>
-        </article>
-
-        <article class="figure-card" data-cat="appendix">
-          <button class="figure-button" data-full="assets/figures/fig_39.webp" data-title="图 39 · 安全命令候选确认流程 B">
-            <img src="assets/figures/fig_39.webp" alt="安全命令候选确认流程 B" loading="lazy" />
-          </button>
-          <div class="figure-meta"><span class="tag">附录流程图</span><span class="pixels">1674×666</span></div>
-          <h3>图 39 · 安全命令候选确认流程 B</h3>
-          <p>二次确认后执行并写入事件日志。</p>
-        </article>
+        <div class="finals-note"><b>从软件到现场：</b>团队完成地面站、飞行端、图传/数传、多模态交互、目标识别、仿真规划与报告导出的集成，并在全国评审现场完成联调与展示。</div>
       </div>
     </section>
 
     <section id="citation" class="container">
-      <div class="section-title"><h2>引用格式 / Citation</h2><p>如果需要在项目主页、简历或 README 中引用该作品，可使用下面的 BibTeX。</p></div>
-      <div class="code-wrap">
-        <div class="code-head"><span>推荐引用格式 / BibTeX</span><button class="copy-btn" id="copyBibtex">复制 BibTeX</button></div>
-        <pre class="code" id="bibtexBlock">@misc{xie2026lowaltitudehub,
-  title        = {Low-Altitude Intelligent Hub: A Multimodal UAV Ground Station System for Low-Altitude Patrol and Fire Detection},
+      <div class="section-title"><h2>引用格式 / Citation</h2><p>在项目主页、简历或技术材料中引用本作品时，可使用以下格式。</p></div>
+      <div class="paper citation reveal">
+        <div class="citation-head"><span>推荐引用格式 / BibTeX</span><button class="copy-btn" id="copyBibtex" type="button">复制 BibTeX</button></div>
+        <pre id="bibtexBlock">@misc{xie2026lowaltitudehub,
+  title        = {Low-Altitude Intelligent Hub: A Multimodal Ground Station System for Low-Altitude Fire Patrol},
   author       = {Qiushi Xie and Tuoyuan Zhu and Yachen Pang},
   year         = {2026},
   school       = {Huazhong University of Science and Technology},
   howpublished = {Intel Cup Undergraduate Electronic Design Contest, Embedded AI Track},
   url          = {https://github.com/Qiushi0919/IntelCup-2026},
-  note         = {Project page and source repository}
+  note         = {National finals project page and source repository}
 }</pre>
       </div>
     </section>
   </main>
 
   <footer class="container">
-    <div class="footer-title"><img src="assets/hust_logo.png" alt="华中科技大学" style="height:42px;vertical-align:middle;margin-right:10px">智驭低空枢纽 · Low-Altitude Intelligent Hub</div>
-    <div>Competition showcase page · GitHub Pages ready · Repository: <a href="https://github.com/Qiushi0919/IntelCup-2026" target="_blank" rel="noopener">Qiushi0919/IntelCup-2026</a></div>
+    <div class="footer-title"><img src="assets/hust_logo.png" alt="华中科技大学" />智驭低空枢纽 · Low-Altitude Intelligent Hub</div>
+    <div>2026 Intel Cup National Finals showcase · <a href="https://github.com/Qiushi0919/IntelCup-2026" target="_blank" rel="noopener">Qiushi0919/IntelCup-2026</a></div>
   </footer>
 
-  <a class="backtop" href="#top" aria-label="Back to top">↑</a>
+  <a class="backtop" href="#top" aria-label="返回页面顶部">↑</a>
   <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="图片预览">
     <div class="lightbox-inner">
-      <div class="lightbox-head"><span id="lightboxTitle">Figure</span><button class="lightbox-close" aria-label="Close">×</button></div>
-      <img id="lightboxImg" alt="放大图片" />
+      <div class="lightbox-head"><span id="lightboxTitle">图片预览</span><button class="lightbox-close" type="button" aria-label="关闭图片预览">×</button></div>
+      <img id="lightboxImg" alt="放大预览" />
     </div>
   </div>
+
   <script>
-    const chips = document.querySelectorAll('.filter-chip');
-    const cards = document.querySelectorAll('.figure-card');
-    chips.forEach(chip => chip.addEventListener('click', () => {
-      chips.forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-      const filter = chip.dataset.filter;
-      cards.forEach(card => { card.style.display = (filter === 'all' || card.dataset.cat === filter) ? '' : 'none'; });
+    const OLD_VIDEO_URL = 'https://media.githubusercontent.com/media/Qiushi0919/IntelCup-2026/documents/%E5%A4%8D%E8%B5%9B-%E6%9C%80%E7%BB%88%E6%8F%90%E4%BA%A4%E6%96%87%E4%BB%B6/%E6%BC%94%E7%A4%BA%E8%A7%86%E9%A2%91-%E5%B0%8F%E4%BA%8E512MB.mp4';
+    const videoVersions = {
+      national: {
+        src: 'assets/nationals/national-finals-demo.mp4',
+        poster: 'assets/nationals/national-finals-video-poster.jpg',
+        title: '2026 国赛新版 · 03:48',
+        description: '覆盖参数自检、六航点巡逻、自由选点、安全飞行管理、火源/人脸/文字识别与日志报告导出。'
+      },
+      regional: {
+        src: OLD_VIDEO_URL,
+        poster: 'assets/figures/fig_20.webp',
+        title: '2026 复赛旧版 · 系统闭环演示',
+        description: '保留早期图传、火源识别、多模态候选与安全确认流程，用于对照系统迭代。'
+      }
+    };
+
+    const video = document.getElementById('demoVideo');
+    const videoTitle = document.getElementById('videoTitle');
+    const videoDescription = document.getElementById('videoDescription');
+    const videoDirectLink = document.getElementById('videoDirectLink');
+    document.querySelectorAll('.video-tab').forEach(tab => tab.addEventListener('click', () => {
+      const selected = videoVersions[tab.dataset.version];
+      if (!selected || tab.getAttribute('aria-selected') === 'true') return;
+      document.querySelectorAll('.video-tab').forEach(item => item.setAttribute('aria-selected', String(item === tab)));
+      video.pause();
+      video.src = selected.src;
+      video.poster = selected.poster;
+      video.load();
+      videoTitle.textContent = selected.title;
+      videoDescription.textContent = selected.description;
+      videoDirectLink.href = selected.src;
     }));
 
     const lightbox = document.getElementById('lightbox');
     const lightboxImg = document.getElementById('lightboxImg');
     const lightboxTitle = document.getElementById('lightboxTitle');
-    document.querySelectorAll('.figure-button').forEach(btn => btn.addEventListener('click', () => {
-      lightboxImg.src = btn.dataset.full;
-      lightboxTitle.textContent = btn.dataset.title || 'Figure';
+    let lastFocused = null;
+    const openLightbox = button => {
+      lastFocused = button;
+      lightboxImg.src = button.dataset.full;
+      lightboxTitle.textContent = button.dataset.title || '图片预览';
       lightbox.classList.add('open');
-    }));
-    document.querySelector('.lightbox-close').addEventListener('click', () => lightbox.classList.remove('open'));
-    lightbox.addEventListener('click', e => { if(e.target === lightbox) lightbox.classList.remove('open'); });
-    document.addEventListener('keydown', e => { if(e.key === 'Escape') lightbox.classList.remove('open'); });
-
-    // hero carousel
-    const heroCarousel = document.getElementById('heroCarousel');
-    if(heroCarousel){
-      const slides = heroCarousel.querySelectorAll('.hero-slide');
-      const dots = heroCarousel.querySelectorAll('.carousel-dot');
-      const caption = document.getElementById('heroCarouselCaption');
-      const prev = heroCarousel.querySelector('.carousel-arrow.prev');
-      const next = heroCarousel.querySelector('.carousel-arrow.next');
-      let current = 0;
-      let timer = null;
-
-      const renderHeroSlide = index => {
-        current = (index + slides.length) % slides.length;
-        slides.forEach((slide, i) => slide.classList.toggle('active', i === current));
-        dots.forEach((dot, i) => dot.classList.toggle('active', i === current));
-        if(caption) caption.textContent = slides[current].dataset.caption || slides[current].dataset.title || '';
-      };
-      const startAuto = () => {
-        stopAuto();
-        timer = setInterval(() => renderHeroSlide(current + 1), 3600);
-      };
-      const stopAuto = () => { if(timer) clearInterval(timer); };
-      prev?.addEventListener('click', () => { renderHeroSlide(current - 1); startAuto(); });
-      next?.addEventListener('click', () => { renderHeroSlide(current + 1); startAuto(); });
-      dots.forEach((dot, i) => dot.addEventListener('click', () => { renderHeroSlide(i); startAuto(); }));
-      heroCarousel.addEventListener('mouseenter', stopAuto);
-      heroCarousel.addEventListener('mouseleave', startAuto);
-      renderHeroSlide(0);
-      startAuto();
-    }
-
-    // scroll reveal
-    const revealTargets = document.querySelectorAll('.paper,.news-card,.feature,.diagram-card,.showcase-card,.metric,.figure-card,.link-card,.quick-link,.section-title,.code-wrap');
-    revealTargets.forEach((el, idx) => {
-      el.classList.add('reveal');
-      el.style.transitionDelay = `${Math.min((idx % 6) * 70, 280)}ms`;
-    });
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        if(entry.isIntersecting){ entry.target.classList.add('inview'); observer.unobserve(entry.target); }
-      });
-    }, {threshold:0.12});
-    revealTargets.forEach(el => observer.observe(el));
-
-    // metric count up
-    const metricValueMap = [
-      {selector: '.metrics .metric:nth-child(1) .value', end: 15, suffix: ' FPS'},
-      {selector: '.metrics .metric:nth-child(2) .value', end: 31, suffix: ' ms'},
-      {selector: '.metrics .metric:nth-child(3) .value', end: 94, suffix: '%', prefix: '≈ '},
-      {selector: '.metrics .metric:nth-child(4) .value', end: 3, suffix: ' 帧'}
-    ];
-    const animateCount = (el, end, suffix='', prefix='') => {
-      let start = 0;
-      const duration = 1200;
-      const t0 = performance.now();
-      const step = now => {
-        const p = Math.min((now - t0) / duration, 1);
-        const eased = 1 - Math.pow(1 - p, 3);
-        const current = Math.round(start + (end - start) * eased);
-        el.textContent = prefix + current + suffix;
-        if(p < 1) requestAnimationFrame(step);
-      };
-      requestAnimationFrame(step);
+      document.body.style.overflow = 'hidden';
+      document.querySelector('.lightbox-close').focus();
     };
-    const metrics = document.querySelector('#results .metrics');
-    if(metrics){
-      const metricObserver = new IntersectionObserver(entries => {
-        if(entries[0].isIntersecting){
-          metricValueMap.forEach(item => {
-            const el = document.querySelector(item.selector);
-            if(el) animateCount(el, item.end, item.suffix || '', item.prefix || '');
-          });
-          metricObserver.disconnect();
-        }
-      }, {threshold:0.35});
-      metricObserver.observe(metrics);
-    }
+    const closeLightbox = () => {
+      lightbox.classList.remove('open');
+      document.body.style.overflow = '';
+      lightboxImg.removeAttribute('src');
+      lastFocused?.focus();
+    };
+    document.querySelectorAll('[data-full]').forEach(button => button.addEventListener('click', () => openLightbox(button)));
+    document.querySelector('.lightbox-close').addEventListener('click', closeLightbox);
+    lightbox.addEventListener('click', event => { if (event.target === lightbox) closeLightbox(); });
+    document.addEventListener('keydown', event => { if (event.key === 'Escape' && lightbox.classList.contains('open')) closeLightbox(); });
 
-    // copy bibtex
-    const copyBtn = document.getElementById('copyBibtex');
-    const bibtexBlock = document.getElementById('bibtexBlock');
-    if(copyBtn && bibtexBlock){
-      copyBtn.addEventListener('click', async () => {
-        try {
-          await navigator.clipboard.writeText(bibtexBlock.textContent.trim());
-          const old = copyBtn.textContent;
-          copyBtn.textContent = '已复制';
-          copyBtn.classList.add('done');
-          setTimeout(() => { copyBtn.textContent = old; copyBtn.classList.remove('done'); }, 1600);
-        } catch (err) {
-          copyBtn.textContent = '复制失败';
-          setTimeout(() => { copyBtn.textContent = '复制 BibTeX'; }, 1600);
-        }
-      });
+    const heroCarousel = document.getElementById('heroCarousel');
+    const heroSlides = [...heroCarousel.querySelectorAll('.hero-slide')];
+    const heroDots = [...heroCarousel.querySelectorAll('.carousel-dot')];
+    const heroLabel = document.getElementById('heroLabel');
+    const heroCaptionTitle = document.getElementById('heroCaptionTitle');
+    const heroCaptionText = document.getElementById('heroCaptionText');
+    let heroIndex = 0;
+    let heroTimer = null;
+    const showHeroSlide = index => {
+      heroIndex = (index + heroSlides.length) % heroSlides.length;
+      heroSlides.forEach((slide, i) => slide.classList.toggle('active', i === heroIndex));
+      heroDots.forEach((dot, i) => dot.classList.toggle('active', i === heroIndex));
+      const slide = heroSlides[heroIndex];
+      heroLabel.textContent = `Featured Preview · ${slide.dataset.title}`;
+      heroCaptionTitle.textContent = `图 ${heroIndex + 1} · ${slide.dataset.title}`;
+      heroCaptionText.textContent = slide.dataset.caption;
+    };
+    const stopHero = () => { if (heroTimer) window.clearInterval(heroTimer); };
+    const startHero = () => { stopHero(); heroTimer = window.setInterval(() => showHeroSlide(heroIndex + 1), 4300); };
+    heroCarousel.querySelector('.prev').addEventListener('click', event => { event.stopPropagation(); showHeroSlide(heroIndex - 1); startHero(); });
+    heroCarousel.querySelector('.next').addEventListener('click', event => { event.stopPropagation(); showHeroSlide(heroIndex + 1); startHero(); });
+    heroDots.forEach((dot, index) => dot.addEventListener('click', event => { event.stopPropagation(); showHeroSlide(index); startHero(); }));
+    heroCarousel.addEventListener('mouseenter', stopHero);
+    heroCarousel.addEventListener('mouseleave', startHero);
+    heroCarousel.addEventListener('keydown', event => {
+      if (event.key === 'ArrowLeft') { event.preventDefault(); showHeroSlide(heroIndex - 1); startHero(); }
+      if (event.key === 'ArrowRight') { event.preventDefault(); showHeroSlide(heroIndex + 1); startHero(); }
+    });
+    showHeroSlide(0);
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) startHero();
+
+    const filterChips = document.querySelectorAll('.filter-chip');
+    const figureCards = document.querySelectorAll('.figure-card');
+    filterChips.forEach(chip => chip.addEventListener('click', () => {
+      filterChips.forEach(item => item.classList.toggle('active', item === chip));
+      figureCards.forEach(card => { card.hidden = chip.dataset.filter !== 'all' && card.dataset.cat !== chip.dataset.filter; });
+    }));
+
+    const copyButton = document.getElementById('copyBibtex');
+    copyButton.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(document.getElementById('bibtexBlock').textContent.trim());
+        copyButton.textContent = '已复制';
+        copyButton.classList.add('done');
+      } catch (error) {
+        copyButton.textContent = '复制失败';
+      }
+      window.setTimeout(() => { copyButton.textContent = '复制 BibTeX'; copyButton.classList.remove('done'); }, 1600);
+    });
+
+    const revealTargets = document.querySelectorAll('.reveal,.quick-link,.shift-card,.stage,.figure-card,.result-metric,.architecture-card');
+    if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('inview'); observer.unobserve(entry.target); } });
+      }, { threshold: .1 });
+      revealTargets.forEach(target => { target.classList.add('reveal'); observer.observe(target); });
+    } else {
+      revealTargets.forEach(target => target.classList.add('inview'));
     }
   </script>
 </body>
