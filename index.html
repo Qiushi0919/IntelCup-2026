@@ -69,15 +69,13 @@
     .hero-slide{position:absolute;inset:0;width:100%;height:100%;padding:0;border:0;opacity:0;pointer-events:none;background:#091827;cursor:zoom-in;transition:opacity .55s ease,transform .75s ease;transform:scale(1.018)}
     .hero-slide.active{opacity:1;pointer-events:auto;transform:scale(1)}
     .hero-slide img,.hero-slide video{width:100%;height:100%;display:block;object-fit:contain;background:linear-gradient(180deg,#0c1c2b,#081522)}.hero-slide video{pointer-events:none}
-    .carousel-label{position:absolute;left:16px;bottom:15px;max-width:calc(100% - 105px);padding:9px 13px;border-radius:13px;background:rgba(7,22,36,.72);backdrop-filter:blur(10px);color:#f4f9ff;font-size:14px;font-weight:800;z-index:3}
     .carousel-arrow{position:absolute;top:50%;z-index:4;width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.28);background:rgba(7,22,36,.54);color:white;font-size:27px;display:grid;place-items:center;cursor:pointer;transform:translateY(-50%)}
     .carousel-arrow:hover{background:rgba(0,91,172,.85)}.carousel-arrow.prev{left:14px}.carousel-arrow.next{right:14px}
     .carousel-count{position:absolute;right:16px;bottom:14px;z-index:4;padding:7px 11px;border:1px solid rgba(255,255,255,.2);border-radius:999px;background:rgba(7,22,36,.7);backdrop-filter:blur(10px);color:white;font-size:12px;font-weight:850;letter-spacing:.04em}
     .hero-caption-panel{margin-top:13px;padding:14px 15px;border:1px solid #d9e8f5;border-radius:17px;background:linear-gradient(135deg,#f8fbff,#eef7ff)}
-    .hero-caption-panel small{display:block;margin-bottom:3px;color:var(--hust);font-size:11px;letter-spacing:.1em;font-weight:900;text-transform:uppercase}
     .hero-caption-panel b{display:block;font-size:16px;color:#173b5e}.hero-caption-panel p{margin:3px 0 0;color:#60778c;font-size:13px;line-height:1.5}
     section{padding:40px 0}
-    .section-title{text-align:center;margin:0 auto 25px;max-width:850px}.section-title h2{margin:0 0 9px;font-size:clamp(30px,3.6vw,40px);line-height:1.08;letter-spacing:-.035em;background:linear-gradient(135deg,#17324c,var(--hust));background-clip:text;-webkit-background-clip:text;color:transparent}.section-en{display:block;margin-top:7px;background:none;color:#8093a5;-webkit-text-fill-color:#8093a5;font-size:.48em;font-weight:720;letter-spacing:.015em}.section-title p{margin:0;color:var(--muted)}
+    .section-title{text-align:center;margin:0 auto 25px;max-width:850px}.section-title h2{margin:0;font-size:clamp(30px,3.6vw,40px);line-height:1.08;letter-spacing:-.035em;background:linear-gradient(135deg,#17324c,var(--hust));background-clip:text;-webkit-background-clip:text;color:transparent}.section-en{display:block;margin-top:7px;background:none;color:#8093a5;-webkit-text-fill-color:#8093a5;font-size:.48em;font-weight:720;letter-spacing:.015em}
     .paper{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 15px 40px rgba(18,52,86,.08)}
     .quick-links{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
     .quick-link{display:flex;align-items:center;gap:12px;padding:16px;background:white;border:1px solid var(--line);border-radius:20px;color:inherit;box-shadow:0 11px 28px rgba(18,52,86,.065);transition:.25s ease}.quick-link:hover{text-decoration:none;transform:translateY(-4px);box-shadow:0 17px 38px rgba(18,52,86,.12)}
@@ -105,7 +103,7 @@
     .reveal{opacity:0;transform:translateY(22px);transition:opacity .65s ease,transform .65s ease}.reveal.inview{opacity:1;transform:none}
     :focus-visible{outline:3px solid rgba(30,132,230,.48);outline-offset:3px}
     @media(max-width:1040px){.hero-grid{grid-template-columns:1fr}.quick-links{grid-template-columns:repeat(3,1fr)}.pipeline-layout{grid-template-columns:1fr}.demo-grid{grid-template-columns:repeat(2,1fr)}.demo-card.full{grid-column:1/-1}.finals-grid{grid-template-columns:1fr}.poster-card .visual-button{height:620px}}
-    @media(max-width:760px){.container{width:min(100% - 30px,1240px)}.nav{height:auto;align-items:flex-start;flex-direction:column;padding:10px 0 8px;gap:8px}.brand img{height:36px}.navlinks{width:100%;overflow-x:auto;padding:2px 0 7px;gap:14px}.hero{padding-top:43px}.hero-grid{gap:25px}.hero-slides{aspect-ratio:4/3}.hero-slide img{object-fit:contain}.quick-links,.shift-grid,.result-metrics{grid-template-columns:repeat(2,1fr)}.stage-grid{grid-template-columns:1fr}.stage:last-child{grid-column:auto}.architecture-grid,.result-gallery{grid-template-columns:1fr}.architecture-card.primary{grid-column:auto}.architecture-card img,.result-gallery img{height:auto;max-height:430px}.demo-grid{grid-template-columns:1fr}.demo-card.wide,.demo-card.full{grid-column:auto}.demo-card.wide .demo-media,.demo-media{height:auto;min-height:220px}.demo-image-row{grid-template-columns:1fr}.demo-image-row .visual-button{height:auto;min-height:230px}.video-head{align-items:flex-start;flex-direction:column}.video-tabs{width:100%}.video-tab{flex:1}.video-foot{align-items:flex-start;flex-direction:column}.finals-grid{grid-template-columns:1fr}.team-gallery{grid-template-columns:1fr}.team-gallery .team-main{grid-column:auto}.poster-card .visual-button{height:560px}.foundation{align-items:flex-start;flex-direction:column}.carousel-label{font-size:12px}.carousel-arrow{width:38px;height:38px}}
+    @media(max-width:760px){.container{width:min(100% - 30px,1240px)}.nav{height:auto;align-items:flex-start;flex-direction:column;padding:10px 0 8px;gap:8px}.brand img{height:36px}.navlinks{width:100%;overflow-x:auto;padding:2px 0 7px;gap:14px}.hero{padding-top:43px}.hero-grid{gap:25px}.hero-slides{aspect-ratio:4/3}.hero-slide img{object-fit:contain}.quick-links,.shift-grid,.result-metrics{grid-template-columns:repeat(2,1fr)}.stage-grid{grid-template-columns:1fr}.stage:last-child{grid-column:auto}.architecture-grid,.result-gallery{grid-template-columns:1fr}.architecture-card.primary{grid-column:auto}.architecture-card img,.result-gallery img{height:auto;max-height:430px}.demo-grid{grid-template-columns:1fr}.demo-card.wide,.demo-card.full{grid-column:auto}.demo-card.wide .demo-media,.demo-media{height:auto;min-height:220px}.demo-image-row{grid-template-columns:1fr}.demo-image-row .visual-button{height:auto;min-height:230px}.video-head{align-items:flex-start;flex-direction:column}.video-tabs{width:100%}.video-tab{flex:1}.video-foot{align-items:flex-start;flex-direction:column}.finals-grid{grid-template-columns:1fr}.team-gallery{grid-template-columns:1fr}.team-gallery .team-main{grid-column:auto}.poster-card .visual-button{height:560px}.foundation{align-items:flex-start;flex-direction:column}.carousel-arrow{width:38px;height:38px}}
     @media(max-width:470px){.quick-links,.shift-grid,.result-metrics{grid-template-columns:1fr}h1{font-size:38px}.hero-caption-panel{padding:12px}.poster-card .visual-button{height:470px}.team-gallery button,.team-gallery .team-main{min-height:230px}.buttons .btn{width:100%;justify-content:center}}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.reveal{opacity:1;transform:none;transition:none}.hero-slide{transition:none}}
   </style>
@@ -143,7 +141,7 @@
 
         <div class="hero-visual">
           <div class="browser-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span>ground-station.demo / live view</span></div>
-          <div class="hero-carousel" id="heroCarousel" tabindex="0" aria-label="国赛答辩 PPT 第 3 至 26 页轮播">
+          <div class="hero-carousel" id="heroCarousel" tabindex="0" aria-label="国赛答辩 PPT 第 3 至 25 页轮播">
             <div class="hero-slides">
               <button class="hero-slide active" type="button" data-full="assets/nationals/ppt-slides/slide-03.jpg" data-title="项目背景" data-caption="低空巡检场景的现实痛点与 Intel DK-2500 边缘智能底座。"><img src="assets/nationals/ppt-slides/slide-03.jpg" alt="PPT 第 3 页：项目背景" /></button>
               <button class="hero-slide" type="button" data-full="assets/nationals/ppt-slides/slide-04.jpg" data-title="作品实现思路" data-caption="从模态输入、计算处理到任务执行的完整链路。"><img src="assets/nationals/ppt-slides/slide-04.jpg" alt="PPT 第 4 页：作品实现思路" loading="lazy" /></button>
@@ -168,16 +166,13 @@
               <button class="hero-slide" type="button" data-full="assets/nationals/ppt-slides/slide-23.jpg" data-title="目标识别测试结果（上）" data-caption="汇总多组火点、人脸与文字识别用例及结果。"><img src="assets/nationals/ppt-slides/slide-23.jpg" alt="PPT 第 23 页：目标识别测试结果上" loading="lazy" /></button>
               <button class="hero-slide" type="button" data-full="assets/nationals/ppt-slides/slide-24.jpg" data-title="目标识别测试结果（下）" data-caption="继续展示识别用例，并对照实际场地标记与测试目标。"><img src="assets/nationals/ppt-slides/slide-24.jpg" alt="PPT 第 24 页：目标识别测试结果下" loading="lazy" /></button>
               <button class="hero-slide" type="button" data-full="assets/nationals/ppt-slides/slide-25.jpg" data-title="系统展望" data-caption="规划向更复杂的巡检任务、服务质量与数据统一性继续迭代。"><img src="assets/nationals/ppt-slides/slide-25.jpg" alt="PPT 第 25 页：系统展望" loading="lazy" /></button>
-              <button class="hero-slide" type="button" data-full="assets/nationals/ppt-slides/slide-26.jpg" data-title="致谢" data-caption="国赛答辩 PPT 结束页。"><img src="assets/nationals/ppt-slides/slide-26.jpg" alt="PPT 第 26 页：致谢" loading="lazy" /></button>
             </div>
             <button class="carousel-arrow prev" type="button" aria-label="上一张">‹</button>
             <button class="carousel-arrow next" type="button" aria-label="下一张">›</button>
-            <div class="carousel-label" id="heroLabel">Featured Preview · 项目背景</div>
-            <div class="carousel-count" id="heroCount" aria-live="polite">PPT 3 / 26</div>
+            <div class="carousel-count" id="heroCount" aria-live="polite">PPT 3 / 25</div>
           </div>
           <div class="hero-caption-panel" aria-live="polite">
-            <small>Presentation Preview · Slides 3–26</small>
-            <b id="heroCaptionTitle">PPT 第 3 页 · 项目背景</b>
+            <b id="heroCaptionTitle">Featured Preview · 项目背景</b>
             <p id="heroCaptionText">低空巡检场景的现实痛点与 Intel DK-2500 边缘智能底座。</p>
           </div>
         </div>
@@ -185,7 +180,7 @@
     </header>
 
     <section id="links" class="container">
-      <div class="section-title"><h2>项目资源<span class="section-en">Project Resources</span></h2><p>演示视频、设计文档、功能完成度与现场资料集中在同一页面。</p></div>
+      <div class="section-title"><h2>项目资源<span class="section-en">Project Resources</span></h2></div>
       <div class="quick-links">
         <a class="quick-link" href="#demo-video"><span class="ql-icon">🎬</span><span><b>演示视频</b><small>Demo Videos</small></span></a>
         <a class="quick-link" href="中文报告.pdf" target="_blank" rel="noopener"><span class="ql-icon">📄</span><span><b>设计报告</b><small>Design Report</small></span></a>
@@ -196,7 +191,7 @@
     </section>
 
     <section id="figures" class="container">
-      <div class="section-title"><h2>功能演示<span class="section-en">Functional Demonstration</span></h2><p>直接展示国赛答辩 PPT 中的实际动图与系统画面；点击动图可暂停或继续播放，点击静态图可放大查看。</p></div>
+      <div class="section-title"><h2>功能演示<span class="section-en">Functional Demonstration</span></h2></div>
       <div class="demo-grid">
         <article class="paper demo-card">
           <div class="demo-media"><video class="demo-loop" autoplay muted loop playsinline preload="metadata" tabindex="0" aria-label="系统自检动画" src="assets/nationals/demos/self-check.mp4"></video></div>
@@ -297,7 +292,7 @@
     </section>
 
     <section id="abstract" class="container">
-      <div class="section-title"><h2>作品简介<span class="section-en">Abstract</span></h2><p>以 Intel DK-2500 为智能底座，把复杂飞行控制转化为可感知、可规划、可确认、可复盘的任务闭环。</p></div>
+      <div class="section-title"><h2>作品简介<span class="section-en">Abstract</span></h2></div>
       <div class="paper abstract reveal">
         <p><strong>“智驭低空枢纽”</strong>面向低空消防巡检场景，在 Intel DK-2500 上完成地面站交互、飞行状态解构、三维姿态与轨迹渲染、自由路线规划、目标识别、安全控制以及事件报告导出。鼠标、手势和视线输入统一生成任务意图，再由地面站组织为可执行的飞行任务。</p>
         <p>系统支持六航点自主巡逻与自由选点巡逻，结合光流、IMU 与高度数据保障室内飞行；在巡逻过程中实时识别火源、人脸和文字，并把识别结果与航迹、地图位置、事件日志关联。异常情况下，高优先级安全指令可抢占当前任务并触发保护或返航。</p>
@@ -306,7 +301,7 @@
     </section>
 
     <section id="pipeline" class="container">
-      <div class="section-title"><h2>闭环流程<span class="section-en">Closed-loop Pipeline</span></h2><p>闭环从“单点功能堆叠”升级为“四个转变 + 一个底座”，让 AI 成为低空巡检的第二飞手。</p></div>
+      <div class="section-title"><h2>闭环流程<span class="section-en">Closed-loop Pipeline</span></h2></div>
       <div class="pipeline-layout">
         <article class="paper pipeline-visual reveal">
         <button class="visual-button" type="button" data-full="assets/nationals/four-shifts-one-foundation.png" data-title="四个转变 + 一个底座"><img src="assets/nationals/four-shifts-one-foundation.png" alt="四个转变加一个底座的系统闭环" loading="lazy" /></button>
@@ -323,7 +318,7 @@
     </section>
 
     <section id="system" class="container">
-      <div class="section-title"><h2>系统架构<span class="section-en">System Architecture</span></h2><p>呈现硬件连接、软件工作流与飞行端协同关系。</p></div>
+      <div class="section-title"><h2>系统架构<span class="section-en">System Architecture</span></h2></div>
       <div class="architecture-grid">
         <article class="paper architecture-card primary reveal"><button class="visual-button" type="button" data-full="assets/nationals/system-architecture.jpg" data-title="系统整体架构图"><img src="assets/nationals/system-architecture.jpg" alt="系统整体架构图" loading="lazy" /></button><div class="visual-body"><h3>系统整体架构图</h3><p>多模态输入进入 Intel 板卡地面站，外设、图传与无人机飞控在统一任务链路中协同。</p></div></article>
         <article class="paper architecture-card reveal"><button class="visual-button" type="button" data-full="assets/nationals/hardware-architecture.png" data-title="基于 DK-2500 的无人机空地双链路架构"><img src="assets/nationals/hardware-architecture.png" alt="基于 DK-2500 的无人机空地双链路硬件架构" loading="lazy" /></button><div class="visual-body"><h3>硬件总体架构</h3><p>DK-2500、无人机、图传、数传、飞控与摄像设备构成空地双链路。</p></div></article>
@@ -332,7 +327,7 @@
     </section>
 
     <section id="highlights" class="container">
-      <div class="section-title"><h2>核心创新点<span class="section-en">Core Highlights</span></h2><p>从“遥控器操作”转向“任务级人机协同”，同时保留对安全、证据与复盘的工程约束。</p></div>
+      <div class="section-title"><h2>核心创新点<span class="section-en">Core Highlights</span></h2></div>
       <div class="shift-grid">
         <div class="shift-card"><div class="icon">🖱️</div><h3>传统遥控 → 自然交互</h3><p>鼠标、手势和视线直接选择任务，降低专业飞控训练门槛。</p></div>
         <div class="shift-card"><div class="icon">🧭</div><h3>飞行参数 → 任务态势</h3><p>把高度、速度、电量、姿态与航迹组织为实时任务界面。</p></div>
@@ -343,7 +338,7 @@
     </section>
 
     <section id="results" class="container">
-      <div class="section-title"><h2>功能完成度与测试结果<span class="section-en">Validation</span></h2><p>依据功能演示表与答辩 PPT 更新：9 项计划目标均已实现，并形成可现场演示的完整闭环。</p></div>
+      <div class="section-title"><h2>功能完成度与测试结果<span class="section-en">Validation</span></h2></div>
       <div class="result-metrics">
         <div class="result-metric"><b>9 / 9</b><span>计划目标完成</span><small>功能演示表全部“已实现”</small></div>
         <div class="result-metric"><b>6</b><span>预设巡逻航点</span><small>同时支持自由选点</small></div>
@@ -375,7 +370,7 @@
     </section>
 
     <section id="finals" class="container">
-      <div class="section-title"><h2>国赛海报与团队现场<span class="section-en">National Finals</span></h2><p>补充全国评审现场材料，展示项目的正式呈现与团队协作。</p></div>
+      <div class="section-title"><h2>国赛海报与团队现场<span class="section-en">National Finals</span></h2></div>
       <div class="finals-grid">
         <article class="paper poster-card reveal"><button class="visual-button" type="button" data-full="assets/nationals/national-finals-poster.jpg" data-title="2026 英特尔杯国赛海报"><img src="assets/nationals/national-finals-poster.jpg" alt="2026 英特尔杯国赛项目海报" loading="lazy" /></button><div class="visual-body"><h3>国赛项目海报</h3><p>系统定位、总体架构、核心功能与验证结果的正式展示版本。</p></div></article>
         <article class="paper team-gallery reveal">
@@ -388,7 +383,7 @@
     </section>
 
     <section id="citation" class="container">
-      <div class="section-title"><h2>引用格式<span class="section-en">Citation</span></h2><p>在项目主页、简历或技术材料中引用本作品时，可使用以下格式。</p></div>
+      <div class="section-title"><h2>引用格式<span class="section-en">Citation</span></h2></div>
       <div class="paper citation reveal">
         <div class="citation-head"><span>推荐引用格式 / BibTeX</span><button class="copy-btn" id="copyBibtex" type="button">复制 BibTeX</button></div>
         <pre id="bibtexBlock">@misc{xie2026lowaltitudehub,
@@ -476,7 +471,6 @@
 
     const heroCarousel = document.getElementById('heroCarousel');
     const heroSlides = [...heroCarousel.querySelectorAll('.hero-slide')];
-    const heroLabel = document.getElementById('heroLabel');
     const heroCount = document.getElementById('heroCount');
     const heroCaptionTitle = document.getElementById('heroCaptionTitle');
     const heroCaptionText = document.getElementById('heroCaptionText');
@@ -493,9 +487,8 @@
         else slideVideo.pause();
       });
       const slide = heroSlides[heroIndex];
-      heroLabel.textContent = `Featured Preview · ${slide.dataset.title}`;
-      heroCount.textContent = `PPT ${heroIndex + 3} / 26`;
-      heroCaptionTitle.textContent = `PPT 第 ${heroIndex + 3} 页 · ${slide.dataset.title}`;
+      heroCount.textContent = `PPT ${heroIndex + 3} / 25`;
+      heroCaptionTitle.textContent = `Featured Preview · ${slide.dataset.title}`;
       heroCaptionText.textContent = slide.dataset.caption;
     };
     const stopHero = () => { if (heroTimer) window.clearInterval(heroTimer); };
