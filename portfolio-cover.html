@@ -17,10 +17,10 @@
     .cover-trigger video{width:100%;height:100%;display:block;object-fit:cover;pointer-events:none}
     .project-logos{position:absolute;top:22px;right:28px;display:flex;align-items:center;gap:16px;z-index:2}.project-logos img{display:block;object-fit:contain}.project-logos .hust-mark{width:154px;height:42px}.project-logos .intel-mark{width:54px;height:50px}
     .hardware-miniatures{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:center}.hardware-shot{height:92px;margin:0;overflow:hidden}.hardware-shot img{display:block;width:100%;height:100%;object-fit:contain}
-    .project-copy{padding-top:62px}.project-copy h2{margin:0;color:var(--blue);font-size:clamp(25px,3vw,38px);line-height:1.22;letter-spacing:-.025em}.project-copy .award{margin:14px 0 16px;color:#244f70;font-size:clamp(14px,1.45vw,17px);font-weight:800;line-height:1.6}.project-bottom{display:grid;grid-template-columns:minmax(310px,1.15fr) minmax(220px,.85fr);gap:22px;align-items:center}.project-copy .summary{max-width:700px;margin:0 0 16px;color:#405d75;font-size:16px;line-height:1.65}
+    .project-copy{padding-top:62px}.project-kicker,.vase-kicker{display:inline-flex;max-width:100%;padding:7px 12px;border-radius:999px;font-size:11px;font-weight:850;letter-spacing:.045em;line-height:1.35;text-transform:uppercase}.project-kicker{border:1px solid #c9e0f3;background:#f3f9fe;color:#236a9f}.project-copy h2{margin:13px 0 0;color:var(--blue);font-size:clamp(25px,3vw,38px);line-height:1.22;letter-spacing:-.025em}.project-meta,.vase-meta{margin:13px 0 17px;color:#244f70}.project-meta p,.vase-meta p{margin:0;font-weight:800;line-height:1.55}.project-meta p:first-child,.vase-meta p:first-child{font-size:14px}.project-meta p:last-child,.vase-meta p:last-child{font-size:clamp(14px,1.45vw,17px)}.project-bottom{display:grid;grid-template-columns:minmax(310px,1.15fr) minmax(220px,.85fr);gap:22px;align-items:center}.project-copy .summary{max-width:700px;margin:0 0 16px;color:#405d75;font-size:16px;line-height:1.65}
     .software-shot{width:100%;aspect-ratio:16/9;margin:0;overflow:hidden;border-radius:10px}.software-shot img{display:block;width:100%;height:100%;object-fit:contain;object-position:center}
     .links{display:flex;flex-wrap:wrap;gap:16px;font-weight:820}
-    .vase-card{margin-top:28px;padding:27px 30px}.vase-visual{display:block;overflow:hidden;border:1px solid #dce8eb;border-radius:20px;background:#fff;box-shadow:0 13px 34px rgba(29,82,85,.09);transition:transform .28s ease,box-shadow .28s ease}.vase-visual:hover,.vase-visual:focus-visible{transform:translateY(-4px);box-shadow:0 19px 43px rgba(29,82,85,.15)}.vase-visual img{display:block;width:100%;aspect-ratio:19/12;object-fit:contain;padding:12px}.vase-copy{padding:5px 0}.vase-kicker{display:inline-flex;padding:6px 10px;border:1px solid #cee4e4;border-radius:999px;background:#f4fbfa;color:#397074;font-size:11px;font-weight:850;letter-spacing:.06em;text-transform:uppercase}.vase-copy h2{margin:12px 0 2px;color:#146e72;font-size:clamp(29px,3.2vw,42px);line-height:1.08;letter-spacing:-.035em}.vase-subtitle{margin:0;color:#6a808f;font-size:17px;font-weight:720}.vase-role{margin:14px 0 7px;color:#244e62;font-weight:850}.vase-summary{max-width:720px;margin:0 0 17px;color:#405d6b;font-size:16px;line-height:1.68}
+    .vase-card{margin-top:28px;padding:27px 30px}.vase-logos{position:absolute;top:22px;right:28px;z-index:2;display:flex;max-width:66%;align-items:center;justify-content:flex-end;gap:10px}.vase-logos img{display:block;width:auto;max-width:78px;height:32px;object-fit:contain}.vase-logos .wide{max-width:96px}.vase-logos .seal{width:32px}.vase-visual{display:block;overflow:hidden;border:1px solid #dce8eb;border-radius:20px;background:#fff;box-shadow:0 13px 34px rgba(29,82,85,.09);transition:transform .28s ease,box-shadow .28s ease}.vase-visual:hover,.vase-visual:focus-visible{transform:translateY(-4px);box-shadow:0 19px 43px rgba(29,82,85,.15)}.vase-visual img{display:block;width:100%;aspect-ratio:19/12;object-fit:contain;padding:12px}.vase-copy{padding:52px 0 5px}.vase-kicker{border:1px solid #cee4e4;background:#f4fbfa;color:#397074}.vase-copy h2{margin:12px 0 2px;color:#146e72;font-size:clamp(29px,3.2vw,42px);line-height:1.08;letter-spacing:-.035em}.vase-subtitle{margin:0;color:#6a808f;font-size:17px;font-weight:720}.vase-meta{color:#244e62}.vase-summary{max-width:720px;margin:0 0 17px;color:#405d6b;font-size:16px;line-height:1.68}
     .feature-overlay{position:fixed;right:3.5vw;top:50%;z-index:100;width:min(920px,74vw);max-height:86vh;overflow:auto;padding:15px;border:1px solid rgba(255,255,255,.55);border-radius:25px;background:rgba(239,247,255,.97);backdrop-filter:blur(18px);box-shadow:0 0 0 100vmax rgba(4,18,31,.42),0 30px 90px rgba(0,0,0,.32);opacity:0;visibility:hidden;pointer-events:none;transform:translate(-280px,-50%) scale(.34);transform-origin:left center;transition:opacity .22s ease,transform .52s cubic-bezier(.16,1,.3,1),visibility .52s;will-change:transform,opacity}
     .project-card.is-open .feature-overlay{opacity:1;visibility:visible;pointer-events:auto;transform:translate(0,-50%) scale(1)}
     .overlay-head{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:6px 5px 15px}.overlay-head h3{margin:0;color:var(--navy);font-size:25px;line-height:1.15}.overlay-head h3 span{display:block;margin-top:4px;color:#7890a4;font-size:12px;letter-spacing:.04em}.close{width:38px;height:38px;border:1px solid #c9dcea;border-radius:50%;background:#fff;color:#24455f;font-size:23px;cursor:pointer}
@@ -29,7 +29,7 @@
     body.overlay-open{overflow:hidden}
     :focus-visible{outline:3px solid rgba(8,120,213,.48);outline-offset:3px}
     @media(max-width:1050px){.feature-overlay{right:2vw;width:min(860px,82vw)}.project-bottom{grid-template-columns:1fr}.software-shot{max-width:440px}}
-    @media(max-width:760px){.page{width:min(100% - 24px,1180px);padding-top:30px}.project-card{grid-template-columns:1fr;gap:24px;padding:18px}.project-logos{position:static;grid-row:1;justify-self:end;margin-bottom:-12px}.cover-column{grid-row:2;max-width:360px}.project-copy{grid-row:3;padding-top:0}.feature-overlay{right:auto;left:50%;width:92vw;padding:11px;border-radius:20px;transform:translate(-50%,-50%) scale(.86);transform-origin:center}.project-card.is-open .feature-overlay{transform:translate(-50%,-50%) scale(1)}.feature-grid{grid-template-columns:repeat(2,1fr)}.feature{aspect-ratio:4/3}.overlay-head h3{font-size:20px}}
+    @media(max-width:760px){.page{width:min(100% - 24px,1180px);padding-top:30px}.project-card{grid-template-columns:1fr;gap:24px;padding:18px}.project-logos{position:static;grid-row:1;justify-self:end;margin-bottom:-12px}.cover-column{grid-row:2;max-width:360px}.project-copy{grid-row:3;padding-top:0}.vase-logos{position:static;grid-row:1;max-width:none;flex-wrap:wrap;justify-content:flex-start;margin-bottom:-8px}.vase-visual{grid-row:2}.vase-copy{grid-row:3;padding-top:0}.feature-overlay{right:auto;left:50%;width:92vw;padding:11px;border-radius:20px;transform:translate(-50%,-50%) scale(.86);transform-origin:center}.project-card.is-open .feature-overlay{transform:translate(-50%,-50%) scale(1)}.feature-grid{grid-template-columns:repeat(2,1fr)}.feature{aspect-ratio:4/3}.overlay-head h3{font-size:20px}}
     @media(max-width:460px){.feature-grid{grid-template-columns:1fr}.feature{aspect-ratio:16/9}}
     @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}.cover-trigger,.feature-overlay{transition:none}}
   </style>
@@ -49,18 +49,19 @@
       </div>
 
       <div class="cover-column">
-        <button class="cover-trigger" id="coverTrigger" type="button" aria-expanded="false" aria-controls="featureOverlay" aria-label="展开智驭低空枢纽完整功能汇总">
-          <video autoplay muted loop playsinline preload="metadata" poster="assets/portfolio-cover/portfolio-cover-poster.jpg" src="assets/portfolio-cover/portfolio-cover.mp4"></video>
-        </button>
         <div class="hardware-miniatures" aria-label="系统硬件组成">
           <figure class="hardware-shot"><img src="assets/hardware/dk2500-cutout.png" alt="Intel DK-2500 边缘智能板卡" /></figure>
           <figure class="hardware-shot"><img src="assets/hardware/drone-cutout.png" alt="低空巡检无人机" /></figure>
         </div>
+        <button class="cover-trigger" id="coverTrigger" type="button" aria-expanded="false" aria-controls="featureOverlay" aria-label="展开智驭低空枢纽完整功能汇总">
+          <video autoplay muted loop playsinline preload="metadata" poster="assets/portfolio-cover/portfolio-cover-poster.jpg" src="assets/portfolio-cover/portfolio-cover.mp4"></video>
+        </button>
       </div>
 
       <div class="project-copy">
+        <span class="project-kicker">2026年4月—7月 · 2026年英特尔杯大学生电子设计竞赛嵌入式AI专题赛</span>
         <h2>智驭低空枢纽（无人机地面站系统）</h2>
-        <p class="award">2026年英特尔杯大学生电子设计竞赛嵌入式AI专题赛 全国二等奖 第18/230名 前7.83%</p>
+        <div class="project-meta"><p>项目队长</p><p>全国二等奖 第18/230名 前7.83%</p></div>
         <div class="project-bottom">
           <figure class="software-shot"><img src="assets/nationals/ground-station-overview.png" alt="地面站软件运行界面" /></figure>
           <div>
@@ -88,14 +89,22 @@
     </article>
 
     <article class="project-card vase-card">
+      <div class="vase-logos" aria-label="Vase Museum 合作院校与研究组织">
+        <img class="seal" src="assets/portfolio-cover/bjtu-logo.png" alt="北京交通大学" title="北京交通大学" />
+        <img class="seal" src="assets/portfolio-cover/pku-logo.svg" alt="北京大学" title="北京大学" />
+        <img class="wide" src="assets/hust_logo.png" alt="华中科技大学" title="华中科技大学" />
+        <img class="wide" src="assets/portfolio-cover/latrobe-logo.svg" alt="La Trobe University" title="La Trobe University" />
+        <img class="wide" src="assets/portfolio-cover/ustc-logo.svg" alt="中国科学技术大学" title="中国科学技术大学" />
+        <img class="seal" src="assets/portfolio-cover/aigeeks-logo.png" alt="AIGeeksGroup" title="AIGeeksGroup" />
+      </div>
       <a class="vase-visual" href="https://aigeeksgroup.github.io/VaseMuseum/" target="_blank" rel="noopener" aria-label="打开 VaseMuseum 项目网站">
         <img src="assets/portfolio-cover/vasemuseum-fig1.png" alt="论文图 1：VaseVQA 系列从二维理解、三维推理到可靠 VaseAgent 的发展过程" />
       </a>
       <div class="vase-copy">
-        <span class="vase-kicker">Research Project · 2026</span>
+        <span class="vase-kicker">2025年10月—Present · Research Project</span>
         <h2>VaseMuseum</h2>
         <p class="vase-subtitle">Digital Intelligent Museum for Ancient Greek Pottery</p>
-        <p class="vase-role">谢秋实 · 共同一作</p>
+        <div class="vase-meta"><p>共同第一作者</p><p>预计投稿至 NMI</p></div>
         <p class="vase-summary">面向古希腊陶器的数字智能博物馆，融合多模态感知、三维推理、外部知识检索与推理时可靠性控制，为文化遗产问答提供更可信、可验证的解释。</p>
         <div class="links"><a href="https://aigeeksgroup.github.io/VaseMuseum/" target="_blank" rel="noopener">项目网站</a><a href="https://github.com/AIGeeksGroup/VaseMuseum" target="_blank" rel="noopener">项目仓库</a></div>
       </div>
