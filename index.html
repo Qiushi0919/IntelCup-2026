@@ -520,7 +520,7 @@
       heroTimer = window.setTimeout(() => {
         showHeroSlide(heroIndex + 1);
         startHero();
-      }, 4300);
+      }, 1500);
     };
     heroCarousel.querySelector('.prev').addEventListener('click', event => { event.stopPropagation(); showHeroSlide(heroIndex - 1); startHero(); });
     heroCarousel.querySelector('.next').addEventListener('click', event => { event.stopPropagation(); showHeroSlide(heroIndex + 1); startHero(); });
