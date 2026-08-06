@@ -16,8 +16,8 @@
     .cover-trigger:hover,.cover-trigger:focus-visible{transform:scale(1.035);box-shadow:0 20px 48px rgba(7,31,52,.3)}
     .cover-trigger video{width:100%;height:100%;display:block;object-fit:cover;pointer-events:none}
     .cover-hint{position:absolute;right:12px;top:12px;padding:7px 10px;border-radius:999px;background:rgba(4,20,34,.72);backdrop-filter:blur(8px);color:#fff;font-size:11px;font-weight:800;letter-spacing:.03em}
-    .project-copy h2{margin:0;color:var(--blue);font-size:clamp(25px,3vw,38px);line-height:1.15;letter-spacing:-.025em}.project-copy .en{display:block;margin-top:5px;color:#8296a8;font-size:.45em;font-weight:700;letter-spacing:.015em}
-    .project-copy .authors{margin:15px 0 5px;color:#2c5677;font-size:18px}.project-copy .meta{margin:0 0 18px;font-style:italic;font-weight:800}.project-copy .summary{max-width:700px;margin:0 0 20px;color:#405d75;font-size:17px;line-height:1.72}
+    .project-logos{position:absolute;top:22px;right:28px;display:flex;align-items:center;gap:16px;z-index:2}.project-logos img{display:block;object-fit:contain}.project-logos .hust-mark{width:154px;height:42px}.project-logos .intel-mark{width:54px;height:50px}
+    .project-copy{padding-top:62px}.project-copy h2{margin:0;color:var(--blue);font-size:clamp(25px,3vw,38px);line-height:1.22;letter-spacing:-.025em}.project-copy .award{margin:14px 0 18px;color:#244f70;font-size:clamp(14px,1.45vw,17px);font-weight:800;line-height:1.6}.project-copy .summary{max-width:700px;margin:0 0 20px;color:#405d75;font-size:17px;line-height:1.72}
     .links{display:flex;flex-wrap:wrap;gap:16px;font-weight:820}
     .feature-overlay{position:fixed;right:3.5vw;top:50%;z-index:100;width:min(920px,74vw);max-height:86vh;overflow:auto;padding:15px;border:1px solid rgba(255,255,255,.55);border-radius:25px;background:rgba(239,247,255,.97);backdrop-filter:blur(18px);box-shadow:0 0 0 100vmax rgba(4,18,31,.42),0 30px 90px rgba(0,0,0,.32);opacity:0;visibility:hidden;pointer-events:none;transform:translate(-280px,-50%) scale(.34);transform-origin:left center;transition:opacity .22s ease,transform .52s cubic-bezier(.16,1,.3,1),visibility .52s;will-change:transform,opacity}
     .project-card.is-open .feature-overlay{opacity:1;visibility:visible;pointer-events:auto;transform:translate(0,-50%) scale(1)}
@@ -27,7 +27,7 @@
     body.overlay-open{overflow:hidden}
     :focus-visible{outline:3px solid rgba(8,120,213,.48);outline-offset:3px}
     @media(max-width:1050px){.feature-overlay{right:2vw;width:min(860px,82vw)}}
-    @media(max-width:760px){.page{width:min(100% - 24px,1180px);padding-top:30px}.project-card{grid-template-columns:1fr;gap:24px;padding:18px}.cover-trigger{max-width:360px}.feature-overlay{right:auto;left:50%;width:92vw;padding:11px;border-radius:20px;transform:translate(-50%,-50%) scale(.86);transform-origin:center}.project-card.is-open .feature-overlay{transform:translate(-50%,-50%) scale(1)}.feature-grid{grid-template-columns:repeat(2,1fr)}.feature{aspect-ratio:4/3}.overlay-head h3{font-size:20px}}
+    @media(max-width:760px){.page{width:min(100% - 24px,1180px);padding-top:30px}.project-card{grid-template-columns:1fr;gap:24px;padding:18px}.project-logos{position:static;grid-row:1;justify-self:end;margin-bottom:-12px}.cover-trigger{grid-row:2;max-width:360px}.project-copy{grid-row:3;padding-top:0}.feature-overlay{right:auto;left:50%;width:92vw;padding:11px;border-radius:20px;transform:translate(-50%,-50%) scale(.86);transform-origin:center}.project-card.is-open .feature-overlay{transform:translate(-50%,-50%) scale(1)}.feature-grid{grid-template-columns:repeat(2,1fr)}.feature{aspect-ratio:4/3}.overlay-head h3{font-size:20px}}
     @media(max-width:460px){.feature-grid{grid-template-columns:1fr}.feature{aspect-ratio:16/9}}
     @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}.cover-trigger,.feature-overlay{transition:none}}
   </style>
@@ -41,15 +41,19 @@
     </header>
 
     <article class="project-card" id="projectCard">
+      <div class="project-logos" aria-label="华中科技大学与英特尔杯大学生电子设计竞赛">
+        <img class="hust-mark" src="assets/hust_logo.png" alt="华中科技大学" />
+        <img class="intel-mark" src="assets/figures/fig_01.webp" alt="英特尔杯大学生电子设计竞赛" />
+      </div>
+
       <button class="cover-trigger" id="coverTrigger" type="button" aria-expanded="false" aria-controls="featureOverlay" aria-label="展开智驭低空枢纽完整功能汇总">
         <video autoplay muted loop playsinline preload="metadata" poster="assets/portfolio-cover/portfolio-cover-poster.jpg" src="assets/portfolio-cover/portfolio-cover.mp4"></video>
         <span class="cover-hint">悬停放大 ↗</span>
       </button>
 
       <div class="project-copy">
-        <h2>智驭低空枢纽<span class="en">Multimodal Ground Station for Low-Altitude Fire Patrol</span></h2>
-        <p class="authors">谢秋实 · 朱拓源 · 庞亚宸</p>
-        <p class="meta">Intel Cup Embedded AI Track, 2026</p>
+        <h2>智驭低空枢纽（无人机地面战系统）</h2>
+        <p class="award">2026年英特尔杯大学生电子设计竞赛嵌入式AI专题赛 全国二等奖 第18/230名 前7.83%</p>
         <p class="summary">基于 Intel DK-2500 的多模态无人机地面站：用手势与视线生成任务，完成仿真规划、自主巡逻、目标识别、安全确认和全过程记录。</p>
         <div class="links"><a href="index.html">项目主页</a><a href="https://github.com/Qiushi0919/IntelCup-2026" target="_blank" rel="noopener">项目仓库</a></div>
       </div>
