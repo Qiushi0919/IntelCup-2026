@@ -80,6 +80,7 @@
     .quick-links{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
     .quick-link{display:flex;align-items:center;gap:12px;padding:16px;background:white;border:1px solid var(--line);border-radius:20px;color:inherit;box-shadow:0 11px 28px rgba(18,52,86,.065);transition:.25s ease}.quick-link:hover{text-decoration:none;transform:translateY(-4px);box-shadow:0 17px 38px rgba(18,52,86,.12)}
     .ql-icon{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;flex:0 0 auto;background:linear-gradient(135deg,#e6f3ff,#f0fbff);font-size:21px}.quick-link b{display:block;color:#173a59;font-size:16px;line-height:1.25}.quick-link small{display:block;margin-top:3px;color:#8a9bab;font-size:11px;line-height:1.2;letter-spacing:.02em}
+    .system-component-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:17px}.system-component-card{overflow:hidden}.system-component-media{display:block;width:100%;height:238px;overflow:hidden;border:0;padding:0;background:linear-gradient(145deg,#f9fcff,#eaf4fb);cursor:zoom-in}.system-component-media img{display:block;width:100%;height:100%;object-fit:contain;padding:18px}.system-component-card.software .system-component-media{background:#071522}.system-component-card.software .system-component-media img{object-fit:cover;object-position:center;padding:0}.system-component-body{padding:14px 17px 17px;border-top:1px solid var(--line)}.system-component-body h3{margin:0 0 3px;font-size:18px}.system-component-body p{margin:0;color:var(--muted);font-size:13px}
     .video-card{overflow:hidden}.video-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;padding:24px 26px 17px;background:linear-gradient(135deg,#f8fbff,#ecf7ff)}.video-head h3{margin:0;font-size:25px;line-height:1.15;color:#153a5b}.title-en{display:block;margin-top:4px;color:#8a9dae;font-size:13px;font-weight:700;letter-spacing:.02em}.video-head p{margin:7px 0 0;color:var(--muted)}
     .video-tabs{display:flex;gap:8px;padding:5px;background:white;border:1px solid var(--line);border-radius:999px;box-shadow:0 8px 20px rgba(18,52,86,.07)}
     .video-tab{border:0;border-radius:999px;padding:9px 13px;background:transparent;color:#506981;font-weight:820;cursor:pointer}.video-tab[aria-selected="true"]{background:linear-gradient(135deg,var(--hust),#318cf0);color:white;box-shadow:0 7px 18px rgba(0,91,172,.22)}
@@ -103,7 +104,7 @@
     .reveal{opacity:0;transform:translateY(22px);transition:opacity .65s ease,transform .65s ease}.reveal.inview{opacity:1;transform:none}
     :focus-visible{outline:3px solid rgba(30,132,230,.48);outline-offset:3px}
     @media(max-width:1040px){.hero-grid{grid-template-columns:1fr}.quick-links{grid-template-columns:repeat(3,1fr)}.pipeline-layout{grid-template-columns:1fr}.demo-grid{grid-template-columns:repeat(2,1fr)}.demo-card.full{grid-column:1/-1}.finals-grid{grid-template-columns:1fr}.poster-card .visual-button{height:620px}}
-    @media(max-width:760px){.container{width:min(100% - 30px,1240px)}.nav{height:auto;align-items:flex-start;flex-direction:column;padding:10px 0 8px;gap:8px}.brand img{height:36px}.navlinks{width:100%;overflow-x:auto;padding:2px 0 7px;gap:14px}.hero{padding-top:43px}.hero-grid{gap:25px}.hero-slides{aspect-ratio:4/3}.hero-slide img{object-fit:contain}.quick-links,.shift-grid,.result-metrics{grid-template-columns:repeat(2,1fr)}.stage-grid{grid-template-columns:1fr}.stage:last-child{grid-column:auto}.architecture-grid,.result-gallery{grid-template-columns:1fr}.architecture-card.primary{grid-column:auto}.architecture-card img,.result-gallery img{height:auto;max-height:430px}.demo-grid{grid-template-columns:1fr}.demo-card.wide,.demo-card.full{grid-column:auto}.demo-card.wide .demo-media,.demo-media{height:auto;min-height:220px}.demo-image-row{grid-template-columns:1fr}.demo-image-row .visual-button{height:auto;min-height:230px}.video-head{align-items:flex-start;flex-direction:column}.video-tabs{width:100%}.video-tab{flex:1}.video-foot{align-items:flex-start;flex-direction:column}.finals-grid{grid-template-columns:1fr}.team-gallery{grid-template-columns:1fr}.team-gallery .team-main{grid-column:auto}.poster-card .visual-button{height:560px}.foundation{align-items:flex-start;flex-direction:column}.carousel-arrow{width:38px;height:38px}}
+    @media(max-width:760px){.container{width:min(100% - 30px,1240px)}.nav{height:auto;align-items:flex-start;flex-direction:column;padding:10px 0 8px;gap:8px}.brand img{height:36px}.navlinks{width:100%;overflow-x:auto;padding:2px 0 7px;gap:14px}.hero{padding-top:43px}.hero-grid{gap:25px}.hero-slides{aspect-ratio:4/3}.hero-slide img{object-fit:contain}.quick-links,.shift-grid,.result-metrics{grid-template-columns:repeat(2,1fr)}.system-component-grid{grid-template-columns:1fr}.system-component-media{height:250px}.stage-grid{grid-template-columns:1fr}.stage:last-child{grid-column:auto}.architecture-grid,.result-gallery{grid-template-columns:1fr}.architecture-card.primary{grid-column:auto}.architecture-card img,.result-gallery img{height:auto;max-height:430px}.demo-grid{grid-template-columns:1fr}.demo-card.wide,.demo-card.full{grid-column:auto}.demo-card.wide .demo-media,.demo-media{height:auto;min-height:220px}.demo-image-row{grid-template-columns:1fr}.demo-image-row .visual-button{height:auto;min-height:230px}.video-head{align-items:flex-start;flex-direction:column}.video-tabs{width:100%}.video-tab{flex:1}.video-foot{align-items:flex-start;flex-direction:column}.finals-grid{grid-template-columns:1fr}.team-gallery{grid-template-columns:1fr}.team-gallery .team-main{grid-column:auto}.poster-card .visual-button{height:560px}.foundation{align-items:flex-start;flex-direction:column}.carousel-arrow{width:38px;height:38px}}
     @media(max-width:470px){.quick-links,.shift-grid,.result-metrics{grid-template-columns:1fr}h1{font-size:38px}.hero-caption-panel{padding:12px}.poster-card .visual-button{height:470px}.team-gallery button,.team-gallery .team-main{min-height:230px}.buttons .btn{width:100%;justify-content:center}}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.reveal{opacity:1;transform:none;transition:none}.hero-slide{transition:none}}
   </style>
@@ -187,6 +188,24 @@
         <a class="quick-link" href="#figures"><span class="ql-icon">✅</span><span><b>功能演示</b><small>Feature Demo</small></span></a>
         <a class="quick-link" href="#finals"><span class="ql-icon">🏆</span><span><b>国赛现场</b><small>National Finals</small></span></a>
         <a class="quick-link" href="https://github.com/Qiushi0919/IntelCup-2026" target="_blank" rel="noopener"><span class="ql-icon">💻</span><span><b>项目仓库</b><small>Repository</small></span></a>
+      </div>
+    </section>
+
+    <section id="components" class="container">
+      <div class="section-title"><h2>系统组成<span class="section-en">System Components</span></h2></div>
+      <div class="system-component-grid">
+        <article class="paper system-component-card reveal">
+          <button class="system-component-media" type="button" data-full="assets/hardware/dk2500-cutout.png" data-title="Intel DK-2500 边缘智能板卡"><img src="assets/hardware/dk2500-cutout.png" alt="透明背景的 Intel DK-2500 边缘智能板卡" loading="lazy" /></button>
+          <div class="system-component-body"><h3>Intel DK-2500 边缘智能平台</h3><p>承载多模态交互、飞行任务管理、视觉识别与数据闭环。</p></div>
+        </article>
+        <article class="paper system-component-card reveal">
+          <button class="system-component-media" type="button" data-full="assets/hardware/drone-cutout.png" data-title="低空巡检无人机"><img src="assets/hardware/drone-cutout.png" alt="透明背景的低空巡检无人机" loading="lazy" /></button>
+          <div class="system-component-body"><h3>低空巡检无人机</h3><p>集成飞控、相机、图传与数传设备，执行自主巡逻任务。</p></div>
+        </article>
+        <article class="paper system-component-card software reveal">
+          <button class="system-component-media" type="button" data-full="assets/nationals/ground-station-overview.png" data-title="地面站软件运行界面"><img src="assets/nationals/ground-station-overview.png" alt="地面站软件整体运行界面" loading="lazy" /></button>
+          <div class="system-component-body"><h3>地面站软件运行界面</h3><p>统一呈现状态、自检、任务地图、设备健康与安全控制。</p></div>
+        </article>
       </div>
     </section>
 
