@@ -17,21 +17,21 @@
     .cover-trigger video{width:100%;height:100%;display:block;object-fit:cover;pointer-events:none}
     .project-logos{position:absolute;top:22px;right:28px;display:flex;align-items:center;gap:16px;z-index:2}.project-logos img{display:block;object-fit:contain}.project-logos .hust-mark{width:154px;height:42px}.project-logos .intel-mark{width:54px;height:50px}
     .hardware-miniatures{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:center}.hardware-shot{height:92px;margin:0;overflow:hidden}.hardware-shot img{display:block;width:100%;height:100%;object-fit:contain}
-    .project-copy{padding-top:62px}.project-kicker,.vase-kicker{display:inline-flex;max-width:100%;padding:7px 12px;border-radius:999px;font-size:11px;font-weight:850;letter-spacing:.045em;line-height:1.35;text-transform:uppercase}.project-kicker{border:1px solid #c9e0f3;background:#f3f9fe;color:#236a9f}.project-copy h2{margin:13px 0 0;color:var(--blue);font-size:clamp(25px,3vw,38px);line-height:1.22;letter-spacing:-.025em}.project-meta,.vase-meta{margin:13px 0 17px;color:#244f70}.project-meta p,.vase-meta p{margin:0;font-weight:800;line-height:1.55}.project-meta p:first-child,.vase-meta p:first-child{font-size:14px}.project-meta p:last-child,.vase-meta p:last-child{font-size:clamp(14px,1.45vw,17px)}.project-bottom{display:grid;grid-template-columns:minmax(310px,1.15fr) minmax(220px,.85fr);gap:22px;align-items:center}.project-copy .summary{max-width:700px;margin:0 0 16px;color:#405d75;font-size:16px;line-height:1.65}
+    .project-copy{align-self:start;margin-top:-8px}.project-kicker,.vase-kicker{display:inline-flex;max-width:calc(100% - 224px);padding:7px 12px;border-radius:999px;font-size:11px;font-weight:850;letter-spacing:.045em;line-height:1.35;text-transform:uppercase}.project-kicker{border:1px solid #c9e0f3;background:#f3f9fe;color:#236a9f}.project-copy h2{margin:13px 0 0;color:var(--blue);font-size:clamp(25px,3vw,38px);line-height:1.22;letter-spacing:-.025em}.project-meta,.vase-meta{margin:13px 0 17px;color:#244f70}.project-meta p,.vase-meta p{margin:0;font-weight:800;line-height:1.55}.project-meta p:first-child,.vase-meta p:first-child{font-size:14px}.project-meta p:last-child,.vase-meta p:last-child{font-size:clamp(14px,1.45vw,17px)}.project-bottom{display:grid;grid-template-columns:minmax(310px,1.15fr) minmax(220px,.85fr);gap:22px;align-items:center}.project-copy .summary{max-width:700px;margin:0 0 16px;color:#405d75;font-size:16px;line-height:1.65}
     .software-shot{width:100%;aspect-ratio:16/9;margin:0;overflow:hidden;border-radius:10px}.software-shot img{display:block;width:100%;height:100%;object-fit:contain;object-position:center}
     .links{display:flex;flex-wrap:wrap;gap:16px;font-weight:820}
-    .vase-card{margin-top:28px;padding:27px 30px}.vase-logos{position:absolute;top:22px;right:28px;z-index:2;display:flex;max-width:66%;align-items:center;justify-content:flex-end;gap:10px}.vase-logos img{display:block;width:auto;max-width:78px;height:32px;object-fit:contain}.vase-logos .wide{max-width:96px}.vase-logos .seal{width:32px}.vase-visual{display:block;overflow:hidden;border:1px solid #dce8eb;border-radius:20px;background:#fff;box-shadow:0 13px 34px rgba(29,82,85,.09);transition:transform .28s ease,box-shadow .28s ease}.vase-visual:hover,.vase-visual:focus-visible{transform:translateY(-4px);box-shadow:0 19px 43px rgba(29,82,85,.15)}.vase-visual img{display:block;width:100%;aspect-ratio:19/12;object-fit:contain;padding:12px}.vase-copy{padding:52px 0 5px}.vase-kicker{border:1px solid #cee4e4;background:#f4fbfa;color:#397074}.vase-copy h2{margin:12px 0 2px;color:#146e72;font-size:clamp(29px,3.2vw,42px);line-height:1.08;letter-spacing:-.035em}.vase-subtitle{margin:0;color:#6a808f;font-size:17px;font-weight:720}.vase-meta{color:#244e62}.vase-summary{max-width:720px;margin:0 0 17px;color:#405d6b;font-size:16px;line-height:1.68}
-    .feature-overlay{position:fixed;right:3.5vw;top:50%;z-index:100;width:min(920px,74vw);max-height:86vh;overflow:auto;padding:15px;border:1px solid rgba(255,255,255,.55);border-radius:25px;background:rgba(239,247,255,.97);backdrop-filter:blur(18px);box-shadow:0 0 0 100vmax rgba(4,18,31,.42),0 30px 90px rgba(0,0,0,.32);opacity:0;visibility:hidden;pointer-events:none;transform:translate(-280px,-50%) scale(.34);transform-origin:left center;transition:opacity .22s ease,transform .52s cubic-bezier(.16,1,.3,1),visibility .52s;will-change:transform,opacity}
+    .vase-card{margin-top:28px;padding:27px 30px}.vase-logos{position:absolute;top:22px;right:28px;z-index:2;display:flex;max-width:66%;align-items:center;justify-content:flex-end;gap:10px}.vase-logos img{display:block;width:auto;max-width:78px;height:32px;object-fit:contain}.vase-logos .wide{max-width:96px}.vase-logos .seal{width:32px}.vase-cover-trigger{position:relative;display:block;width:100%;aspect-ratio:1;padding:12px;overflow:hidden;border:1px solid #dce8eb;border-radius:20px;background:linear-gradient(145deg,#f9fdfd,#edf7f7);cursor:zoom-in;box-shadow:0 13px 34px rgba(29,82,85,.09);transition:transform .28s ease,box-shadow .28s ease}.vase-cover-trigger:hover,.vase-cover-trigger:focus-visible{transform:scale(1.035);box-shadow:0 19px 43px rgba(29,82,85,.15)}.vase-slide{position:absolute;inset:12px;display:grid;gap:8px;opacity:0;animation:vase-cycle 12s infinite}.vase-slide img{display:block;width:100%;height:100%;min-height:0;object-fit:contain;border:1px solid #e0ebee;border-radius:10px;background:#fff}.vase-slide:nth-child(2){animation-delay:4s}.vase-slide:nth-child(3){animation-delay:8s}.vase-slide.pair-wide{grid-template-rows:repeat(2,minmax(0,1fr))}.vase-slide.pair-mixed{grid-template-columns:.9fr 1.1fr}.vase-cover-label{position:absolute;left:20px;bottom:18px;z-index:4;padding:7px 10px;border-radius:9px;background:rgba(14,66,69,.82);color:#fff;font-size:11px;font-weight:800;letter-spacing:.02em;backdrop-filter:blur(7px)}.vase-copy{align-self:start;margin-top:-5px;padding:0 0 5px}.vase-kicker{border:1px solid #cee4e4;background:#f4fbfa;color:#397074}.vase-copy h2{margin:12px 0 2px;color:#146e72;font-size:clamp(29px,3.2vw,42px);line-height:1.08;letter-spacing:-.035em}.vase-subtitle{margin:0;color:#6a808f;font-size:17px;font-weight:720}.vase-meta{color:#244e62}.vase-summary{max-width:720px;margin:0 0 17px;color:#405d6b;font-size:16px;line-height:1.68}
+    @keyframes vase-cycle{0%,29%{opacity:1}33%,96%{opacity:0}100%{opacity:1}}
+    .overlay-backdrop{position:fixed;inset:0;z-index:90;border:0;background:rgba(4,18,31,.42);opacity:0;visibility:hidden;pointer-events:none;cursor:default;transition:opacity .22s ease,visibility .22s}.overlay-active .overlay-backdrop{opacity:1;visibility:visible;pointer-events:auto}.feature-overlay{position:fixed;right:3.5vw;top:50%;z-index:100;width:min(920px,74vw);max-height:86vh;overflow:auto;padding:15px;border:1px solid rgba(255,255,255,.55);border-radius:25px;background:rgba(239,247,255,.97);backdrop-filter:blur(18px);box-shadow:0 30px 90px rgba(0,0,0,.32);opacity:0;visibility:hidden;pointer-events:none;transform:translate(-280px,-50%) scale(.34);transform-origin:left center;transition:opacity .22s ease,transform .52s cubic-bezier(.16,1,.3,1),visibility .52s;will-change:transform,opacity}
     .project-card.is-open .feature-overlay{opacity:1;visibility:visible;pointer-events:auto;transform:translate(0,-50%) scale(1)}
     .overlay-head{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:6px 5px 15px}.overlay-head h3{margin:0;color:var(--navy);font-size:25px;line-height:1.15}.overlay-head h3 span{display:block;margin-top:4px;color:#7890a4;font-size:12px;letter-spacing:.04em}.close{width:38px;height:38px;border:1px solid #c9dcea;border-radius:50%;background:#fff;color:#24455f;font-size:23px;cursor:pointer}
     .feature-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.feature{position:relative;overflow:hidden;aspect-ratio:16/10;border-radius:16px;background:#071625;box-shadow:0 10px 26px rgba(15,45,70,.12)}.feature video{width:100%;height:100%;display:block;object-fit:cover}.feature.flight video{object-fit:contain}.feature b{position:absolute;left:10px;bottom:9px;padding:7px 10px;border-radius:10px;background:rgba(4,18,31,.76);backdrop-filter:blur(7px);color:white;font-size:13px}
-    .overlay-foot{display:flex;flex-wrap:wrap;gap:8px;padding:14px 4px 2px}.overlay-foot span{padding:7px 10px;border:1px solid #cfe0ed;border-radius:999px;background:#fff;color:#315a79;font-size:11px;font-weight:800}
-    body.overlay-open{overflow:hidden}
+    .overlay-foot{display:flex;flex-wrap:wrap;gap:8px;padding:14px 4px 2px}.overlay-foot span{padding:7px 10px;border:1px solid #cfe0ed;border-radius:999px;background:#fff;color:#315a79;font-size:11px;font-weight:800}.vase-feature-overlay{width:min(980px,76vw);background:rgba(245,252,251,.98)}.research-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.research-figure{display:grid;grid-template-rows:minmax(0,1fr) auto;min-height:0;margin:0;overflow:hidden;border:1px solid #d9e8e8;border-radius:15px;background:#fff;box-shadow:0 9px 24px rgba(23,72,76,.09)}.research-figure img{display:block;width:100%;height:170px;padding:7px;object-fit:contain;background:#fff}.research-figure figcaption{padding:9px 11px 10px;border-top:1px solid #e7eeee;color:#315a60;font-size:12px;font-weight:800;line-height:1.35}
     :focus-visible{outline:3px solid rgba(8,120,213,.48);outline-offset:3px}
     @media(max-width:1050px){.feature-overlay{right:2vw;width:min(860px,82vw)}.project-bottom{grid-template-columns:1fr}.software-shot{max-width:440px}}
-    @media(max-width:760px){.page{width:min(100% - 24px,1180px);padding-top:30px}.project-card{grid-template-columns:1fr;gap:24px;padding:18px}.project-logos{position:static;grid-row:1;justify-self:end;margin-bottom:-12px}.cover-column{grid-row:2;max-width:360px}.project-copy{grid-row:3;padding-top:0}.vase-logos{position:static;grid-row:1;max-width:none;flex-wrap:wrap;justify-content:flex-start;margin-bottom:-8px}.vase-visual{grid-row:2}.vase-copy{grid-row:3;padding-top:0}.feature-overlay{right:auto;left:50%;width:92vw;padding:11px;border-radius:20px;transform:translate(-50%,-50%) scale(.86);transform-origin:center}.project-card.is-open .feature-overlay{transform:translate(-50%,-50%) scale(1)}.feature-grid{grid-template-columns:repeat(2,1fr)}.feature{aspect-ratio:4/3}.overlay-head h3{font-size:20px}}
-    @media(max-width:460px){.feature-grid{grid-template-columns:1fr}.feature{aspect-ratio:16/9}}
-    @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}.cover-trigger,.feature-overlay{transition:none}}
+    @media(max-width:760px){.page{width:min(100% - 24px,1180px);padding-top:30px}.project-card{grid-template-columns:1fr;gap:24px;padding:18px}.project-logos{position:static;grid-row:1;justify-self:end;margin-bottom:-12px}.cover-column{grid-row:2;max-width:360px}.project-copy{grid-row:3;margin-top:0}.project-kicker,.vase-kicker{max-width:100%}.vase-logos{position:static;grid-row:1;max-width:none;flex-wrap:wrap;justify-content:flex-start;margin-bottom:-8px}.vase-cover-trigger{grid-row:2;max-width:360px}.vase-copy{grid-row:3;margin-top:0;padding-top:0}.feature-overlay{right:auto;left:50%;width:92vw;padding:11px;border-radius:20px;transform:translate(-50%,-50%) scale(.86);transform-origin:center}.project-card.is-open .feature-overlay{transform:translate(-50%,-50%) scale(1)}.feature-grid,.research-grid{grid-template-columns:repeat(2,1fr)}.feature{aspect-ratio:4/3}.research-figure img{height:145px}.overlay-head h3{font-size:20px}}
+    @media(max-width:460px){.feature-grid,.research-grid{grid-template-columns:1fr}.feature{aspect-ratio:16/9}.research-figure img{height:auto;max-height:220px}}
+    @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}.cover-trigger,.vase-cover-trigger,.feature-overlay{transition:none}.vase-slide{animation:none;opacity:0}.vase-slide:first-child{opacity:1}}
   </style>
 </head>
 <body>
@@ -88,7 +88,7 @@
       </section>
     </article>
 
-    <article class="project-card vase-card">
+    <article class="project-card vase-card" id="vaseProjectCard">
       <div class="vase-logos" aria-label="Vase Museum 合作院校与研究组织">
         <img class="seal" src="assets/portfolio-cover/bjtu-logo.png" alt="北京交通大学" title="北京交通大学" />
         <img class="seal" src="assets/portfolio-cover/pku-logo.svg" alt="北京大学" title="北京大学" />
@@ -97,9 +97,21 @@
         <img class="wide" src="assets/portfolio-cover/ustc-logo.svg" alt="中国科学技术大学" title="中国科学技术大学" />
         <img class="seal" src="assets/portfolio-cover/aigeeks-logo.png" alt="AIGeeksGroup" title="AIGeeksGroup" />
       </div>
-      <a class="vase-visual" href="https://aigeeksgroup.github.io/VaseMuseum/" target="_blank" rel="noopener" aria-label="打开 VaseMuseum 项目网站">
-        <img src="assets/portfolio-cover/vasemuseum-fig1.png" alt="论文图 1：VaseVQA 系列从二维理解、三维推理到可靠 VaseAgent 的发展过程" />
-      </a>
+      <button class="vase-cover-trigger" id="vaseCoverTrigger" type="button" aria-expanded="false" aria-controls="vaseFeatureOverlay" aria-label="展开 VaseMuseum 论文关键流程与实验结果">
+        <span class="vase-slide pair-wide">
+          <img src="assets/portfolio-cover/vase-paper-preview/architecture.webp" alt="VaseMuseum 系统架构" />
+          <img src="assets/portfolio-cover/vase-paper-preview/interaction.webp" alt="虚拟博物馆交互流程" />
+        </span>
+        <span class="vase-slide pair-mixed">
+          <img src="assets/portfolio-cover/vase-paper-preview/interface.webp" alt="虚拟博物馆界面" />
+          <img src="assets/portfolio-cover/vase-paper-preview/reliability.webp" alt="VaseAgent 可靠性框架" />
+        </span>
+        <span class="vase-slide pair-wide">
+          <img src="assets/portfolio-cover/vase-paper-preview/results.webp" alt="主要实验结果" />
+          <img src="assets/portfolio-cover/vase-paper-preview/evaluation.webp" alt="消融、扩展性与多维评估" />
+        </span>
+        <span class="vase-cover-label">流程 · 交互 · 可靠性 · 实验</span>
+      </button>
       <div class="vase-copy">
         <span class="vase-kicker">2025年10月—Present · Research Project</span>
         <h2>VaseMuseum</h2>
@@ -108,48 +120,116 @@
         <p class="vase-summary">面向古希腊陶器的数字智能博物馆，融合多模态感知、三维推理、外部知识检索与推理时可靠性控制，为文化遗产问答提供更可信、可验证的解释。</p>
         <div class="links"><a href="https://aigeeksgroup.github.io/VaseMuseum/" target="_blank" rel="noopener">项目网站</a><a href="https://github.com/AIGeeksGroup/VaseMuseum" target="_blank" rel="noopener">项目仓库</a></div>
       </div>
+
+      <section class="feature-overlay vase-feature-overlay" id="vaseFeatureOverlay" aria-label="VaseMuseum 论文关键流程与实验结果">
+        <div class="overlay-head">
+          <h3>VaseMuseum · 方法与验证<span>Key figures from the research paper</span></h3>
+          <button class="close" id="vaseCloseOverlay" type="button" aria-label="关闭论文图示汇总">×</button>
+        </div>
+        <div class="research-grid">
+          <figure class="research-figure"><img src="assets/portfolio-cover/vase-paper-preview/architecture.webp" alt="VaseMuseum 系统架构" /><figcaption>系统架构 · 感知、检索与可靠性控制</figcaption></figure>
+          <figure class="research-figure"><img src="assets/portfolio-cover/vase-paper-preview/interaction.webp" alt="虚拟博物馆交互流程" /><figcaption>交互流程 · 从藏品导入到数字展陈</figcaption></figure>
+          <figure class="research-figure"><img src="assets/portfolio-cover/vase-paper-preview/interface.webp" alt="虚拟博物馆界面" /><figcaption>系统界面 · 3D 展品与可验证问答</figcaption></figure>
+          <figure class="research-figure"><img src="assets/portfolio-cover/vase-paper-preview/reliability.webp" alt="VaseAgent 可靠性框架" /><figcaption>可靠性框架 · Source / Response Control</figcaption></figure>
+          <figure class="research-figure"><img src="assets/portfolio-cover/vase-paper-preview/results.webp" alt="VaseAgent 主要实验结果" /><figcaption>主要结果 · 准确率、幻觉率与链接有效性</figcaption></figure>
+          <figure class="research-figure"><img src="assets/portfolio-cover/vase-paper-preview/evaluation.webp" alt="VaseAgent 消融与扩展性实验" /><figcaption>深入评估 · 消融、扩展性与多维对比</figcaption></figure>
+        </div>
+      </section>
     </article>
   </main>
 
+  <button class="overlay-backdrop" id="overlayBackdrop" type="button" aria-label="关闭放大内容"></button>
+
   <script>
-    const card = document.getElementById('projectCard');
-    const trigger = document.getElementById('coverTrigger');
-    const overlay = document.getElementById('featureOverlay');
-    const closeButton = document.getElementById('closeOverlay');
     const canHover = window.matchMedia('(hover:hover) and (pointer:fine)').matches;
     const reduceMotion = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
-    const featureVideos = [...overlay.querySelectorAll('video')];
+    const backdrop = document.getElementById('overlayBackdrop');
+    const projects = [
+      {
+        card: document.getElementById('projectCard'),
+        trigger: document.getElementById('coverTrigger'),
+        overlay: document.getElementById('featureOverlay'),
+        close: document.getElementById('closeOverlay')
+      },
+      {
+        card: document.getElementById('vaseProjectCard'),
+        trigger: document.getElementById('vaseCoverTrigger'),
+        overlay: document.getElementById('vaseFeatureOverlay'),
+        close: document.getElementById('vaseCloseOverlay')
+      }
+    ];
     let closeTimer = null;
-
-    const setOpen = open => {
-      card.classList.toggle('is-open', open);
-      trigger.setAttribute('aria-expanded', String(open));
-      document.body.classList.toggle('overlay-open', open);
-      featureVideos.forEach(video => {
+    let hoverSuppressedUntil = 0;
+    const anyOpen = () => projects.some(project => project.card.classList.contains('is-open'));
+    const cancelClose = () => { if (closeTimer) window.clearTimeout(closeTimer); closeTimer = null; };
+    const syncBackdrop = () => document.body.classList.toggle('overlay-active', anyOpen());
+    const setOpen = (project, open) => {
+      if (open) projects.filter(item => item !== project).forEach(item => setOpen(item, false));
+      project.card.classList.toggle('is-open', open);
+      project.trigger.setAttribute('aria-expanded', String(open));
+      project.overlay.setAttribute('aria-hidden', String(!open));
+      project.overlay.querySelectorAll('video').forEach(video => {
         if (open && !reduceMotion) video.play().catch(() => {});
         else video.pause();
       });
+      syncBackdrop();
     };
-    const cancelClose = () => { if (closeTimer) window.clearTimeout(closeTimer); closeTimer = null; };
-    const scheduleClose = delay => { cancelClose(); closeTimer = window.setTimeout(() => setOpen(false), delay); };
+    const closeAll = (suppressHover = true) => {
+      cancelClose();
+      if (suppressHover) hoverSuppressedUntil = performance.now() + 1600;
+      projects.forEach(project => setOpen(project, false));
+    };
+    const scheduleClose = (project, delay) => {
+      cancelClose();
+      closeTimer = window.setTimeout(() => setOpen(project, false), delay);
+    };
 
-    if (canHover) {
-      trigger.addEventListener('pointerenter', () => { cancelClose(); setOpen(true); });
-      trigger.addEventListener('pointerleave', () => scheduleClose(260));
-      overlay.addEventListener('pointerenter', cancelClose);
-      overlay.addEventListener('pointerleave', () => scheduleClose(120));
-    }
-    trigger.addEventListener('keydown', event => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        setOpen(true);
+    projects.forEach(project => {
+      project.overlay.setAttribute('aria-hidden', 'true');
+      project.overlay.querySelectorAll('video').forEach(video => video.pause());
+      if (canHover) {
+        project.trigger.addEventListener('pointerenter', () => {
+          if (performance.now() < hoverSuppressedUntil) return;
+          cancelClose();
+          setOpen(project, true);
+        });
+        project.trigger.addEventListener('pointerleave', () => scheduleClose(project, 280));
+        project.overlay.addEventListener('pointerenter', cancelClose);
+        project.overlay.addEventListener('pointerleave', () => scheduleClose(project, 130));
       }
+      project.trigger.addEventListener('click', () => {
+        if (canHover && performance.now() < hoverSuppressedUntil) return;
+        canHover ? setOpen(project, true) : setOpen(project, !project.card.classList.contains('is-open'));
+      });
+      project.close.addEventListener('click', event => {
+        event.stopPropagation();
+        setOpen(project, false);
+        project.trigger.focus({preventScroll:true});
+      });
+      project.card.addEventListener('focusout', event => {
+        if (!project.card.contains(event.relatedTarget)) setOpen(project, false);
+      });
     });
-    trigger.addEventListener('click', () => canHover ? setOpen(true) : setOpen(!card.classList.contains('is-open')));
-    closeButton.addEventListener('click', event => { event.stopPropagation(); trigger.focus(); setOpen(false); });
-    document.addEventListener('keydown', event => { if (event.key === 'Escape') { trigger.focus(); setOpen(false); } });
-    card.addEventListener('focusout', event => { if (!card.contains(event.relatedTarget)) setOpen(false); });
-    featureVideos.forEach(video => video.pause());
+
+    backdrop.addEventListener('pointerdown', event => {
+      event.preventDefault();
+      event.stopPropagation();
+      closeAll(true);
+    });
+    backdrop.addEventListener('click', () => { if (anyOpen()) closeAll(true); });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && anyOpen()) closeAll();
+    });
+    window.addEventListener('wheel', event => {
+      if (!anyOpen()) return;
+      event.preventDefault();
+      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? window.innerHeight : 1;
+      const left = event.deltaX * unit;
+      const top = event.deltaY * unit;
+      closeAll();
+      window.scrollBy({left, top, behavior:'auto'});
+    }, {passive:false, capture:true});
+    window.addEventListener('scroll', () => { if (anyOpen()) closeAll(); }, {passive:true});
     if (reduceMotion) document.querySelectorAll('video').forEach(video => video.pause());
   </script>
 </body>
