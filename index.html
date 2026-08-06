@@ -169,7 +169,7 @@
             </div>
             <button class="carousel-arrow prev" type="button" aria-label="上一张">‹</button>
             <button class="carousel-arrow next" type="button" aria-label="下一张">›</button>
-            <div class="carousel-count" id="heroCount" aria-live="polite">PPT 3 / 25</div>
+            <div class="carousel-count" id="heroCount" aria-live="polite">1 / 23</div>
           </div>
           <div class="hero-caption-panel" aria-live="polite">
             <b id="heroCaptionTitle">Featured Preview · 项目背景</b>
@@ -487,16 +487,24 @@
         else slideVideo.pause();
       });
       const slide = heroSlides[heroIndex];
-      heroCount.textContent = `PPT ${heroIndex + 3} / 25`;
+      heroCount.textContent = `${heroIndex + 1} / ${heroSlides.length}`;
       heroCaptionTitle.textContent = `Featured Preview · ${slide.dataset.title}`;
       heroCaptionText.textContent = slide.dataset.caption;
     };
-    const stopHero = () => { if (heroTimer) window.clearInterval(heroTimer); };
-    const startHero = () => { stopHero(); heroTimer = window.setInterval(() => showHeroSlide(heroIndex + 1), 4300); };
+    const stopHero = () => {
+      if (heroTimer) window.clearTimeout(heroTimer);
+      heroTimer = null;
+    };
+    const startHero = () => {
+      stopHero();
+      if (reduceMotion) return;
+      heroTimer = window.setTimeout(() => {
+        showHeroSlide(heroIndex + 1);
+        startHero();
+      }, 4300);
+    };
     heroCarousel.querySelector('.prev').addEventListener('click', event => { event.stopPropagation(); showHeroSlide(heroIndex - 1); startHero(); });
     heroCarousel.querySelector('.next').addEventListener('click', event => { event.stopPropagation(); showHeroSlide(heroIndex + 1); startHero(); });
-    heroCarousel.addEventListener('mouseenter', stopHero);
-    heroCarousel.addEventListener('mouseleave', startHero);
     heroCarousel.addEventListener('keydown', event => {
       if (event.key === 'ArrowLeft') { event.preventDefault(); showHeroSlide(heroIndex - 1); startHero(); }
       if (event.key === 'ArrowRight') { event.preventDefault(); showHeroSlide(heroIndex + 1); startHero(); }
