@@ -100,6 +100,25 @@
     .lightbox{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(5,17,29,.88)}.lightbox.open{display:flex}.lightbox-inner{overflow:hidden;max-width:min(1280px,96vw);max-height:94vh;background:white;border-radius:20px;box-shadow:0 28px 90px rgba(0,0,0,.48)}.lightbox-head{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:11px 15px;border-bottom:1px solid var(--line);font-weight:900}.lightbox-close{width:36px;height:36px;border:0;border-radius:50%;background:#edf4fa;font-size:22px;cursor:pointer}.lightbox img{display:block;max-width:96vw;max-height:calc(94vh - 60px);object-fit:contain;background:white}
     .reveal{opacity:0;transform:translateY(22px);transition:opacity .65s ease,transform .65s ease}.reveal.inview{opacity:1;transform:none}
     :focus-visible{outline:3px solid rgba(30,132,230,.48);outline-offset:3px}
+    @media(min-width:1041px){
+      .container{width:min(740px,calc(100% - 96px))}
+      .nav{height:60px;gap:20px}.brand{gap:10px;font-size:13px}.brand img{height:34px}.navlinks{gap:14px;font-size:12px}
+      .hero.container{width:min(960px,calc(100% - 96px))}.hero{padding:42px 0 29px}.hero-grid{grid-template-columns:minmax(0,1fr) minmax(0,410px);gap:42px}
+      .logo-strip{gap:11px;margin-bottom:16px}.logo-card,.contest-card{border-radius:14px}.logo-card{padding:8px 13px}.logo-card img{height:43px}.contest-card{gap:8px;padding:7px 11px}.contest-card img{height:37px}.contest-card span{font-size:10px}
+      .eyebrow{gap:6px;padding:6px 11px;font-size:12px}h1{font-size:clamp(36px,4.45vw,54px);margin:14px 0 10px}.subtitle{font-size:clamp(15px,1.55vw,18px);margin-bottom:14px}.authors{font-size:15px;margin-top:14px}.meta{gap:7px;margin-top:8px}.meta span{padding:5px 8px;font-size:11px}.buttons{gap:9px;margin-top:20px}.btn{gap:6px;padding:9px 14px;font-size:13px}
+      .hero-visual{padding:10px;border-radius:25px}.browser-bar{height:31px;padding:0 6px 7px;font-size:11px}.dot{width:9px;height:9px}.hero-carousel{border-radius:18px}.carousel-arrow{width:34px;height:34px;font-size:22px}.carousel-arrow.prev{left:11px}.carousel-arrow.next{right:11px}.carousel-count{right:12px;bottom:11px;padding:5px 9px;font-size:10px}.hero-caption-panel{margin-top:9px;padding:10px 12px;border-radius:14px}.hero-caption-panel b{font-size:13px}.hero-caption-panel p{font-size:11px}
+      section{padding:30px 0}.section-title{margin-bottom:20px}.section-title h2{font-size:clamp(26px,3vw,32px)}
+      .system-component-grid{gap:10px}.system-component-media{height:107px}.system-component-media img{padding:8px}.system-component-body{padding:11px 12px 12px}.system-component-body h3{font-size:15px}.system-component-body p{font-size:11px}
+      .video-head{gap:16px;padding:19px 21px 14px}.video-head h3{font-size:20px}.title-en{font-size:11px}.video-head p{font-size:13px}.video-tabs{gap:6px;padding:4px}.video-tab{padding:7px 10px;font-size:12px}.video-wrap{padding:14px 17px 12px}.video-wrap video{border-radius:15px}.video-foot{padding:0 18px 17px;font-size:11px}.video-foot b{font-size:12px}
+      .abstract{padding:23px;font-size:14px}.keywords{gap:7px;margin-top:15px}.pill{padding:6px 9px;font-size:10px}
+      .pipeline-layout{grid-template-columns:minmax(0,1.22fr) minmax(200px,.78fr);gap:9px}.pipeline-visual .visual-button img{max-height:193px}.visual-body{padding:12px 13px}.visual-body h3{font-size:15px}.visual-body p{font-size:11px}.stage-grid{gap:6px}.stage{padding:9px;border-radius:12px}.stage span{width:20px;height:20px;font-size:9px}.stage b{font-size:11px}.stage p{font-size:9px}
+      .architecture-grid{gap:10px}.architecture-card img{height:148px;padding:5px}.architecture-card.primary img{max-height:278px}
+      .shift-grid{gap:12px}.shift-card{padding:17px;border-radius:17px}.shift-card .icon{font-size:20px}.shift-card h3{font-size:15px}.shift-card p{font-size:11px}.foundation{gap:14px;padding:14px 17px;border-radius:16px}.foundation b{font-size:15px}.foundation span{font-size:11px}
+      .demo-grid{gap:9px}.demo-media{height:101px}.demo-card.wide .demo-media{height:131px}.demo-image-row{gap:4px;padding:4px}.demo-image-row .visual-button{height:128px}.demo-body{padding:11px 12px 12px}.demo-body h3{font-size:15px}.demo-body p{font-size:11px}
+      .result-metrics{gap:8px;margin-bottom:12px}.result-metric{padding:15px 10px;border-radius:15px}.result-metric b{font-size:27px}.result-metric span{font-size:13px}.result-metric small{font-size:10px}th,td{padding:10px 11px;font-size:11px}.result-gallery{gap:9px;margin-top:12px}.result-gallery img{height:148px;padding:4px}
+      .finals-grid{grid-template-columns:minmax(188px,.72fr) minmax(0,1.28fr);gap:9px}.poster-card .visual-button{height:310px}.poster-card img{padding:6px}.team-gallery{gap:6px;padding:6px}.team-gallery button{min-height:126px}.team-gallery .team-main{min-height:161px}.finals-note{padding:14px 15px;font-size:12px}
+      .citation-head{padding:12px 15px}.copy-btn{padding:6px 10px;font-size:11px}pre{padding:18px;font-size:10px}footer{padding:36px 0 51px;font-size:12px}.footer-title img{height:32px}
+    }
     @media(max-width:1040px){.hero-grid{grid-template-columns:1fr}.pipeline-layout{grid-template-columns:1fr}.demo-grid{grid-template-columns:repeat(2,1fr)}.demo-card.full{grid-column:1/-1}.finals-grid{grid-template-columns:1fr}.poster-card .visual-button{height:620px}}
     @media(max-width:760px){.container{width:min(100% - 30px,1240px)}.nav{height:auto;align-items:flex-start;flex-direction:column;padding:10px 0 8px;gap:8px}.brand img{height:36px}.navlinks{width:100%;overflow-x:auto;padding:2px 0 7px;gap:14px}.hero{padding-top:43px}.hero-grid{gap:25px}.hero-slides{aspect-ratio:4/3}.hero-slide img{object-fit:contain}.shift-grid,.result-metrics{grid-template-columns:repeat(2,1fr)}.system-component-grid{grid-template-columns:1fr}.system-component-media{height:250px}.stage-grid{grid-template-columns:1fr}.stage:last-child{grid-column:auto}.architecture-grid,.result-gallery{grid-template-columns:1fr}.architecture-card.primary{grid-column:auto}.architecture-card img,.result-gallery img{height:auto;max-height:430px}.demo-grid{grid-template-columns:1fr}.demo-card.wide,.demo-card.full{grid-column:auto}.demo-card.wide .demo-media,.demo-media{height:auto;min-height:220px}.demo-image-row{grid-template-columns:1fr}.demo-image-row .visual-button{height:auto;min-height:230px}.video-head{align-items:flex-start;flex-direction:column}.video-tabs{width:100%}.video-tab{flex:1}.video-foot{align-items:flex-start;flex-direction:column}.finals-grid{grid-template-columns:1fr}.team-gallery{grid-template-columns:1fr}.team-gallery .team-main{grid-column:auto}.poster-card .visual-button{height:560px}.foundation{align-items:flex-start;flex-direction:column}.carousel-arrow{width:38px;height:38px}}
     @media(max-width:470px){.shift-grid,.result-metrics{grid-template-columns:1fr}h1{font-size:38px}.hero-caption-panel{padding:12px}.poster-card .visual-button{height:470px}.team-gallery button,.team-gallery .team-main{min-height:230px}.buttons .btn{width:100%;justify-content:center}}
@@ -119,22 +138,15 @@
   <main id="top">
     <header class="hero container">
       <div class="hero-grid">
-        <div>
+        <div class="hero-copy">
           <div class="logo-strip">
             <div class="logo-card"><img src="assets/hust_logo.png" alt="华中科技大学" /></div>
             <div class="contest-card"><img src="assets/figures/fig_01.webp" alt="英特尔杯专题赛标识" /><span>2026 Intel Cup<br>National Finals Edition</span></div>
           </div>
-          <div class="eyebrow">🚁 2026 全国评审版 · 嵌入式 AI 专题赛</div>
           <h1>智驭低空枢纽</h1>
           <p class="subtitle">面向低空消防巡检的多模态地面站系统<span class="subtitle-en">A Multimodal Ground Station System for Low-Altitude Fire Patrol</span></p>
           <div class="authors"><strong class="leader">谢秋实</strong> · <strong>朱拓源</strong> · <strong>庞亚宸</strong></div>
-          <div class="meta"><span>华中科技大学</span><span>指导教师：夏景圆</span><span>队长</span><span>全国二等奖 · 18 / 230 · 前 7.8%</span></div>
-          <div class="buttons">
-            <a class="btn primary" href="#demo-video">▶ 查看国赛演示</a>
-            <a class="btn" href="中文报告.pdf" target="_blank" rel="noopener">📄 作品设计报告</a>
-            <a class="btn" href="作品简介.pdf" target="_blank" rel="noopener">🧾 作品简介</a>
-            <a class="btn" href="https://github.com/Qiushi0919/IntelCup-2026" target="_blank" rel="noopener">💻 项目仓库</a>
-          </div>
+          <div class="meta"><span>华中科技大学</span><span>指导教师：夏景圆</span><span><b class="leader">†</b> 队长</span><span>全国二等奖 · 18 / 230 · 前 7.8%</span></div>
         </div>
 
         <div class="hero-visual">
@@ -482,6 +494,7 @@
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let heroIndex = 0;
     let heroTimer = null;
+    let heroHoverPaused = false;
     const showHeroSlide = index => {
       heroIndex = (index + heroSlides.length) % heroSlides.length;
       heroSlides.forEach((slide, i) => {
@@ -502,12 +515,21 @@
     };
     const startHero = () => {
       stopHero();
-      if (reduceMotion) return;
+      if (reduceMotion || heroHoverPaused) return;
       heroTimer = window.setTimeout(() => {
         showHeroSlide(heroIndex + 1);
         startHero();
       }, 1500);
     };
+    const heroVisual = heroCarousel.closest('.hero-visual');
+    heroVisual.addEventListener('mouseenter', () => {
+      heroHoverPaused = true;
+      stopHero();
+    });
+    heroVisual.addEventListener('mouseleave', () => {
+      heroHoverPaused = false;
+      startHero();
+    });
     heroCarousel.querySelector('.prev').addEventListener('click', event => { event.stopPropagation(); showHeroSlide(heroIndex - 1); startHero(); });
     heroCarousel.querySelector('.next').addEventListener('click', event => { event.stopPropagation(); showHeroSlide(heroIndex + 1); startHero(); });
     heroCarousel.addEventListener('keydown', event => {
