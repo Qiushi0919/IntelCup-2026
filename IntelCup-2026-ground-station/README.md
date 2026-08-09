@@ -10,8 +10,6 @@
 - 手势识别：OK，已接入 MediaPipe 三手势识别，可触发暂停、取消候选、确认候选。
 - 视线识别：OK，已接入头部姿态 + 视线融合识别，可显示方向并触发确认/取消。
 - 手势 + 视线场景：OK，手势先选择起飞/自检/返航大类，倒数 5 秒后用视线选择三个细项。
-- 飞行巡检：OK，连接无人机图传后常驻运行人脸与中英文 OCR 小模型；命中结果先进入 Qwen 队列，由飞行记录页的开关手动启动复核。
-- 巡检日志：OK，右侧“飞行记录”页签显示识别结果、Qwen3-VL 分析、飞行位置与截图，并持续追加到本地。
 
 ## 运行截图
 
@@ -74,22 +72,6 @@ install_voice_asr_deps.bat
 
 该场景流程同样使用一个 USB 摄像头，不要与其它识别窗口同时开启。
 选择“日志输出”后，会把最近一次从解锁到重新锁定期间采样到的飞行数据导出到 `ground_station/flight_logs/flight_*/flight_log.md`。
-
-## 飞行巡检与 Qwen3-VL
-
-切换到无人机图传并成功收到画面后，地面站会优先在 NPU 上启动 OpenVINO 人脸模型，同时在 CPU 上运行中英文 OCR。NPU 不可用时会自动回退 OpenCV YuNet。火源继续使用原有连续帧确认链路。小模型命中后会立即保存截图并加入 Qwen 队列，但默认不会加载 Qwen。
-
-在右侧“飞行记录”页点击“启动 Qwen 推理”后，地面站冻结最后一帧并停止读取图传、OpenCV 和 NPU 巡检，主画面切换为 Qwen 加载状态、当前任务、已用时间和模型输出。关闭开关后释放 Qwen，并自动重新连接保存的 RTSP 地址。未完成队列会保留，地面站重启后也会从追加日志中恢复。
-
-右侧窗口可在“设备 / 串口 / 网络”和“飞行记录”之间切换。每条飞行记录包含时间、识别摘要、飞行坐标与高度、Qwen 分析结果和截图。日志采用追加写入，不会因重启程序而丢失：
-
-```text
-ground_station/flight_logs/inspection_journal/inspection_log.jsonl
-ground_station/flight_logs/inspection_journal/inspection_log.md
-ground_station/flight_logs/inspection_journal/images/YYYYMMDD/
-```
-
-8GB 内存机器上，Qwen 仅在系统可用内存达到 1.4GiB 时启动；运行中若低于 0.8GiB，会暂停派发新任务但保留排队记录。队列处理完成后 Qwen 保持等待，直到手动关闭推理开关。
 
 如果换机器后缺少依赖，可运行：
 

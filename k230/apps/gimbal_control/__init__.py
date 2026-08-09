@@ -1,0 +1,1 @@
+"""Gimbal control application."""

@@ -5,6 +5,7 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 .venv/
+.venv-*/
 venv/
 
 # Runtime output
@@ -12,6 +13,7 @@ work/
 captures/
 recordings/
 logs/
+gmodel_dump_dir/
 flight_logs/
 */flight_logs/
 *.log
@@ -20,12 +22,6 @@ camera_test_*.jpg
 
 # Local model caches
 models/
-!IntelCup-2026-ground-station/inspection_demo/models/
-!IntelCup-2026-ground-station/inspection_demo/models/face_detection_yunet_2023mar.onnx
-!IntelCup-2026-ground-station/inspection_demo/models/face-detection-retail-0005.xml
-!IntelCup-2026-ground-station/inspection_demo/models/face-detection-retail-0005.bin
-!IntelCup-2026-ground-station/inspection_demo/models/README.md
-IntelCup-2026-ground-station/inspection_demo/models/.npu_cache/
 multimodal_recognition/models/
 */multimodal_recognition/models/
 

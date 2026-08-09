@@ -7,7 +7,7 @@ from pathlib import Path
 import cv2
 from PyQt5.QtCore import QThread, pyqtSignal
 
-from fire_detector import FireConfirmationTracker, FireDetector
+from k230_color_detector import K230RedBlobDetector, RedBlobConfirmationTracker
 from lens_correction import LensCorrector
 from models import FireDetection
 
@@ -23,6 +23,7 @@ from amb82_camera import AMB82Camera  # noqa: E402
 class CameraThread(QThread):
     frame_ready = pyqtSignal(object, object)
     fire_confirmed = pyqtSignal(object)
+    fire_recognition_ready = pyqtSignal(object, object)
     status_changed = pyqtSignal(bool, str, float, object)
 
     def __init__(
@@ -31,10 +32,13 @@ class CameraThread(QThread):
         parent=None,
         lens_correction_enabled: bool = True,
         lens_correction_strength: int = 50,
+        fire_detection_enabled: bool = False,
     ) -> None:
         super().__init__(parent)
         self.url = url
         self._stop_requested = False
+        self._fire_detection_enabled = bool(fire_detection_enabled)
+        self._fire_detection_reset_requested = True
         self.lens_corrector = LensCorrector(
             lens_correction_enabled,
             lens_correction_strength,
@@ -49,24 +53,36 @@ class CameraThread(QThread):
             poll_interval=0.5,
         )
         last_frame_time = 0.0
-        last_detection_time = 0.0
         last_status_time = 0.0
         latest_detections: list[FireDetection] = []
-        detector = FireDetector()
-        tracker = FireConfirmationTracker()
+        detector = K230RedBlobDetector()
+        tracker = RedBlobConfirmationTracker(required_frames=20)
         try:
             while not self._stop_requested:
                 ok, frame = camera.read(timeout=0.25, wait_for_new=True, copy=True)
                 now = time.monotonic()
                 if ok and frame is not None and now - last_frame_time >= 0.055:
                     frame = self.lens_corrector.apply(frame)
-                    if now - last_detection_time >= 0.16:
+                    confirmed = None
+                    if self._fire_detection_reset_requested:
+                        tracker.reset()
+                        latest_detections = []
+                        self._fire_detection_reset_requested = False
+                    if self._fire_detection_enabled:
                         latest_detections = self._detect_scaled(frame, detector)
-                        confirmed = tracker.update(latest_detections, now)
-                        if confirmed:
-                            self.fire_confirmed.emit(confirmed)
-                        last_detection_time = now
+                        confirmed = tracker.update(latest_detections)
+                    else:
+                        latest_detections = []
+                        tracker.reset()
                     self.frame_ready.emit(frame, latest_detections)
+                    if confirmed:
+                        self.fire_confirmed.emit(confirmed)
+                    confirmed_detection = next(
+                        (item for item in latest_detections if item.confirmed),
+                        None,
+                    )
+                    if confirmed_detection is not None:
+                        self.fire_recognition_ready.emit(confirmed_detection, frame)
                     last_frame_time = now
                 if now - last_status_time >= 0.5:
                     if camera.connected:
@@ -108,19 +124,22 @@ class CameraThread(QThread):
             )
 
     def stop(self) -> None:
-        self.request_stop()
-        self.wait(5000)
-
-    def request_stop(self) -> None:
         self._stop_requested = True
         self.requestInterruption()
+        self.wait(5000)
 
     def set_lens_correction(self, enabled: bool, strength: int) -> None:
         self.lens_corrector.configure(enabled, strength)
 
+    def set_fire_detection_enabled(self, enabled: bool) -> None:
+        enabled = bool(enabled)
+        if enabled != self._fire_detection_enabled:
+            self._fire_detection_reset_requested = True
+        self._fire_detection_enabled = enabled
+
     @staticmethod
     def _detect_scaled(
-        frame, detector: FireDetector
+        frame, detector: K230RedBlobDetector
     ) -> list[FireDetection]:
         height, width = frame.shape[:2]
         if width <= 640:
@@ -153,6 +172,9 @@ class CameraThread(QThread):
                 warm_ratio=item.warm_ratio,
                 core_ratio=item.core_ratio,
                 kind=item.kind,
+                consecutive_frames=item.consecutive_frames,
+                required_frames=item.required_frames,
+                confirmed=item.confirmed,
             )
             for item in detections
         ]

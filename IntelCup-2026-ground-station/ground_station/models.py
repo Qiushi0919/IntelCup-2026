@@ -6,6 +6,9 @@ from typing import Any
 from uuid import uuid4
 
 
+FIRE_CENTER_ROI_SCALE = 0.5
+
+
 @dataclass
 class DroneState:
     connected: bool = True
@@ -85,7 +88,75 @@ class FireDetection:
     frame_height: int
     warm_ratio: float = 0.0
     core_ratio: float = 0.0
-    kind: str = "visible_flame"
+    kind: str = "k230_red_blob"
+    consecutive_frames: int = 1
+    required_frames: int = 20
+    confirmed: bool = False
+
+
+def bbox_inside_center_roi(
+    bbox: tuple[int, int, int, int],
+    frame_width: int,
+    frame_height: int,
+    roi_scale: float = FIRE_CENTER_ROI_SCALE,
+) -> bool:
+    """Return whether an entire image-space box is inside the centered ROI."""
+
+    if frame_width <= 0 or frame_height <= 0:
+        return False
+    scale = max(0.0, min(1.0, float(roi_scale)))
+    roi_width = frame_width * scale
+    roi_height = frame_height * scale
+    roi_left = (frame_width - roi_width) / 2.0
+    roi_top = (frame_height - roi_height) / 2.0
+    roi_right = roi_left + roi_width
+    roi_bottom = roi_top + roi_height
+    x, y, width, height = bbox
+    return (
+        width > 0
+        and height > 0
+        and x >= roi_left
+        and y >= roi_top
+        and x + width <= roi_right
+        and y + height <= roi_bottom
+    )
+
+
+def fire_detection_inside_center_roi(
+    detection: FireDetection,
+    roi_scale: float = FIRE_CENTER_ROI_SCALE,
+) -> bool:
+    return bbox_inside_center_roi(
+        detection.bbox,
+        detection.frame_width,
+        detection.frame_height,
+        roi_scale,
+    )
+
+
+@dataclass
+class FaceMatch:
+    bbox: tuple[int, int, int, int]
+    name: str
+    confidence: float
+    detection_confidence: float
+    frame_width: int
+    frame_height: int
+    matched: bool = False
+
+
+@dataclass
+class OCRMatch:
+    polygon: tuple[
+        tuple[int, int],
+        tuple[int, int],
+        tuple[int, int],
+        tuple[int, int],
+    ]
+    text: str
+    confidence: float
+    frame_width: int
+    frame_height: int
 
 
 @dataclass

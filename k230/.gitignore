@@ -1,0 +1,23 @@
+# K230 firmware runtime and large deployment assets
+/micropython
+/kmodel/
+/audio/
+/res/
+/resources/
+/mp_detect_garbage/
+/mp_detect_guide/
+/mp_detect_obstacle/
+/System Volume Information/
+
+# Device-local settings may contain Wi-Fi or API credentials
+/configs/sys_config.json
+
+# Python generated files
+__pycache__/
+*.py[cod]
+
+# Editor and OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.tmp

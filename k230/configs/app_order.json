@@ -1,0 +1,8 @@
+{
+    "setting": 1,
+    "ai_face": 2,
+    "ai_body": 3,
+    "ai_objects": 4,
+    "chat": 5,
+    "gimbal_control": 6
+  }

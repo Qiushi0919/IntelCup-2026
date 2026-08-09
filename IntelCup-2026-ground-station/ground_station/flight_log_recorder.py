@@ -23,6 +23,18 @@ class FlightSample:
 
 
 @dataclass
+class RecognitionRecord:
+    timestamp: datetime
+    target_type: str
+    label: str
+    confidence: float
+    x: float
+    y: float
+    altitude: float
+    image_filename: str
+
+
+@dataclass
 class FlightRecord:
     started_at: datetime
     ended_at: datetime | None = None
@@ -32,6 +44,7 @@ class FlightRecord:
     planned_waypoints: dict[str, tuple[float, float, float]] = field(default_factory=dict)
     route_track: list[tuple[float, float]] = field(default_factory=list)
     system_logs: list[tuple[str, str, str]] = field(default_factory=list)
+    recognition_records: list[RecognitionRecord] = field(default_factory=list)
 
     @property
     def duration_s(self) -> float:
@@ -58,6 +71,90 @@ class FlightLogRecorder:
         item = (datetime.now().strftime("%H:%M:%S"), level, message)
         self._system_logs.append(item)
         self._system_logs = self._system_logs[-200:]
+
+    def record_recognition(
+        self,
+        target_type: str,
+        label: str,
+        confidence: float,
+        state: DroneState,
+        bbox: tuple[int, int, int, int] | None = None,
+        frame_width: int = 0,
+        frame_height: int = 0,
+        overlay_label: str = "TARGET",
+        recognition_frame=None,
+    ) -> bool:
+        """Save one annotated recognition frame into the active flight record."""
+
+        source_frame = recognition_frame if recognition_frame is not None else self._latest_frame
+        if self.active is None or source_frame is None:
+            return False
+        frame = source_frame.copy()
+        image_height, image_width = frame.shape[:2]
+        if bbox is not None and image_width > 0 and image_height > 0:
+            source_width = frame_width if frame_width > 0 else image_width
+            source_height = frame_height if frame_height > 0 else image_height
+            scale_x = image_width / source_width
+            scale_y = image_height / source_height
+            x, y, width, height = bbox
+            x1 = max(0, min(image_width - 1, round(x * scale_x)))
+            y1 = max(0, min(image_height - 1, round(y * scale_y)))
+            x2 = max(x1 + 1, min(image_width - 1, round((x + width) * scale_x)))
+            y2 = max(y1 + 1, min(image_height - 1, round((y + height) * scale_y)))
+            color = {
+                "人脸识别": (80, 220, 80),
+                "火源识别": (40, 40, 240),
+            }.get(target_type, (255, 180, 40))
+            thickness = max(2, round(min(image_width, image_height) / 300))
+            cv2.rectangle(frame, (x1, y1), (x2, y2), color, thickness)
+            caption = f"{overlay_label} {confidence:.0%}"
+            font_scale = max(0.55, min(image_width, image_height) / 900)
+            (text_width, text_height), baseline = cv2.getTextSize(
+                caption,
+                cv2.FONT_HERSHEY_SIMPLEX,
+                font_scale,
+                thickness,
+            )
+            text_top = max(0, y1 - text_height - baseline - 8)
+            cv2.rectangle(
+                frame,
+                (x1, text_top),
+                (min(image_width - 1, x1 + text_width + 10), y1),
+                (12, 22, 30),
+                -1,
+            )
+            cv2.putText(
+                frame,
+                caption,
+                (x1 + 5, max(text_height + 2, y1 - baseline - 4)),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                font_scale,
+                color,
+                thickness,
+                cv2.LINE_AA,
+            )
+
+        now = datetime.now()
+        flight_dir = self._flight_asset_dir(self.active)
+        flight_dir.mkdir(parents=True, exist_ok=True)
+        index = len(self.active.recognition_records) + 1
+        filename = f"recognition_{index:02d}_{now.strftime('%H%M%S_%f')}.jpg"
+        path = flight_dir / filename
+        if not cv2.imwrite(str(path), frame):
+            return False
+        self.active.recognition_records.append(
+            RecognitionRecord(
+                timestamp=now,
+                target_type=target_type,
+                label=label,
+                confidence=max(0.0, min(1.0, float(confidence))),
+                x=state.x,
+                y=state.y,
+                altitude=state.altitude,
+                image_filename=filename,
+            )
+        )
+        return True
 
     def observe_state(
         self,
@@ -198,6 +295,7 @@ class FlightLogRecorder:
             f"- 规划航线：{route_text}",
             f"- 采样点数：{len(samples)}",
             f"- 图传采样：{len(record.image_files)} 张",
+            f"- 视觉识别记录：{len(record.recognition_records)} 条",
             "",
         ]
         if final_state is not None:
@@ -269,6 +367,21 @@ class FlightLogRecorder:
                     f"### {timestamp.strftime('%H:%M:%S')}",
                     "",
                     f"![图传采样]({filename})",
+                    "",
+                ]
+
+        if record.recognition_records:
+            lines += ["## 视觉识别结果", ""]
+            for recognition in record.recognition_records:
+                lines += [
+                    f"### {recognition.timestamp.strftime('%H:%M:%S')} · "
+                    f"{recognition.target_type} · {recognition.label}",
+                    "",
+                    f"- 识别置信度：{recognition.confidence:.1%}",
+                    f"- 无人机位置：X {recognition.x:.1f} cm，"
+                    f"Y {recognition.y:.1f} cm，高度 {recognition.altitude:.2f} m",
+                    "",
+                    f"![{recognition.target_type}识别结果]({recognition.image_filename})",
                     "",
                 ]
 

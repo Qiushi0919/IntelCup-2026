@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import html
 import math
 import ipaddress
 import re
@@ -20,12 +19,10 @@ from PyQt5.QtCore import (
     QRectF,
     Qt,
     QTimer,
-    QUrl,
     pyqtSignal,
 )
 from PyQt5.QtGui import (
     QColor,
-    QDesktopServices,
     QFont,
     QImage,
     QLinearGradient,
@@ -48,7 +45,6 @@ from PyQt5.QtWidgets import (
     QPlainTextEdit,
     QProgressBar,
     QPushButton,
-    QScrollArea,
     QSlider,
     QSizePolicy,
     QTabWidget,
@@ -61,12 +57,14 @@ from models import (
     CameraState,
     CommandIntent,
     DroneState,
+    FaceMatch,
     FireDetection,
+    OCRMatch,
 )
 
 
-DEFAULT_AMB82_RTSP_URL = "rtsp://10.51.117.2:554"
-DEFAULT_AMB82_IP = "10.51.117.2"
+DEFAULT_AMB82_RTSP_URL = "rtsp://192.168.0.102:554"
+DEFAULT_AMB82_IP = "192.168.0.102"
 DEFAULT_AMB82_PORT = "554"
 CAMERA_SETTINGS_PATH = Path(__file__).resolve().parent / "camera_settings.json"
 
@@ -140,9 +138,11 @@ class VideoCanvas(QWidget):
         self._demo_mode = False
         self._detections: list[FireDetection] = []
         self._detections_hold_until = 0.0
-        self._inspection_detections: list[dict] = []
-        self._inspection_hold_until = 0.0
         self._confirmed_until = 0.0
+        self._face_matches: list[FaceMatch] = []
+        self._face_matches_hold_until = 0.0
+        self._ocr_matches: list[OCRMatch] = []
+        self._ocr_matches_hold_until = 0.0
         self._frame_size = (1280, 720)
         self._display_scale = 1.0
         self._display_detection_boxes: list[
@@ -186,9 +186,46 @@ class VideoCanvas(QWidget):
         self._frame = None
         self._pixmap = None
         self._detections = []
-        self._inspection_detections = []
+        self._face_matches = []
+        self._ocr_matches = []
         self._selected_target_id = ""
         self._hover_target_id = ""
+        self.update()
+
+    def clear_detections(self) -> None:
+        self._detections = []
+        self._detections_hold_until = 0.0
+        self._confirmed_until = 0.0
+        self._selected_target_id = ""
+        self._hover_target_id = ""
+        self.update()
+
+    def set_face_matches(self, matches: list[FaceMatch]) -> None:
+        now = time.monotonic()
+        if matches:
+            self._face_matches = matches
+            self._face_matches_hold_until = now + 0.7
+        elif now >= self._face_matches_hold_until:
+            self._face_matches = []
+        self.update()
+
+    def clear_face_matches(self) -> None:
+        self._face_matches = []
+        self._face_matches_hold_until = 0.0
+        self.update()
+
+    def set_ocr_matches(self, matches: list[OCRMatch]) -> None:
+        now = time.monotonic()
+        if matches:
+            self._ocr_matches = matches
+            self._ocr_matches_hold_until = now + 1.0
+        elif now >= self._ocr_matches_hold_until:
+            self._ocr_matches = []
+        self.update()
+
+    def clear_ocr_matches(self) -> None:
+        self._ocr_matches = []
+        self._ocr_matches_hold_until = 0.0
         self.update()
 
     def set_demo_mode(self, enabled: bool) -> None:
@@ -251,15 +288,6 @@ class VideoCanvas(QWidget):
             self._detections = []
         self.update()
 
-    def set_inspection_detections(self, detections: list[dict]) -> None:
-        now = time.monotonic()
-        if detections:
-            self._inspection_detections = list(detections)
-            self._inspection_hold_until = now + 1.4
-        elif now >= self._inspection_hold_until:
-            self._inspection_detections = []
-        self.update()
-
     def confirm_detection(
         self, detection: FireDetection, hold_seconds: float = 6.0
     ) -> None:
@@ -271,12 +299,18 @@ class VideoCanvas(QWidget):
 
     def _expire_detections(self) -> None:
         now = time.monotonic()
+        changed = False
         if self._detections and now >= self._detections_hold_until:
             self._detections = []
             self._confirmed_until = 0.0
-            self.update()
-        if self._inspection_detections and now >= self._inspection_hold_until:
-            self._inspection_detections = []
+            changed = True
+        if self._face_matches and now >= self._face_matches_hold_until:
+            self._face_matches = []
+            changed = True
+        if self._ocr_matches and now >= self._ocr_matches_hold_until:
+            self._ocr_matches = []
+            changed = True
+        if changed:
             self.update()
 
     def set_state(self, state: DroneState) -> None:
@@ -374,7 +408,8 @@ class VideoCanvas(QWidget):
 
         if self._pixmap is not None and not self._pixmap.isNull():
             self._draw_fire_detections(painter, content_rect)
-            self._draw_inspection_detections(painter, content_rect)
+            self._draw_face_matches(painter, content_rect)
+            self._draw_ocr_matches(painter, content_rect)
 
         if self._demo_mode:
             banner_width = min(rect.width() * 0.46, 310 * scale)
@@ -629,58 +664,6 @@ class VideoCanvas(QWidget):
             y += line_height
         painter.restore()
 
-    def _draw_inspection_detections(self, painter: QPainter, rect: QRectF) -> None:
-        if not self._inspection_detections:
-            return
-        frame_width, frame_height = self._frame_size
-        if frame_width <= 0 or frame_height <= 0:
-            return
-        scale_x = rect.width() / frame_width
-        scale_y = rect.height() / frame_height
-        ui_scale = min(self._display_scale, 1.5)
-        colors = {
-            "face": QColor("#55d8ff"),
-            "text": QColor("#61e49b"),
-        }
-        labels = {"face": "人脸", "text": "文字"}
-        for index, detection in enumerate(self._inspection_detections[:8], start=1):
-            bbox = detection.get("bbox", [])
-            if len(bbox) != 4:
-                continue
-            x, y, width, height = (float(value) for value in bbox)
-            box = QRectF(
-                rect.left() + x * scale_x,
-                rect.top() + y * scale_y,
-                max(2.0, width * scale_x),
-                max(2.0, height * scale_y),
-            ).intersected(rect)
-            kind = str(detection.get("kind", "face"))
-            color = colors.get(kind, QColor("#55d8ff"))
-            painter.setBrush(Qt.NoBrush)
-            painter.setPen(QPen(color, max(2, round(2 * ui_scale))))
-            painter.drawRect(box)
-            confidence = float(detection.get("confidence", 0.0))
-            label = f"{labels.get(kind, kind.upper())}-{index}  {confidence:.0%}"
-            painter.setFont(
-                QFont("Microsoft YaHei UI", max(8, round(9 * ui_scale)), QFont.Bold)
-            )
-            metrics = painter.fontMetrics()
-            label_width = metrics.horizontalAdvance(label) + 14 * ui_scale
-            label_height = max(22.0, metrics.height() + 6 * ui_scale)
-            label_rect = QRectF(
-                box.left(),
-                max(rect.top(), box.top() - label_height),
-                min(label_width, rect.right() - box.left()),
-                label_height,
-            )
-            painter.fillRect(label_rect, QColor(color.red(), color.green(), color.blue(), 205))
-            painter.setPen(QColor("#041019"))
-            painter.drawText(
-                label_rect.adjusted(6 * ui_scale, 0, -4 * ui_scale, 0),
-                Qt.AlignLeft | Qt.AlignVCenter,
-                label,
-            )
-
     def _draw_fire_detections(self, painter: QPainter, rect: QRectF) -> None:
         if not self._detections:
             return
@@ -691,9 +674,10 @@ class VideoCanvas(QWidget):
         scale_x = rect.width() / frame_width
         scale_y = rect.height() / frame_height
         ui_scale = self._display_scale
-        confirmed = time.monotonic() < self._confirmed_until
+        held_confirmation = time.monotonic() < self._confirmed_until
 
         for index, detection in enumerate(self._detections[:5], start=1):
+            confirmed = detection.confirmed or (held_confirmation and index == 1)
             target_id = f"FIRE-{index:02d}"
             x, y, width, height = detection.bbox
             raw_box = QRectF(
@@ -727,7 +711,7 @@ class VideoCanvas(QWidget):
                 if selected
                 else QColor("#ffbd52")
                 if hovered
-                else QColor("#ff303d" if confirmed else "#ff5454")
+                else QColor("#ff303d" if confirmed else "#ffbd52")
             )
             painter.setBrush(Qt.NoBrush)
             painter.setPen(
@@ -750,13 +734,19 @@ class VideoCanvas(QWidget):
                 painter.drawEllipse(box.adjusted(-7, -7, 7, 7))
 
             label = (
-                f"{target_id} · 已确认  {detection.confidence:.0%}"
+                f"{target_id} · 火源已确认 · 连续 {detection.required_frames} 帧"
                 if confirmed
-                else f"{target_id} · 火源  {detection.confidence:.0%}"
+                else f"{target_id} · 红色候选 · "
+                f"{detection.consecutive_frames}/{detection.required_frames} 帧"
             )
-            label_width = max(
-                box.width(),
-                (132.0 if confirmed else 96.0) * min(ui_scale, 1.5),
+            label_font = QFont(
+                "Microsoft YaHei UI", round(9 * ui_scale), QFont.Bold
+            )
+            painter.setFont(label_font)
+            text_width = painter.fontMetrics().horizontalAdvance(label)
+            label_width = min(
+                rect.width(),
+                max(box.width(), text_width + 18 * ui_scale),
             )
             label_left = min(
                 max(rect.left(), box.left()),
@@ -777,22 +767,140 @@ class VideoCanvas(QWidget):
                     235,
                 )
                 if selected
-                else QColor(196, 28, 42, 235 if confirmed else 220),
+                else QColor(196, 28, 42, 235)
+                if confirmed
+                else QColor(142, 91, 17, 225),
             )
             painter.setPen(Qt.white)
-            painter.setFont(
-                QFont("Microsoft YaHei UI", round(9 * ui_scale), QFont.Bold)
+            font_metrics = painter.fontMetrics()
+            baseline = (
+                label_top
+                + (label_height + font_metrics.ascent() - font_metrics.descent()) / 2
             )
             painter.drawText(
-                QRectF(
-                    label_left + 7 * ui_scale,
-                    label_top,
-                    max(1.0, label_width - 10 * ui_scale),
-                    label_height,
-                ),
-                Qt.AlignVCenter,
+                QPointF(label_left + 7 * ui_scale, baseline),
                 label,
             )
+
+    def _draw_face_matches(self, painter: QPainter, rect: QRectF) -> None:
+        if not self._face_matches:
+            return
+
+        frame_width, frame_height = self._frame_size
+        if frame_width <= 0 or frame_height <= 0:
+            return
+        scale_x = rect.width() / frame_width
+        scale_y = rect.height() / frame_height
+        ui_scale = self._display_scale
+
+        painter.save()
+        for match in self._face_matches[:4]:
+            x, y, width, height = match.bbox
+            box = QRectF(
+                rect.left() + x * scale_x,
+                rect.top() + y * scale_y,
+                width * scale_x,
+                height * scale_y,
+            ).intersected(rect)
+            color = QColor("#38e6a3" if match.matched else "#ffbd52")
+            painter.setBrush(Qt.NoBrush)
+            painter.setPen(QPen(color, max(2, round(3 * ui_scale))))
+            painter.drawRect(box)
+
+            score = match.confidence if match.matched else match.detection_confidence
+            label = f"{match.name} · 置信度 {score:.0%}"
+            font = QFont(
+                "Microsoft YaHei UI", round(10 * ui_scale), QFont.Bold
+            )
+            painter.setFont(font)
+            label_height = max(27.0, 27.0 * ui_scale)
+            label_width = min(
+                rect.width(),
+                max(
+                    box.width(),
+                    painter.fontMetrics().horizontalAdvance(label) + 18 * ui_scale,
+                ),
+            )
+            label_left = min(
+                max(rect.left(), box.left()),
+                max(rect.left(), rect.right() - label_width),
+            )
+            label_top = max(rect.top(), box.top() - label_height)
+            label_rect = QRectF(
+                label_left, label_top, label_width, label_height
+            )
+            painter.fillRect(label_rect, QColor(7, 28, 37, 220))
+            painter.setPen(color)
+            painter.drawText(
+                label_rect.adjusted(8 * ui_scale, 0, -6 * ui_scale, 0),
+                Qt.AlignLeft | Qt.AlignVCenter,
+                label,
+            )
+        painter.restore()
+
+    def _draw_ocr_matches(self, painter: QPainter, rect: QRectF) -> None:
+        if not self._ocr_matches:
+            return
+
+        frame_width, frame_height = self._frame_size
+        if frame_width <= 0 or frame_height <= 0:
+            return
+        scale_x = rect.width() / frame_width
+        scale_y = rect.height() / frame_height
+        ui_scale = self._display_scale
+        color = QColor("#55c7ff")
+
+        painter.save()
+        for match in self._ocr_matches[:4]:
+            points = [
+                QPointF(
+                    rect.left() + x * scale_x,
+                    rect.top() + y * scale_y,
+                )
+                for x, y in match.polygon
+            ]
+            polygon = QPolygonF(points)
+            painter.setBrush(QColor(16, 91, 124, 28))
+            painter.setPen(QPen(color, max(2, round(3 * ui_scale))))
+            painter.drawPolygon(polygon)
+
+            font = QFont(
+                "Microsoft YaHei UI", round(10 * ui_scale), QFont.Bold
+            )
+            painter.setFont(font)
+            label = f"OCR · {match.text} · {match.confidence:.0%}"
+            left = min(point.x() for point in points)
+            top = min(point.y() for point in points)
+            label_height = max(27.0, 27.0 * ui_scale)
+            available_width = max(80.0, rect.right() - max(rect.left(), left))
+            label = painter.fontMetrics().elidedText(
+                label,
+                Qt.ElideRight,
+                int(available_width - 16 * ui_scale),
+            )
+            label_width = min(
+                available_width,
+                painter.fontMetrics().horizontalAdvance(label) + 16 * ui_scale,
+            )
+            label_left = min(
+                max(rect.left(), left),
+                max(rect.left(), rect.right() - label_width),
+            )
+            label_top = max(rect.top(), top - label_height)
+            label_rect = QRectF(
+                label_left, label_top, label_width, label_height
+            )
+            painter.fillRect(label_rect, QColor(5, 30, 44, 225))
+            painter.setPen(Qt.white)
+            metrics = painter.fontMetrics()
+            baseline = (
+                label_top
+                + (label_height + metrics.ascent() - metrics.descent()) / 2
+            )
+            painter.drawText(
+                QPointF(label_left + 8 * ui_scale, baseline), label
+            )
+        painter.restore()
 
     def mouseDoubleClickEvent(self, event) -> None:
         for target_id, box, detection in reversed(
@@ -1465,6 +1573,10 @@ class VideoPanel(QFrame):
         self.view_title.setObjectName("sectionTitle")
         self.mode_label = QLabel("模拟视觉链")
         self.mode_label.setObjectName("chipInfo")
+        self._fire_detection_enabled = False
+        self._face_recognition_enabled = False
+        self._ocr_recognition_enabled = False
+        self._camera_state = CameraState()
         toolbar.addWidget(self.view_title)
         toolbar.addWidget(self.mode_label)
         toolbar.addStretch()
@@ -1479,11 +1591,14 @@ class VideoPanel(QFrame):
         self.lens_button.toggled.connect(self._on_lens_toggled)
         snapshot_button = QPushButton("截图")
         snapshot_button.clicked.connect(self.snapshot_requested)
-        toolbar.addWidget(connect_button)
-        toolbar.addWidget(demo_button)
-        toolbar.addWidget(self.lens_button)
-        toolbar.addWidget(snapshot_button)
         layout.addLayout(toolbar)
+
+        action_toolbar = QHBoxLayout()
+        action_toolbar.addWidget(connect_button)
+        action_toolbar.addWidget(demo_button)
+        action_toolbar.addWidget(self.lens_button)
+        action_toolbar.addWidget(snapshot_button)
+        layout.addLayout(action_toolbar)
 
         self.info_bar = QLabel("无信号 | 未连接图传 | 1280 × 720 | 15.0 帧/秒 | 高度 0.00 m")
         self.info_bar.setObjectName("videoInfoBar")
@@ -1654,6 +1769,24 @@ class VideoPanel(QFrame):
         self.lens_button.setText("去畸变 ON" if enabled else "去畸变 OFF")
         self.lens_button.blockSignals(False)
 
+    def set_fire_detection_enabled(self, enabled: bool) -> None:
+        self._fire_detection_enabled = bool(enabled)
+        if not enabled:
+            self.canvas.clear_detections()
+        self.set_camera_state(self._camera_state)
+
+    def set_face_recognition_enabled(self, enabled: bool) -> None:
+        self._face_recognition_enabled = bool(enabled)
+        if not enabled:
+            self.canvas.clear_face_matches()
+        self.set_camera_state(self._camera_state)
+
+    def set_ocr_recognition_enabled(self, enabled: bool) -> None:
+        self._ocr_recognition_enabled = bool(enabled)
+        if not enabled:
+            self.canvas.clear_ocr_matches()
+        self.set_camera_state(self._camera_state)
+
     def set_state(self, state: DroneState) -> None:
         self.canvas.set_state(state)
         self.attitude_3d_panel.set_state(state)
@@ -1676,6 +1809,7 @@ class VideoPanel(QFrame):
         widget.hide()
 
     def set_camera_state(self, state: CameraState) -> None:
+        self._camera_state = state
         self.canvas.set_camera_state(state)
         if (
             self.map_confirm_panel.isVisible()
@@ -1697,7 +1831,24 @@ class VideoPanel(QFrame):
                 f"● AMB82 在线  {state.fps:.1f} 帧/秒{age_text}"
             )
             self.camera_status.setObjectName("chipGood")
-            self.mode_label.setText("火源识别 ON")
+            enabled_modes = sum(
+                (
+                    self._fire_detection_enabled,
+                    self._face_recognition_enabled,
+                    self._ocr_recognition_enabled,
+                )
+            )
+            self.mode_label.setText(
+                "视觉目标识别 ON"
+                if enabled_modes > 1
+                else "K230 红色识别 ON"
+                if self._fire_detection_enabled
+                else "人脸识别 ON"
+                if self._face_recognition_enabled
+                else "OCR 识别 ON"
+                if self._ocr_recognition_enabled
+                else "目标识别 OFF"
+            )
             source = state.source
             status = "在线"
         else:
@@ -1727,8 +1878,8 @@ class VideoPanel(QFrame):
         self.canvas.show()
         self.canvas.clear_status_report()
         self.canvas.set_demo_mode(True)
-        self.view_title.setText("火源识别示例")
-        self.mode_label.setText("火源识别示例")
+        self.view_title.setText("K230 红色识别示例")
+        self.mode_label.setText("K230 红色识别示例")
         self.camera_status.setText(
             f"● 离线示例 · {detection_count} 个候选 · 非实时图传"
         )
@@ -1755,27 +1906,6 @@ class VideoPanel(QFrame):
             "无人机实时图传" if self.canvas._camera.connected else "无人机实时画面"
         )
         self.hint.setText("双击检测框可将目标加入候选任务")
-
-    def show_qwen_mode(self, status: str, lines: list[str]) -> None:
-        self.map_confirm_panel.hide()
-        self.attitude_3d_panel.hide()
-        self.parameter_check_panel.hide()
-        self.simulation_host.hide()
-        self.canvas.show()
-        self.canvas.set_demo_mode(False)
-        self.canvas.set_detections([])
-        self.canvas.set_inspection_detections([])
-        self.canvas.show_status_report("Qwen-VL 推理工作台", lines)
-        self.view_title.setText("Qwen-VL 图像分析")
-        self.mode_label.setText("GPU 推理模式")
-        self.camera_status.setText("● 图传读取已暂停 · 使用已保存截图")
-        self.camera_status.setObjectName(
-            "chipWarn" if status in {"loading", "busy", "memory"} else "chipGood"
-        )
-        self.hint.setText("关闭 Qwen 推理开关后，将自动重新连接无人机图传")
-        self.info_bar.setText(f"Qwen推理 | {status} | 图传与OpenCV已暂停")
-        self.camera_status.style().unpolish(self.camera_status)
-        self.camera_status.style().polish(self.camera_status)
 
     def show_returning_mode(self, task_label: str = "") -> None:
         self.map_confirm_panel.hide()
@@ -2177,6 +2307,9 @@ class MissionMap(QWidget):
         self._planning_points: list[tuple[float, float]] = []
         self._planning_preview = False
         self._route_tracking = False
+        self._fire_marker: tuple[float, float] | None = None
+        self._face_markers: dict[str, tuple[float, float]] = {}
+        self._text_markers: dict[str, tuple[float, float]] = {}
         self._map_pixmap = QPixmap(
             str(Path(__file__).resolve().parent / "examples" / "fire_test_scene.png")
         )
@@ -2218,6 +2351,39 @@ class MissionMap(QWidget):
         self._drone_map_point = self._takeoff_point
         self._track = [self._takeoff_point]
         self.update()
+
+    def clear_fire_marker(self) -> None:
+        self._fire_marker = None
+        self.update()
+
+    def mark_fire_at_current_position(self) -> tuple[float, float]:
+        self._fire_marker = self._drone_map_point
+        self.update()
+        return self._fire_marker
+
+    def clear_face_markers(self) -> None:
+        self._face_markers = {}
+        self.update()
+
+    def mark_face_at_current_position(self, marker: str) -> tuple[float, float]:
+        normalized = marker.upper()
+        if normalized not in {"L", "M"}:
+            raise ValueError(f"Unsupported face marker: {marker}")
+        self._face_markers[normalized] = self._drone_map_point
+        self.update()
+        return self._face_markers[normalized]
+
+    def clear_text_markers(self) -> None:
+        self._text_markers = {}
+        self.update()
+
+    def mark_text_at_current_position(self, marker: str) -> tuple[float, float]:
+        normalized = marker.strip()
+        if len(normalized) != 1:
+            raise ValueError(f"Text map marker must be one character: {marker}")
+        self._text_markers[normalized] = self._drone_map_point
+        self.update()
+        return self._text_markers[normalized]
 
     def clear_planning_route(self) -> None:
         if (
@@ -2398,6 +2564,42 @@ class MissionMap(QWidget):
                 track.lineTo(point(*item))
             painter.drawPath(track)
 
+        if self._fire_marker is not None:
+            fire = point(*self._fire_marker)
+            painter.setBrush(QColor(255, 48, 57, 55))
+            painter.setPen(QPen(QColor("#ff303d"), 4))
+            painter.drawEllipse(fire, 13, 13)
+            painter.setPen(QColor("#b20f1a"))
+            painter.setFont(QFont("Microsoft YaHei UI", 9, QFont.Bold))
+            painter.drawText(fire + QPointF(15, -10), "火源")
+
+        for marker, marker_point in self._face_markers.items():
+            face = point(*marker_point)
+            color = QColor("#8d6bff" if marker == "L" else "#ef5da8")
+            painter.setBrush(color)
+            painter.setPen(QPen(QColor("#ffffff"), 2))
+            painter.drawEllipse(face, 11, 11)
+            painter.setPen(QColor("#ffffff"))
+            painter.setFont(QFont("Microsoft YaHei UI", 11, QFont.Bold))
+            painter.drawText(
+                QRectF(face.x() - 11, face.y() - 11, 22, 22),
+                Qt.AlignCenter,
+                marker,
+            )
+
+        for marker, marker_point in self._text_markers.items():
+            text_point = point(*marker_point)
+            painter.setBrush(QColor("#087f8c"))
+            painter.setPen(QPen(QColor("#ffffff"), 2))
+            painter.drawEllipse(text_point, 13, 13)
+            painter.setPen(QColor("#ffffff"))
+            painter.setFont(QFont("Microsoft YaHei UI", 11, QFont.Bold))
+            painter.drawText(
+                QRectF(text_point.x() - 13, text_point.y() - 13, 26, 26),
+                Qt.AlignCenter,
+                marker,
+            )
+
         if self._route_tracking or not self._planning_preview:
             drone_x, drone_y = self._drone_map_point
             drone = point(drone_x, drone_y)
@@ -2461,6 +2663,24 @@ class MapPanel(QFrame):
     def clear_planning_route(self) -> None:
         self.map.clear_planning_route()
         self.progress_text.setText(f"进度 {self.map._state.mission_progress:.0f}%")
+
+    def clear_fire_marker(self) -> None:
+        self.map.clear_fire_marker()
+
+    def mark_fire_at_current_position(self) -> tuple[float, float]:
+        return self.map.mark_fire_at_current_position()
+
+    def clear_face_markers(self) -> None:
+        self.map.clear_face_markers()
+
+    def mark_face_at_current_position(self, marker: str) -> tuple[float, float]:
+        return self.map.mark_face_at_current_position(marker)
+
+    def clear_text_markers(self) -> None:
+        self.map.clear_text_markers()
+
+    def mark_text_at_current_position(self, marker: str) -> tuple[float, float]:
+        return self.map.mark_text_at_current_position(marker)
 
 
 class VoicePanel(QWidget):
@@ -3292,244 +3512,87 @@ class MultimodalPanel(QWidget):
         self.scenario_stopped.emit()
 
 
-class InspectionEventCard(QFrame):
-    def __init__(self, entry: dict, parent: QWidget | None = None) -> None:
+class VisionRecognitionPanel(QWidget):
+    fire_detection_toggled = pyqtSignal(bool)
+    face_recognition_toggled = pyqtSignal(bool)
+    ocr_recognition_toggled = pyqtSignal(bool)
+
+    def __init__(self, parent=None) -> None:
         super().__init__(parent)
-        self.setObjectName("card")
-        self.entry_id = str(entry.get("id", ""))
+        self.setMinimumHeight(126)
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 9, 10, 10)
-        layout.setSpacing(6)
+        layout.setContentsMargins(10, 8, 10, 9)
+        layout.setSpacing(7)
 
-        header = QHBoxLayout()
-        self.title = QLabel()
-        self.title.setObjectName("sectionTitle")
-        self.status = QLabel()
-        self.status.setAlignment(Qt.AlignCenter)
-        header.addWidget(self.title, 1)
-        header.addWidget(self.status)
-        layout.addLayout(header)
-
-        self.summary = QLabel()
-        self.summary.setWordWrap(True)
-        layout.addWidget(self.summary)
-
-        self.flight = QLabel()
-        self.flight.setObjectName("muted")
-        self.flight.setWordWrap(True)
-        layout.addWidget(self.flight)
-
-        self.analysis = QLabel()
-        self.analysis.setWordWrap(True)
-        self.analysis.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        layout.addWidget(self.analysis)
-
-        self.image = QLabel()
-        self.image.setAlignment(Qt.AlignCenter)
-        self.image.setMinimumHeight(118)
-        self.image.setMaximumHeight(185)
-        self.image.setStyleSheet(
-            "background:#050b12;border:1px solid #244158;border-radius:6px;"
+        self.fire_detection_button = self._create_button(
+            "火源目标识别",
+            "开启后才会在实时图传中检测红色模拟火源",
+            self._on_fire_detection_toggled,
         )
-        layout.addWidget(self.image)
-        self.update_entry(entry)
-
-    def update_entry(self, entry: dict) -> None:
-        self.entry_id = str(entry.get("id", self.entry_id))
-        timestamp = str(entry.get("timestamp", "")).replace("T", " ")
-        kind = html.escape(str(entry.get("kind", "巡检事件")))
-        trigger = html.escape(str(entry.get("trigger", "自动识别")))
-        summary = html.escape(str(entry.get("summary", "暂无结果")))
-        self.title.setText(f"{timestamp[11:19]} · {kind}")
-        self.summary.setText(
-            f"<b>识别：</b>{summary}<br>"
-            f"<span style='color:#7892aa'>触发：{trigger}</span>"
+        self.face_recognition_button = self._create_button(
+            "人脸目标识别",
+            "开启后在实时图传中识别 Lucy、Mark，并标记陌生人",
+            self._on_face_recognition_toggled,
         )
-        state = entry.get("flight_state", {})
-        self.flight.setText(
-            f"位置 ({float(state.get('x', 0.0)):.0f}, {float(state.get('y', 0.0)):.0f}) cm · "
-            f"高度 {float(state.get('altitude', 0.0)):.2f} m · "
-            f"航向 {float(state.get('yaw', 0.0)):.0f}°"
+        self.ocr_recognition_button = self._create_button(
+            "OCR 文字识别",
+            "开启后使用本机 OpenCV 模型实时识别图传中的中英文文字",
+            self._on_ocr_recognition_toggled,
         )
-        qwen_status = str(entry.get("qwen_status", "排队中"))
-        qwen_text = html.escape(str(entry.get("qwen_analysis", "")).strip())
-        elapsed = float(entry.get("qwen_elapsed_s", 0.0))
-        if qwen_text:
-            elapsed_text = f" · {elapsed:.1f}s" if elapsed > 0 else ""
-            self.analysis.setText(
-                f"<b>Qwen-VL{elapsed_text}：</b>{qwen_text}"
-            )
-        else:
-            self.analysis.setText("<b>Qwen-VL：</b>等待分析…")
-        status_object = (
-            "miniChipGood"
-            if qwen_status == "分析完成"
-            else "miniChipWarn"
-            if qwen_status == "分析失败"
-            else "miniChipInfo"
-        )
-        self.status.setText(qwen_status)
-        self.status.setObjectName(status_object)
-        self.status.style().unpolish(self.status)
-        self.status.style().polish(self.status)
-
-        screenshot = Path(str(entry.get("screenshot", "")))
-        if screenshot.exists():
-            pixmap = QPixmap(str(screenshot))
-            if not pixmap.isNull():
-                self.image.setPixmap(
-                    pixmap.scaled(
-                        300,
-                        170,
-                        Qt.KeepAspectRatio,
-                        Qt.SmoothTransformation,
-                    )
-                )
-                self.image.setToolTip(str(screenshot))
-                return
-        self.image.setText("截图不可用")
-
-
-class FlightInspectionLogPanel(QWidget):
-    retry_qwen_requested = pyqtSignal()
-    qwen_toggled = pyqtSignal(bool)
-
-    def __init__(self, log_root: Path, parent: QWidget | None = None) -> None:
-        super().__init__(parent)
-        self.log_root = log_root
-        self._cards: dict[str, InspectionEventCard] = {}
-        self._order: list[str] = []
-
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(8, 8, 8, 8)
-        layout.setSpacing(8)
-        title = QLabel("飞行巡检记录")
-        title.setObjectName("sectionTitle")
-        subtitle = QLabel(
-            "默认只跑小模型并保留Qwen队列；手动开启Qwen后暂停图传进行分析。"
-        )
-        subtitle.setObjectName("muted")
-        subtitle.setWordWrap(True)
-        layout.addWidget(title)
-        layout.addWidget(subtitle)
-
-        statuses = QHBoxLayout()
-        self.vision_status = QLabel("视觉：等待图传")
-        self.vision_status.setObjectName("miniChipInfo")
-        self.qwen_status = QLabel("Qwen：等待图传")
-        self.qwen_status.setObjectName("miniChipInfo")
-        statuses.addWidget(self.vision_status)
-        statuses.addWidget(self.qwen_status)
-        layout.addLayout(statuses)
-
-        buttons = QHBoxLayout()
-        self.qwen_toggle = QPushButton("启动 Qwen 推理")
-        self.qwen_toggle.setCheckable(True)
-        self.qwen_toggle.toggled.connect(self._on_qwen_toggled)
-        open_folder = QPushButton("打开日志目录")
-        open_folder.clicked.connect(self._open_log_folder)
-        clear_display = QPushButton("清空当前显示")
-        clear_display.clicked.connect(self.clear_display)
-        buttons.addWidget(self.qwen_toggle)
-        buttons.addWidget(open_folder)
-        buttons.addWidget(clear_display)
-        layout.addLayout(buttons)
-
-        self.scroll = QScrollArea()
-        self.scroll.setWidgetResizable(True)
-        self.scroll.setFrameShape(QFrame.NoFrame)
-        self.scroll.setStyleSheet("QScrollArea { background: #071321; border: none; }")
-        container = QWidget()
-        container.setStyleSheet("background: #071321;")
-        self.cards_layout = QVBoxLayout(container)
-        self.cards_layout.setContentsMargins(0, 0, 0, 0)
-        self.cards_layout.setSpacing(8)
-        self.cards_layout.setAlignment(Qt.AlignTop)
-        self.empty_label = QLabel("等待无人机图传。连接后自动启动巡检识别。")
-        self.empty_label.setObjectName("muted")
-        self.empty_label.setAlignment(Qt.AlignCenter)
-        self.empty_label.setWordWrap(True)
-        self.empty_label.setMinimumHeight(120)
-        self.cards_layout.addWidget(self.empty_label)
-        self.scroll.setWidget(container)
-        layout.addWidget(self.scroll, 1)
-
-        path_label = QLabel(f"本地日志：{log_root}")
-        path_label.setObjectName("muted")
-        path_label.setWordWrap(True)
-        layout.addWidget(path_label)
-
-    def load_entries(self, entries: list[dict]) -> None:
-        for entry in entries:
-            self.add_or_update_entry(entry)
-
-    def add_or_update_entry(self, entry: dict) -> None:
-        event_id = str(entry.get("id", ""))
-        if not event_id:
-            return
-        card = self._cards.get(event_id)
-        if card is not None:
-            card.update_entry(entry)
-            return
-        self.empty_label.hide()
-        card = InspectionEventCard(entry)
-        self._cards[event_id] = card
-        self._order.append(event_id)
-        self.cards_layout.insertWidget(0, card)
-        while len(self._order) > 60:
-            old_id = self._order.pop(0)
-            old_card = self._cards.pop(old_id, None)
-            if old_card is not None:
-                old_card.deleteLater()
-
-    def set_vision_status(self, status: str, message: str) -> None:
-        self._set_status(self.vision_status, "视觉", status, message)
-
-    def set_qwen_status(self, status: str, message: str) -> None:
-        self._set_status(self.qwen_status, "Qwen", status, message)
-
-    def set_qwen_enabled(self, enabled: bool) -> None:
-        self.qwen_toggle.blockSignals(True)
-        self.qwen_toggle.setChecked(enabled)
-        self.qwen_toggle.setText(
-            "关闭 Qwen 推理" if enabled else "启动 Qwen 推理"
-        )
-        self.qwen_toggle.setObjectName("warningButton" if enabled else "primaryButton")
-        self.qwen_toggle.style().unpolish(self.qwen_toggle)
-        self.qwen_toggle.style().polish(self.qwen_toggle)
-        self.qwen_toggle.blockSignals(False)
-
-    def clear_display(self) -> None:
-        for card in self._cards.values():
-            card.deleteLater()
-        self._cards.clear()
-        self._order.clear()
-        self.empty_label.setText("显示已清空；本地历史日志和截图没有删除。")
-        self.empty_label.show()
-
-    def _open_log_folder(self) -> None:
-        self.log_root.mkdir(parents=True, exist_ok=True)
-        QDesktopServices.openUrl(QUrl.fromLocalFile(str(self.log_root.resolve())))
-
-    def _on_qwen_toggled(self, enabled: bool) -> None:
-        self.set_qwen_enabled(enabled)
-        self.qwen_toggled.emit(enabled)
+        layout.addWidget(self.fire_detection_button)
+        layout.addWidget(self.face_recognition_button)
+        layout.addWidget(self.ocr_recognition_button)
 
     @staticmethod
-    def _set_status(label: QLabel, prefix: str, status: str, message: str) -> None:
-        short_message = message if len(message) <= 24 else message[:23] + "…"
-        label.setText(f"{prefix}：{short_message}")
-        label.setToolTip(message)
-        object_name = (
-            "miniChipGood"
-            if status == "ready"
-            else "miniChipWarn"
-            if status in {"error", "memory"}
-            else "miniChipInfo"
-        )
-        label.setObjectName(object_name)
-        label.style().unpolish(label)
-        label.style().polish(label)
+    def _create_button(
+        label: str,
+        tooltip: str,
+        callback,
+    ) -> QPushButton:
+        button = QPushButton(f"{label}：关")
+        button.setObjectName("statusInfo")
+        button.setCheckable(True)
+        button.setChecked(False)
+        button.setToolTip(tooltip)
+        button.toggled.connect(callback)
+        return button
+
+    @staticmethod
+    def _update_button(button: QPushButton, label: str, enabled: bool) -> None:
+        button.setText(f"{label}：{'开' if enabled else '关'}")
+        button.setObjectName("statusGood" if enabled else "statusInfo")
+        button.style().unpolish(button)
+        button.style().polish(button)
+
+    def _on_fire_detection_toggled(self, enabled: bool) -> None:
+        self._update_button(self.fire_detection_button, "火源目标识别", enabled)
+        self.fire_detection_toggled.emit(enabled)
+
+    def _on_face_recognition_toggled(self, enabled: bool) -> None:
+        self._update_button(self.face_recognition_button, "人脸目标识别", enabled)
+        self.face_recognition_toggled.emit(enabled)
+
+    def _on_ocr_recognition_toggled(self, enabled: bool) -> None:
+        self._update_button(self.ocr_recognition_button, "OCR 文字识别", enabled)
+        self.ocr_recognition_toggled.emit(enabled)
+
+    @staticmethod
+    def _set_button_enabled(button: QPushButton, enabled: bool) -> None:
+        button.blockSignals(True)
+        button.setChecked(enabled)
+        button.blockSignals(False)
+
+    def set_fire_detection_enabled(self, enabled: bool) -> None:
+        self._set_button_enabled(self.fire_detection_button, enabled)
+        self._on_fire_detection_toggled(enabled)
+
+    def set_face_recognition_enabled(self, enabled: bool) -> None:
+        self._set_button_enabled(self.face_recognition_button, enabled)
+        self._on_face_recognition_toggled(enabled)
+
+    def set_ocr_recognition_enabled(self, enabled: bool) -> None:
+        self._set_button_enabled(self.ocr_recognition_button, enabled)
+        self._on_ocr_recognition_toggled(enabled)
 
 
 class DevicePanel(QWidget):
@@ -3545,7 +3608,7 @@ class DevicePanel(QWidget):
         form = QFormLayout()
         saved_ip, saved_port = load_camera_endpoint()
         self.camera_ip = QLineEdit(saved_ip)
-        self.camera_ip.setPlaceholderText("例如 10.51.117.2")
+        self.camera_ip.setPlaceholderText("例如 192.168.0.102")
         self.camera_port = QLineEdit(saved_port)
         self.camera_port.setPlaceholderText("例如 554")
         camera_endpoint_row = QHBoxLayout()
@@ -3983,6 +4046,24 @@ class RightSidebar(QWidget):
 
     def clear_planning_route(self) -> None:
         self.map_panel.clear_planning_route()
+
+    def clear_fire_marker(self) -> None:
+        self.map_panel.clear_fire_marker()
+
+    def mark_fire_at_current_position(self) -> tuple[float, float]:
+        return self.map_panel.mark_fire_at_current_position()
+
+    def clear_face_markers(self) -> None:
+        self.map_panel.clear_face_markers()
+
+    def mark_face_at_current_position(self, marker: str) -> tuple[float, float]:
+        return self.map_panel.mark_face_at_current_position(marker)
+
+    def clear_text_markers(self) -> None:
+        self.map_panel.clear_text_markers()
+
+    def mark_text_at_current_position(self, marker: str) -> tuple[float, float]:
+        return self.map_panel.mark_text_at_current_position(marker)
 
     def set_compact(self, compact: bool) -> None:
         self.status_panel.set_compact(compact)

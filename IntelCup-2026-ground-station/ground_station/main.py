@@ -19,15 +19,19 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QSplitter,
     QStatusBar,
-    QTabWidget,
     QVBoxLayout,
     QWidget,
 )
 
 from camera_service import CameraThread
-from fire_detector import FireDetector
+from face_recognition_service import FaceRecognitionThread
+from ocr_recognition_service import OCRRecognitionThread
+from k230_color_detector import (
+    K230RedBlobDetector,
+    RedBlobConfirmationTracker,
+    create_red_blob_demo_frame,
+)
 from flight_log_recorder import FlightLogRecorder
-from inspection_service import InspectionCoordinator
 try:
     from drone_3d import Drone3DView
 except Exception as exc:  # pragma: no cover - depends on local OpenGL packages
@@ -45,11 +49,15 @@ else:
     FLIGHT_CONTROL_IMPORT_ERROR = None
 
 from models import (
+    bbox_inside_center_roi,
     CameraState,
     CommandIntent,
     DetectionEvent,
     DroneState,
+    FaceMatch,
+    fire_detection_inside_center_roi,
     FireDetection,
+    OCRMatch,
     SelectionState,
 )
 from simulator import DroneSimulator
@@ -70,7 +78,6 @@ from widgets import (
     CommandBar,
     CompactStatusBar,
     DevicePanel,
-    FlightInspectionLogPanel,
     GazePanel,
     GesturePanel,
     LogPanel,
@@ -78,6 +85,7 @@ from widgets import (
     RightSidebar,
     SideNavigation,
     VideoPanel,
+    VisionRecognitionPanel,
     VoicePanel,
     suggested_amb82_url,
 )
@@ -99,6 +107,14 @@ TAKEOFF_CLEAR_FRAME_REPEAT_COUNT = 2
 TAKEOFF_CLEAR_FRAME_REPEAT_INTERVAL_MS = 2500
 TAKEOFF_CLEAR_TO_WAYPOINT_DELAY_MS = 7500
 TAKEOFF_WAYPOINT_STEP_DELAY_MS = 1000
+OCR_MAP_CANDIDATES = {
+    "图书馆": "图",
+    "汉堡王": "汉",
+    "教学楼": "教",
+    "必胜客": "必",
+    "食堂": "食",
+}
+OCR_MAP_MIN_CONFIDENCE = 0.50
 SAFETY_UART4_COMMANDS = {
     "HOLD": ("暂停 / 悬停", SAFETY_HOLD_FRAME),
     "RTL": ("返航", SAFETY_RTL_FRAME),
@@ -167,10 +183,15 @@ class GroundStationWindow(QMainWindow):
         self.camera_state = CameraState()
         self.drone_state = DroneState()
         self.camera_thread: CameraThread | None = None
+        self.face_recognition_thread: FaceRecognitionThread | None = None
+        self.ocr_recognition_thread: OCRRecognitionThread | None = None
         self.telemetry_thread: TelemetryThread | None = None
         self.coordinate_thread: CoordinateThread | None = None
         self.lens_correction_enabled = True
         self.lens_correction_strength = 50
+        self.fire_detection_enabled = False
+        self.face_recognition_enabled = False
+        self.ocr_recognition_enabled = False
         self._right_sidebar_user_hidden = False
         self._last_responsive_mode = ""
         self._large_display = False
@@ -196,21 +217,17 @@ class GroundStationWindow(QMainWindow):
         self._return_countdown_value = 0
         self._pending_takeoff_route: list[str] = []
         self._pending_takeoff_label = ""
+        self._pending_takeoff_task = ""
         self._takeoff_sequence_active = False
+        self._fire_mapping_task_active = False
+        self._fire_location_marked = False
+        self._face_mapping_task_active = False
+        self._face_locations_marked: set[str] = set()
+        self._ocr_mapping_task_active = False
+        self._ocr_locations_marked: set[str] = set()
         self.drone_3d_view = None
         self.simulation_control_window: SimulationControlWindow | None = None
         self.flight_log_recorder = FlightLogRecorder(APP_DIR / "flight_logs")
-        self.inspection_coordinator = InspectionCoordinator(
-            APP_DIR / "flight_logs" / "inspection_journal",
-            self,
-        )
-        self._inspection_vision_status = "idle"
-        self._inspection_qwen_status = "idle"
-        self._inspection_qwen_message = "Qwen推理未开启"
-        self._qwen_inference_mode = False
-        self._qwen_resume_url = suggested_amb82_url()
-        self._resume_camera_pending = False
-        self._qwen_start_pending = False
 
         self.simulator = DroneSimulator(self)
         self.simulator.state_changed.connect(self._on_state_changed)
@@ -437,7 +454,7 @@ class GroundStationWindow(QMainWindow):
         self.connect_camera_button.clicked.connect(
             lambda: self.connect_camera(suggested_amb82_url())
         )
-        device_button = QPushButton("设备/记录")
+        device_button = QPushButton("设备")
         device_button.clicked.connect(lambda: self._show_dock("device"))
         fullscreen_button = QPushButton("全屏")
         fullscreen_button.clicked.connect(self._toggle_fullscreen)
@@ -492,48 +509,35 @@ class GroundStationWindow(QMainWindow):
         self.device_panel.lens_correction_changed.connect(
             self._set_lens_correction
         )
-        self.flight_inspection_panel = FlightInspectionLogPanel(
-            self.inspection_coordinator.log_root
-        )
-        self.flight_inspection_panel.load_entries(
-            self.inspection_coordinator.saved_entries()
-        )
-        self.flight_inspection_panel.retry_qwen_requested.connect(
-            self.inspection_coordinator.retry_qwen
-        )
-        self.flight_inspection_panel.qwen_toggled.connect(
-            self._set_qwen_inference_enabled
-        )
-
-        self.device_records_tabs = QTabWidget()
-        self.device_records_tabs.addTab(self.device_panel, "设备 / 串口 / 网络")
-        self.device_records_tabs.addTab(self.flight_inspection_panel, "飞行记录")
-
-        self.inspection_coordinator.overlay_ready.connect(
-            self.video_panel.canvas.set_inspection_detections
-        )
-        self.inspection_coordinator.entry_created.connect(
-            self.flight_inspection_panel.add_or_update_entry
-        )
-        self.inspection_coordinator.entry_updated.connect(
-            self.flight_inspection_panel.add_or_update_entry
-        )
-        self.inspection_coordinator.vision_status_changed.connect(
-            self._on_inspection_vision_status
-        )
-        self.inspection_coordinator.qwen_status_changed.connect(
-            self._on_inspection_qwen_status
-        )
-        self.inspection_coordinator.alert_raised.connect(
-            self._on_inspection_alert
-        )
-        self.inspection_coordinator.diagnostic.connect(self._append_log)
         self._add_dock(
             "device",
-            "设备、串口、网络与飞行记录",
-            self.device_records_tabs,
+            "设备、串口与网络",
+            self.device_panel,
             Qt.RightDockWidgetArea,
             True,
+        )
+
+        self.vision_recognition_panel = VisionRecognitionPanel()
+        self.vision_recognition_panel.fire_detection_toggled.connect(
+            self._toggle_fire_detection
+        )
+        self.vision_recognition_panel.face_recognition_toggled.connect(
+            self._toggle_face_recognition
+        )
+        self.vision_recognition_panel.ocr_recognition_toggled.connect(
+            self._toggle_ocr_recognition
+        )
+        self._add_dock(
+            "visionRecognition",
+            "视觉识别",
+            self.vision_recognition_panel,
+            Qt.RightDockWidgetArea,
+            True,
+        )
+        self.splitDockWidget(
+            self.docks["device"],
+            self.docks["visionRecognition"],
+            Qt.Vertical,
         )
 
     def _add_dock(
@@ -565,10 +569,18 @@ class GroundStationWindow(QMainWindow):
             dock = self.docks.get(name)
             if dock:
                 dock.setVisible(True)
-        for name in ("multimodal", "logs", "device"):
+        for name in ("multimodal", "logs", "device", "visionRecognition"):
             dock = self.docks.get(name)
             if dock:
                 dock.raise_()
+        device_dock = self.docks.get("device")
+        recognition_dock = self.docks.get("visionRecognition")
+        if device_dock and recognition_dock:
+            self.resizeDocks(
+                [device_dock, recognition_dock],
+                [720, 160],
+                Qt.Vertical,
+            )
 
     def _build_status_bar(self) -> None:
         bar = QStatusBar()
@@ -656,23 +668,6 @@ class GroundStationWindow(QMainWindow):
         )
 
     def _update_header_status(self) -> None:
-        if self.inspection_coordinator.active:
-            ai_states = {
-                "ready": ("● AI 就绪", "chipGood"),
-                "busy": ("● AI 分析中", "chipWarn"),
-                "loading": ("● AI 加载中", "chipInfo"),
-                "memory": ("● AI 等待内存", "chipWarn"),
-                "error": ("● AI 异常", "chipWarn"),
-                "disabled": ("● AI 排队模式", "chipInfo"),
-                "waiting": ("● AI 等待画面", "chipInfo"),
-            }
-            ai_text, ai_style = ai_states.get(
-                self._inspection_qwen_status,
-                ("● AI 巡检中", "chipInfo"),
-            )
-        else:
-            ai_text = "● AI 就绪" if self.drone_state.ai_ready else "● AI 离线"
-            ai_style = "chipGood" if self.drone_state.ai_ready else "chipWarn"
         statuses = [
             (
                 self.flight_chip,
@@ -692,14 +687,13 @@ class GroundStationWindow(QMainWindow):
             ),
             (
                 self.ai_chip,
-                ai_text,
-                ai_style,
+                "● AI 就绪"
+                if self.drone_state.ai_ready
+                else "● AI 离线",
+                "chipGood" if self.drone_state.ai_ready else "chipWarn",
             ),
         ]
-        if self._qwen_inference_mode:
-            camera_text = "● 图传 已暂停"
-            camera_style = "chipInfo"
-        elif self.camera_state.connected:
+        if self.camera_state.connected:
             camera_text = f"● 图传 {self.camera_state.fps:.1f} FPS"
             camera_style = "chipGood"
         elif self._camera_connecting:
@@ -1308,26 +1302,241 @@ class GroundStationWindow(QMainWindow):
             self,
             self.lens_correction_enabled,
             self.lens_correction_strength,
+            self.fire_detection_enabled,
         )
         self.camera_thread.frame_ready.connect(self._on_camera_frame)
         self.camera_thread.fire_confirmed.connect(self._on_fire_confirmed)
+        self.camera_thread.fire_recognition_ready.connect(
+            self._on_fire_recognition_result
+        )
         self.camera_thread.status_changed.connect(self._on_camera_status)
-        self.camera_thread.finished.connect(self._on_camera_thread_finished)
         self.camera_thread.start()
-
-    def _on_camera_thread_finished(self) -> None:
-        self.camera_thread = None
-        if self._qwen_start_pending and self._qwen_inference_mode:
-            self._qwen_start_pending = False
-            self.inspection_coordinator.set_qwen_enabled(True)
-            self._refresh_qwen_inference_view()
-            return
-        if self._resume_camera_pending and not self._qwen_inference_mode:
-            self._resume_camera_pending = False
-            QTimer.singleShot(150, lambda: self.connect_camera(self._qwen_resume_url))
 
     def _toggle_lens_correction(self, enabled: bool) -> None:
         self._set_lens_correction(enabled, self.lens_correction_strength)
+
+    def _toggle_fire_detection(self, enabled: bool) -> None:
+        self.fire_detection_enabled = bool(enabled)
+        self.video_panel.set_fire_detection_enabled(enabled)
+        if self.camera_thread and self.camera_thread.isRunning():
+            self.camera_thread.set_fire_detection_enabled(enabled)
+        if not enabled:
+            self.video_panel.canvas.clear_detections()
+        state = "已开启" if enabled else "已关闭"
+        detail = (
+            "正在对实时图传逐帧检测红色模拟火源"
+            if enabled and self.camera_state.connected
+            else "连接图传后开始检测"
+            if enabled
+            else "实时图传不执行火源检测"
+        )
+        self._append_log("INFO", f"火源目标识别{state}：{detail}")
+        self.statusBar().showMessage(f"火源目标识别{state} · {detail}", 4500)
+        self.video_panel.set_camera_state(self.camera_state)
+
+    def _toggle_face_recognition(self, enabled: bool) -> None:
+        self.face_recognition_enabled = bool(enabled)
+        self.video_panel.set_face_recognition_enabled(enabled)
+        if enabled:
+            if (
+                self.face_recognition_thread is None
+                or not self.face_recognition_thread.isRunning()
+            ):
+                self.face_recognition_thread = FaceRecognitionThread(self)
+                self.face_recognition_thread.recognition_ready.connect(
+                    self._on_face_recognition_results
+                )
+                self.face_recognition_thread.status_changed.connect(
+                    self._on_face_recognition_status
+                )
+                self.face_recognition_thread.set_enabled(True)
+                self.face_recognition_thread.start()
+            else:
+                self.face_recognition_thread.set_enabled(True)
+        elif self.face_recognition_thread is not None:
+            self.face_recognition_thread.set_enabled(False)
+            self.video_panel.canvas.clear_face_matches()
+
+        state = "已开启" if enabled else "已关闭"
+        detail = (
+            "正在本机实时识别 Lucy、Mark 和陌生人"
+            if enabled and self.camera_state.connected
+            else "连接图传后开始识别"
+            if enabled
+            else "实时图传不执行人脸识别"
+        )
+        self._append_log("INFO", f"人脸目标识别{state}：{detail}")
+        self.statusBar().showMessage(
+            f"人脸目标识别{state} · {detail}", 4500
+        )
+        self.video_panel.set_camera_state(self.camera_state)
+
+    def _on_face_recognition_status(self, ready: bool, message: str) -> None:
+        level = "INFO" if ready else "ERROR"
+        self._append_log(level, f"人脸识别：{message}")
+        self.statusBar().showMessage(f"人脸识别 · {message}", 6000)
+        if not ready and self.face_recognition_enabled:
+            self.face_recognition_enabled = False
+            self.vision_recognition_panel.set_face_recognition_enabled(False)
+
+    def _on_face_recognition_results(
+        self,
+        matches: list[FaceMatch],
+        recognition_frame=None,
+    ) -> None:
+        if not self.face_recognition_enabled or self._main_view_mode != "flight":
+            return
+        self.video_panel.canvas.set_face_matches(matches)
+        if not self._face_mapping_task_active:
+            return
+        for match in matches:
+            marker = {"lucy": "L", "mark": "M"}.get(match.name.casefold())
+            if (
+                not match.matched
+                or marker is None
+                or marker in self._face_locations_marked
+            ):
+                continue
+            if not bbox_inside_center_roi(
+                match.bbox,
+                match.frame_width,
+                match.frame_height,
+            ):
+                continue
+            map_x, map_y = self.right_sidebar.mark_face_at_current_position(marker)
+            self._face_locations_marked.add(marker)
+            self.flight_log_recorder.record_recognition(
+                target_type="人脸识别",
+                label=match.name,
+                confidence=match.confidence,
+                state=self.drone_state,
+                bbox=match.bbox,
+                frame_width=match.frame_width,
+                frame_height=match.frame_height,
+                overlay_label=f"FACE {match.name}",
+                recognition_frame=recognition_frame,
+            )
+            self._append_log(
+                "WARNING",
+                f"首次识别到 {match.name}（置信度 {match.confidence:.1%}）："
+                f"水平坐标 ({self.drone_state.x:.0f}, "
+                f"{self.drone_state.y:.0f}) cm，地图标记 {marker} "
+                f"位于 ({map_x:.0f}, {map_y:.0f}) cm",
+            )
+            self.statusBar().showMessage(
+                f"已在任务地图标记 {marker}：{match.name}",
+                7000,
+            )
+
+    def _toggle_ocr_recognition(self, enabled: bool) -> None:
+        self.ocr_recognition_enabled = bool(enabled)
+        self.video_panel.set_ocr_recognition_enabled(enabled)
+        if enabled:
+            if (
+                self.ocr_recognition_thread is None
+                or not self.ocr_recognition_thread.isRunning()
+            ):
+                self.ocr_recognition_thread = OCRRecognitionThread(self)
+                self.ocr_recognition_thread.recognition_ready.connect(
+                    self._on_ocr_recognition_results
+                )
+                self.ocr_recognition_thread.status_changed.connect(
+                    self._on_ocr_recognition_status
+                )
+                self.ocr_recognition_thread.set_enabled(True)
+                self.ocr_recognition_thread.start()
+            else:
+                self.ocr_recognition_thread.set_enabled(True)
+        elif self.ocr_recognition_thread is not None:
+            self.ocr_recognition_thread.set_enabled(False)
+            self.video_panel.canvas.clear_ocr_matches()
+
+        state = "已开启" if enabled else "已关闭"
+        detail = (
+            "正在本机实时识别图传中的中英文文字"
+            if enabled and self.camera_state.connected
+            else "连接图传后开始识别"
+            if enabled
+            else "实时图传不执行 OCR 识别"
+        )
+        self._append_log("INFO", f"OCR 文字识别{state}：{detail}")
+        self.statusBar().showMessage(
+            f"OCR 文字识别{state} · {detail}", 4500
+        )
+        self.video_panel.set_camera_state(self.camera_state)
+
+    def _on_ocr_recognition_status(self, ready: bool, message: str) -> None:
+        level = "INFO" if ready else "ERROR"
+        self._append_log(level, f"OCR 识别：{message}")
+        self.statusBar().showMessage(f"OCR 识别 · {message}", 6000)
+        if not ready and self.ocr_recognition_enabled:
+            self.ocr_recognition_enabled = False
+            self.vision_recognition_panel.set_ocr_recognition_enabled(False)
+
+    def _on_ocr_recognition_results(
+        self,
+        matches: list[OCRMatch],
+        recognition_frame=None,
+    ) -> None:
+        if not self.ocr_recognition_enabled or self._main_view_mode != "flight":
+            return
+        self.video_panel.canvas.set_ocr_matches(matches)
+        if not self._ocr_mapping_task_active:
+            return
+        for match in matches:
+            if match.confidence < OCR_MAP_MIN_CONFIDENCE:
+                continue
+            normalized_text = "".join(
+                character for character in match.text if character.isalnum()
+            )
+            candidates = [
+                (word, marker)
+                for word, marker in OCR_MAP_CANDIDATES.items()
+                if word in normalized_text and word not in self._ocr_locations_marked
+            ]
+            if not candidates:
+                continue
+            x_values = [point[0] for point in match.polygon]
+            y_values = [point[1] for point in match.polygon]
+            bbox = (
+                min(x_values),
+                min(y_values),
+                max(x_values) - min(x_values),
+                max(y_values) - min(y_values),
+            )
+            if not bbox_inside_center_roi(
+                bbox,
+                match.frame_width,
+                match.frame_height,
+            ):
+                continue
+            for word, marker in candidates:
+                map_x, map_y = self.right_sidebar.mark_text_at_current_position(
+                    marker
+                )
+                self._ocr_locations_marked.add(word)
+                self.flight_log_recorder.record_recognition(
+                    target_type="文字识别",
+                    label=word,
+                    confidence=match.confidence,
+                    state=self.drone_state,
+                    bbox=bbox,
+                    frame_width=match.frame_width,
+                    frame_height=match.frame_height,
+                    overlay_label="OCR",
+                    recognition_frame=recognition_frame,
+                )
+                self._append_log(
+                    "WARNING",
+                    f"首次识别到文字“{word}”（置信度 {match.confidence:.1%}）："
+                    f"水平坐标 ({self.drone_state.x:.0f}, "
+                    f"{self.drone_state.y:.0f}) cm，地图标记“{marker}”位于 "
+                    f"({map_x:.0f}, {map_y:.0f}) cm",
+                )
+                self.statusBar().showMessage(
+                    f"已在任务地图标记“{marker}”：{word}",
+                    7000,
+                )
 
     def _set_lens_correction(self, enabled: bool, strength: int) -> None:
         self.lens_correction_enabled = enabled
@@ -1352,17 +1561,16 @@ class GroundStationWindow(QMainWindow):
     def _load_fire_demo(self) -> None:
         self._leave_simulation_view()
         self._leave_self_check_view()
-        source_path = APP_DIR / "examples" / "fire_test_scene.png"
-        frame = cv2.imread(str(source_path))
-        if frame is None:
-            QMessageBox.warning(
-                self,
-                "示例不可用",
-                f"未能读取火源测试图：\n{source_path}",
-            )
-            return
-
-        detections = FireDetector().detect(frame)
+        frame = create_red_blob_demo_frame()
+        detector = K230RedBlobDetector()
+        tracker = RedBlobConfirmationTracker(required_frames=20)
+        detections: list[FireDetection] = []
+        confirmed = None
+        for _ in range(20):
+            detections = detector.detect(frame)
+            confirmed = tracker.update(detections) or confirmed
+        if confirmed is not None:
+            detections = [confirmed]
         self.video_panel.canvas.set_frame(frame)
         self.video_panel.canvas.set_detections(detections)
         self.video_panel.show_demo_mode(len(detections))
@@ -1382,12 +1590,24 @@ class GroundStationWindow(QMainWindow):
         self, frame, detections: list[FireDetection]
     ) -> None:
         self.flight_log_recorder.update_latest_frame(frame)
+        if (
+            self.face_recognition_enabled
+            and self.face_recognition_thread is not None
+            and self.face_recognition_thread.isRunning()
+            and self._main_view_mode == "flight"
+        ):
+            self.face_recognition_thread.submit_frame(frame)
+        if (
+            self.ocr_recognition_enabled
+            and self.ocr_recognition_thread is not None
+            and self.ocr_recognition_thread.isRunning()
+            and self._main_view_mode == "flight"
+        ):
+            self.ocr_recognition_thread.submit_frame(frame)
+        if not self.fire_detection_enabled:
+            detections = []
         if self._main_view_mode != "flight":
             return
-        self.inspection_coordinator.submit_frame(
-            frame,
-            self._inspection_state_snapshot(),
-        )
         self.video_panel.canvas.set_frame(frame)
         self.video_panel.canvas.set_detections(detections)
         self.video_panel.show_live_mode()
@@ -1411,6 +1631,7 @@ class GroundStationWindow(QMainWindow):
             return
         self._multimodal_waiting_map_confirm = True
         task = intent.label if intent is not None else "起飞选项"
+        self._pending_takeoff_task = task
         mode = "free" if task == "定制航点" else "preset"
         self.video_panel.show_takeoff_map_confirmation(mode=mode, task_label=task)
         if mode == "free":
@@ -1632,12 +1853,33 @@ class GroundStationWindow(QMainWindow):
                 FORCE_SDK_MODE18_FRAME,
                 f"启动 mode18 巡航：航线 {route_text}",
             )
+            self._start_detection_mapping_task()
             self.statusBar().showMessage("mode18 巡航指令已重复发送", 5000)
         else:
             self._append_log("ERROR", "倒计时结束时 UART4 已断开，mode18 未发送")
             QMessageBox.warning(self, "UART4 已断开", "倒计时结束时 UART4 已断开，未能启动巡航。")
         self._takeoff_sequence_active = False
         self._exit_multimodal_view("起飞巡航")
+
+    def _start_detection_mapping_task(self) -> None:
+        mapping_enabled = self._pending_takeoff_task in {
+            "低空巡逻",
+            "定制航点",
+        }
+        self._fire_mapping_task_active = mapping_enabled
+        self._fire_location_marked = False
+        self._face_mapping_task_active = mapping_enabled
+        self._face_locations_marked = set()
+        self._ocr_mapping_task_active = mapping_enabled
+        self._ocr_locations_marked = set()
+        self.right_sidebar.clear_fire_marker()
+        self.right_sidebar.clear_face_markers()
+        self.right_sidebar.clear_text_markers()
+        if mapping_enabled:
+            self._append_log(
+                "INFO",
+                f"{self._pending_takeoff_task}已启动：等待 ROI 内首次确认火源、人脸和候选文字",
+            )
 
     def _exit_multimodal_view(self, task_label: str = "") -> None:
         if self._main_view_mode != "multimodal":
@@ -1687,6 +1929,8 @@ class GroundStationWindow(QMainWindow):
         self.video_panel.show_multimodal_mode()
 
     def _on_fire_confirmed(self, detection: FireDetection) -> None:
+        if not self.fire_detection_enabled:
+            return
         self.video_panel.canvas.confirm_detection(detection)
         event = DetectionEvent(
             target_type="火源",
@@ -1694,22 +1938,56 @@ class GroundStationWindow(QMainWindow):
             x=self.drone_state.x,
             y=self.drone_state.y,
             altitude=self.drone_state.altitude,
-            source="AMB82 火源识别",
+            source="K230 颜色识别",
             bbox=detection.bbox,
         )
         self._on_event(event)
         self._append_log(
             "WARNING",
-            "火源识别已连续帧确认："
+            "K230 红色目标已连续 20 帧确认："
             f"{detection.confidence:.0%}，像素中心 "
             f"({detection.center_x}, {detection.center_y})",
         )
         self.statusBar().showMessage(
             f"发现火源：置信度 {detection.confidence:.0%}", 8000
         )
-        self.inspection_coordinator.report_fire(
-            detection,
-            self._inspection_state_snapshot(),
+
+    def _on_fire_recognition_result(
+        self,
+        detection: FireDetection,
+        recognition_frame,
+    ) -> None:
+        if (
+            not self.fire_detection_enabled
+            or not self._fire_mapping_task_active
+            or self._fire_location_marked
+        ):
+            return
+        if not fire_detection_inside_center_roi(detection):
+            return
+
+        map_x, map_y = self.right_sidebar.mark_fire_at_current_position()
+        self._fire_location_marked = True
+        self.flight_log_recorder.record_recognition(
+            target_type="火源识别",
+            label="火源",
+            confidence=detection.confidence,
+            state=self.drone_state,
+            bbox=detection.bbox,
+            frame_width=detection.frame_width,
+            frame_height=detection.frame_height,
+            overlay_label="FIRE",
+            recognition_frame=recognition_frame,
+        )
+        self._append_log(
+            "WARNING",
+            f"首次火源坐标已锁定（置信度 {detection.confidence:.1%}）："
+            f"水平坐标 ({self.drone_state.x:.0f}, {self.drone_state.y:.0f}) cm，"
+            f"地图位置 ({map_x:.0f}, {map_y:.0f}) cm",
+        )
+        self.statusBar().showMessage(
+            f"火源已标记：({self.drone_state.x:.0f}, {self.drone_state.y:.0f}) cm",
+            8000,
         )
 
     def _on_camera_status(
@@ -1742,7 +2020,6 @@ class GroundStationWindow(QMainWindow):
             and self.camera_thread.isRunning()
             and diagnostics.get("source_kind") != "stopped"
         )
-        self.inspection_coordinator.set_stream_connected(connected)
         if self._self_check_active:
             self._refresh_self_check_view()
         elif self._main_view_mode == "flight":
@@ -1752,18 +2029,14 @@ class GroundStationWindow(QMainWindow):
         thread_active = bool(
             self.camera_thread and self.camera_thread.isRunning()
         )
-        if self._qwen_inference_mode:
-            self.connect_camera_button.setEnabled(False)
-            self.connect_camera_button.setText("Qwen推理中")
-        else:
-            self.connect_camera_button.setEnabled(not thread_active)
-            self.connect_camera_button.setText(
-                "相机已连接"
-                if connected
-                else "重连中…"
-                if thread_active
-                else "重新连接"
-            )
+        self.connect_camera_button.setEnabled(not thread_active)
+        self.connect_camera_button.setText(
+            "相机已连接"
+            if connected
+            else "重连中…"
+            if thread_active
+            else "重新连接"
+        )
         if connected and not was_connected:
             self._append_log("INFO", f"相机在线：{fps:.1f} FPS · {message}")
         elif (
@@ -1772,117 +2045,6 @@ class GroundStationWindow(QMainWindow):
         ):
             self._append_log("WARNING", f"图传重连：{self.camera_state.last_error}")
         self._update_header_status()
-
-    def _inspection_state_snapshot(self) -> dict:
-        return {
-            "x": float(self.drone_state.x),
-            "y": float(self.drone_state.y),
-            "altitude": float(self.drone_state.altitude),
-            "yaw": float(self.drone_state.yaw),
-            "battery_voltage": float(self.drone_state.battery_voltage),
-            "flight_phase": str(self.drone_state.flight_phase),
-            "flight_mode": str(self.drone_state.flight_mode),
-            "camera_source": str(self.camera_state.source),
-        }
-
-    def _on_inspection_vision_status(self, status: str, message: str) -> None:
-        changed = status != self._inspection_vision_status
-        self._inspection_vision_status = status
-        self.flight_inspection_panel.set_vision_status(status, message)
-        if changed and status in {"ready", "error"}:
-            self._append_log("INFO" if status == "ready" else "ERROR", message)
-
-    def _on_inspection_qwen_status(self, status: str, message: str) -> None:
-        changed = status != self._inspection_qwen_status
-        self._inspection_qwen_status = status
-        self._inspection_qwen_message = message
-        self.flight_inspection_panel.set_qwen_status(status, message)
-        self._update_header_status()
-        if self._qwen_inference_mode:
-            self._refresh_qwen_inference_view()
-        if changed and status in {"ready", "memory", "error"}:
-            level = "INFO" if status == "ready" else "WARNING"
-            self._append_log(level, message)
-
-    def _on_inspection_alert(self, kind: str, summary: str) -> None:
-        dock = self.docks.get("device")
-        if dock is not None:
-            dock.setVisible(True)
-            dock.raise_()
-        self.device_records_tabs.setCurrentWidget(self.flight_inspection_panel)
-        self._append_log("WARNING", f"巡检识别：{summary}")
-        self.statusBar().showMessage(f"巡检发现{kind}：{summary}", 8000)
-
-    def _set_qwen_inference_enabled(self, enabled: bool) -> None:
-        if enabled:
-            if not self.inspection_coordinator.has_frame:
-                self.flight_inspection_panel.set_qwen_enabled(False)
-                QMessageBox.information(
-                    self,
-                    "暂无图传画面",
-                    "请先连接无人机图传并收到至少一帧画面，再启动Qwen推理。",
-                )
-                return
-            self._qwen_inference_mode = True
-            self._main_view_mode = "qwen"
-            if self.camera_thread is not None:
-                self._qwen_resume_url = self.camera_thread.url
-            self.flight_inspection_panel.set_qwen_enabled(True)
-            if self.camera_thread and self.camera_thread.isRunning():
-                self._qwen_start_pending = True
-                self._inspection_qwen_status = "waiting"
-                self._inspection_qwen_message = "正在停止图传，完成后启动Qwen"
-                self.flight_inspection_panel.set_qwen_status(
-                    "waiting",
-                    self._inspection_qwen_message,
-                )
-                self._refresh_qwen_inference_view()
-                self.camera_thread.request_stop()
-            else:
-                self.inspection_coordinator.set_qwen_enabled(True)
-                self._refresh_qwen_inference_view()
-            self._append_log(
-                "INFO",
-                "已进入Qwen推理模式：暂停图传和OpenCV，开始处理保留队列",
-            )
-            return
-
-        self._qwen_inference_mode = False
-        self._qwen_start_pending = False
-        self.inspection_coordinator.set_qwen_enabled(False)
-        self.flight_inspection_panel.set_qwen_enabled(False)
-        if self._main_view_mode == "qwen":
-            self._main_view_mode = "flight"
-            self.video_panel.show_returning_mode("恢复无人机图传")
-        self._resume_camera_pending = True
-        if self.camera_thread is None or not self.camera_thread.isRunning():
-            self.camera_thread = None
-            self._resume_camera_pending = False
-            QTimer.singleShot(150, lambda: self.connect_camera(self._qwen_resume_url))
-        self._append_log("INFO", "已关闭Qwen推理，正在恢复无人机图传与OpenCV巡检")
-
-    def _refresh_qwen_inference_view(self) -> None:
-        state = self.inspection_coordinator.qwen_display_state()
-        lines = [
-            f"运行阶段：{self._inspection_qwen_message}",
-            f"排队任务：{int(state.get('queue_count', 0))} 个",
-        ]
-        current_kind = str(state.get("current_kind", ""))
-        current_summary = str(state.get("current_summary", ""))
-        if current_kind:
-            lines.append(f"当前任务：{current_kind} · {current_summary}")
-        if state.get("busy"):
-            lines.append(f"推理耗时：{float(state.get('elapsed_s', 0.0)):.0f} 秒")
-            lines.append("分析进度：视觉编码与文字生成中，请稍候…")
-        last_analysis = str(state.get("last_analysis", "")).strip()
-        if last_analysis:
-            lines += ["", f"最近一次模型输出：{last_analysis}"]
-        lines += [
-            "",
-            "资源策略：图传读取和OpenCV已暂停，Qwen独占当前推理资源",
-            "关闭飞行记录中的Qwen开关后，将自动恢复图传。",
-        ]
-        self.video_panel.show_qwen_mode(self._inspection_qwen_status, lines)
 
     def save_snapshot(self) -> None:
         CAPTURE_DIR.mkdir(exist_ok=True)
@@ -1906,6 +2068,9 @@ class GroundStationWindow(QMainWindow):
         if event == "started":
             self._append_log("INFO", "飞行日志开始记录：检测到无人机解锁")
         elif event == "completed":
+            self._fire_mapping_task_active = False
+            self._face_mapping_task_active = False
+            self._ocr_mapping_task_active = False
             self._append_log("INFO", "飞行日志记录完成：检测到无人机重新锁定")
 
     def _current_route_sequence(self) -> list[str]:
@@ -2069,9 +2234,18 @@ class GroundStationWindow(QMainWindow):
         widget.style().polish(widget)
 
     def closeEvent(self, event) -> None:
-        self.inspection_coordinator.stop()
         if self.camera_thread and self.camera_thread.isRunning():
             self.camera_thread.stop()
+        if (
+            self.face_recognition_thread
+            and self.face_recognition_thread.isRunning()
+        ):
+            self.face_recognition_thread.stop()
+        if (
+            self.ocr_recognition_thread
+            and self.ocr_recognition_thread.isRunning()
+        ):
+            self.ocr_recognition_thread.stop()
         if self.drone_3d_view is not None:
             self.drone_3d_view.stop()
         if self.simulation_control_window is not None:

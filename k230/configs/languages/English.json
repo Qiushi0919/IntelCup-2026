@@ -1,0 +1,349 @@
+{
+    "AI_body": {
+        "person_det": {
+            "title": "Person Detection",
+            "info": "Person detection is the foundation for many subsequent application scenarios, and can be used in the following scenarios with person detection algorithms\n\nSecurity Monitoring\n\n- Crowd counting\n- Abnormal behavior detection\n- Area intrusion detection\n\nSmart Retail\n\n- Customer flow analysis\n- Queue length detection\n- Shopping behavior analysis\n\nIntelligent Transportation\n\n- Pedestrian detection\n- Traffic flow statistics\n- Red light violation detection\n\nSmart Home\n\n- Home security\n- Elderly fall detection\n- Baby monitoring"
+        },
+        "person_keypoint_det": {
+            "title": "Human Keypoint Detection",
+            "info": "Smart fitness and sports analysis\n\n- Posture correction and movement guidance\n- Sports performance analysis and evaluation\n- Remote fitness coaching system\n\nMedical rehabilitation\n\n- Patient motor function assessment\n- Rehabilitation training progress tracking\n- Remote medical guidance"
+        },
+        "person_falldown_det": {
+            "title": "Fall Detection",
+            "info": "Detect humans in the scene and determine if they are in a falling state"
+        },
+        "person_hand_det": {
+            "title": "Hand Detection",
+            "info": "Detect human hands in the scene \n Best performance when about 50cm from K230"
+        },
+        "person_hand_keypoint_det": {
+            "title": "Hand Keypoint Detection",
+            "info": "Detect keypoints of human hands in the scene \n [Single hand] \n Best performance when about 50cm from K230"
+        },
+        "person_hand_keypoint_cla": {
+            "title": "Hand Keypoint Classification",
+            "info": "Recognize basic gestures through classification of hand keypoints \n [Single hand] \n Best performance when about 50cm from K230"
+        },
+        "person_finger_guessing": {
+            "title": "Rock Paper Scissors Game",
+            "info": "Click the button to start the game\nUses best-of-three mechanism, please ensure only one hand appears in the scene"
+        },
+        "person_hand_recog": {
+            "title": "Gesture Recognition",
+            "info": "This example demonstrates basic gesture recognition on K230"
+        }
+    },
+    "AI_face": {
+        "face_det": {
+            "title": "Face Detection",
+            "info": "Detect face positions in video\nFace detection is the foundation for subsequent face recognition, face keypoint recognition and other functions"
+        },
+        "face_keypoint_recog": {
+            "title": "Face Keypoint Recognition",
+            "info": "Recognize keypoint information of faces in video\n [Single person] \nKeypoint recognition is used in many scenarios, here are some common use cases:\n- Feature point extraction for expression recognition\n- Facial feature localization for age estimation\n- Feature reference for gender determination \n - VTuber facial capture"
+        },
+        "face_dirt_recog": {
+            "title": "Face Direction Recognition",
+            "info": "This example demonstrates recognizing the direction of faces in the scene.\n [Single person] \n Applicable scenarios:\n\n\n Driving safety monitoring\n\n- Detect if driver is looking ahead\n- Identify head movements during drowsy driving\n- Analyze driver distraction behavior\n\nHuman-computer interaction\n\n- VR/AR headset tracking\n- Gaze tracking control\n- Smart device adaptive viewing angle\n\nSecurity monitoring\n\n- Abnormal behavior recognition\n- Attention analysis\n- Crowd flow direction statistics"
+        },
+        "face_3d_net": {
+            "title": "3D Face Detection",
+            "info": "This example demonstrates using K230 to implement 3D face mesh rendering.\n [Single person] \n Commonly used for:\n\n\n Security authentication - More precise facial recognition system, harder to spoof than 2D recognition, suitable for high-security locations or device unlocking.\n\nMedical field - Can be used for plastic surgery planning, facial abnormality analysis, and medical research.\n\nAugmented Reality/Virtual Reality - Precisely capture user facial expressions, providing more immersive virtual experiences.\n\nSmart retail - Customer facial analysis can provide personalized shopping experiences and recommendations.\n\nEmotion analysis - Analyze user emotions by capturing subtle facial expression changes.\n\nVideo games and entertainment - Map player facial expressions to game characters.\n\nTelemedicine - Doctors can conduct preliminary diagnosis through 3D facial scanning.\n\nVirtual makeup/virtual glasses try-on - Provide more accurate virtual try-on experiences.\n\nNote that when applying these technologies, special attention should be paid to privacy protection and data security issues to ensure ethical use of technology."
+        },
+        "face_look_det": {
+            "title": "Gaze Direction Detection",
+            "info": "This example demonstrates using K230 to implement eye gaze direction detection.\n [Single person] \n Commonly used for:\n\n\n Driving safety monitoring - Detect if driver is looking at the road, prevent drowsy or distracted driving.\n\nUser experience research - Analyze user gaze patterns when browsing websites or apps, optimize interface design.\n\nSmart advertising systems - Evaluate advertising attention effectiveness, analyze user focus on advertising content.\n\nAssisted medical diagnosis - Help detect certain neurological diseases or attention disorders.\n\nAugmented reality interaction - Enable intuitive control and navigation through eye tracking.\n\nEducation and training - Evaluate learner attention distribution and learning patterns.\n\nRetail analytics - Understand consumer visual focus points in stores.\n\nDisability assistive technology - Provide eye-movement based control systems for mobility-impaired users.\n\nSecurity authentication systems - As part of biometric identification, enhance identity verification security.\n\nNote that applications of such technology need to balance convenience with privacy protection, ensuring user data security and informed consent."
+        },
+        "face_recog_register": {
+            "title": "Face Registration",
+            "info": "This example is used to register faces for recognition:\nPlease place the faces to be recognized in the [/data/face_register/] directory\nThen click the Boot button, K230 will start training face data\nThe trained face data will be saved to the [/data/face_database/] directory.\n ** The above paths are default save paths, you can adjust path information in the configuration file",
+            "modal_info": "Confirm to start scanning and registering face data?\n[Click OK button, buzzer sounds to indicate training start, screen cannot be operated during this time, after training ends the buzzer will sound twice more, screen returns to normal]\n About to register the following faces: ",
+            "modal_error": "An error occurred while reading face data: \n",
+            "modal_error_no_data": "No face data found, please confirm there are face photos in the current set directory and files are named with person's name",
+            "modal_train_error": "Training failed, error message as follows:",
+            "modal_training": "...",
+            "modal_training_finished": "Training ..."
+        },
+        "face_recog": {
+            "title": "Registered Face Recognition",
+            "info": "This example is used to recognize registered faces\n [Single person] \n[Note] Before using face recognition, please first use the face registration function to register face data",
+            "modal_info_no_face": "There is currently no registered face data in the face database, please first use the [Face Registration] example to save face data information"
+        }
+    },
+    "AI_objects": {
+        "ocr_det": {
+            "title": "OCR Detection",
+            "info": "[In large programs, detects up to four OCR text segments in the scene] \n What is OCR?\n- OCR (Optical Character Recognition) is an AI technology used to convert text in images into editable digital text.\n\nCommon application scenarios\n- Document digitization\n- ID card, driver's license and other document recognition\n- Invoice and receipt processing\n- Business card information extraction\n- License plate recognition"
+        },
+        "ocr_recog": {
+            "title": "OCR Recognition",
+            "info": "[In large programs, detects up to four OCR text segments in the scene] \n Based on OCR detection, let's implement OCR recognition\n\nWhat is OCR?\n- OCR (Optical Character Recognition) is an AI technology used to convert text in images into editable digital text.\n\nCommon application scenarios\n- Document digitization\n- ID card, driver's license and other document recognition\n- Invoice and receipt processing\n- Business card information extraction\n- License plate recognition"
+        },
+        "yolov8n_seg": {
+            "title": "Yolov8n Segmentation",
+            "info": "Image segmentation is a fundamental task in computer vision,\nits goal is to divide an image into multiple regions with specific semantic meaning.\n\nImage segmentation tasks require AI systems to identify which category or object each pixel in the image belongs to.\nCompared to image classification tasks that only identify what objects exist in an image,\nimage segmentation requires more precise determination of object location and boundaries."
+        },
+        "yolov8n_det": {
+            "title": "Yolov8n Object Detection",
+            "info": "Vehicles\nbicycle, car, motorcycle, airplane, bus, train, truck, boat\n\nTraffic facilities\ntraffic light, fire hydrant, stop sign, parking meter\n\nAnimals:\nbird, cat, dog, horse, sheep, cow, elephant, bear, zebra, giraffe\n\nPersonal items:\nbackpack, umbrella, handbag, tie, suitcase\n\nSports equipment:\nfrisbee, skis, snowboard, sports ball, kite, baseball bat, baseball glove, skateboard, surfboard, tennis racket\n\nDining items:\nbottle, wine glass, cup, fork, knife, spoon, bowl\n\nFood:\nbanana, apple, sandwich, orange, broccoli, carrot, hot dog, pizza, donut, cake\n\nHome items:\nbench, chair, couch, potted plant, bed, dining table, toilet, vase\n\nElectronic devices:\ntv, laptop, mouse, remote, keyboard, cell phone, microwave, oven, toaster, sink, refrigerator, hair drier\n\nOthers:\nbook, clock, scissors, teddy bear, toothbrush"
+        },
+        "car_license_plate_det": {
+            "title": "License Plate Detection",
+            "info": "Detect license plates"
+        },
+        "car_license_plate_recog":{
+            "title": "License Plate Recognition",
+            "info": "Detect license plates and recognize license plate content"            
+        },
+        "nanotracker":{
+            "title": "Object Tracking",
+            "info":"Run the sample program, align the center frame with the object we want to identify, and wait about 8 seconds\n\nThe first 7-8 seconds is the learning and waiting process, during which the frame is green\n\nDuring the waiting phase, the serial terminal will output a countdown:\n\nAfter the countdown ends, the frame in the center of the screen will turn red, indicating that K230 has entered the search and tracking phase.\n\n"
+        },
+        "self_learning":{
+            "title": "Self-learning Recognition",
+            "info":"K230 will first learn the features of a certain object, then perform recognition.\nYou can set the types of objects to learn in the configuration file,\nand specify the directory to save data\n\n Current settings: \n",
+            "choose_mode": "Please select execution mode:\n - In [Recognition Only] mode, the program will skip the learning phase and start recognition directly \n - In [Learning & Recognition] mode, the program will first learn according to the labels written in the configuration,\nand save the learned data to the database set in the configuration file\nAfter the learning phase ends, it will enter the recognition phase",
+            "mode_rec_only": "Recognition Only Mode",
+            "mode_study_and_rec": "Learning & Recognition Mode"
+        }
+    },
+    "Camera": {
+        "intro_texts_l1": "Welcome to Camera App",
+        "intro_texts_l2": "Click the button below to open camera",
+        "intro_texts_l3": "Photos will be saved to specified path",
+        "intro_texts_l4": "File name prefix: ",
+        "path_label_text": "Save path: ",
+        "button": "Open Camera"
+    },
+    "Chat":{
+        "title": "LLM Large Language Model",
+        "no_internet": "Please connect to WIFI network first",
+        "prompt": "Please answer my questions in the most concise way possible, the more concise the better"
+    },
+    "CodeDet": {
+        "barcode_recog": {
+            "title": "Barcode Recognition",
+            "info": "This example demonstrates basic barcode recognition using K230"
+        },
+        "qrcode_recog": {
+            "title": "QR Code Recognition",
+            "info": "This example demonstrates basic QR code recognition using K230\n\nWhat's the difference between QR codes and barcodes?\nThe main differences between QR codes and barcodes lie in encoding method and functionality:\nBarcodes are one-dimensional, have smaller capacity, mainly used for product identification, require dedicated devices for scanning;\nwhile QR codes are planar two-dimensional, have larger storage capacity, wider application range, error correction capability,\nand can be easily recognized by smartphones,\nmaking QR codes more widely applied in modern digital life."
+        },
+        "apriltag_recog": {
+            "title": "AprilTag Recognition",
+            "info": "[Note: Due to resolution issues, AprilTag recognition performance is poor in GUI programs, please run separate AprilTag examples]\nThis example demonstrates AprilTag recognition using K230\n\nAprilTag is a two-dimensional barcode for visual recognition, widely used in robot navigation, augmented reality, and camera calibration. It was originally developed by researchers at Georgia Institute of Technology. AprilTag is designed to provide a reliable and easily recognizable tag system that can work efficiently in complex environments."
+        },
+        "dmcode_recog": {
+            "title": "Data Matrix Code Recognition",
+            "info": "This example demonstrates Data Matrix code recognition using K230\n\nData Matrix code features:\n\n1. Square or rectangular shape, composed of black and white dot matrix\n2. Supports small sizes, suitable for small area identification\n3. Strong damage resistance, still readable even with 30% damage\n4. High encoding density, can store more data"
+        }
+    },
+    "ColorDet": {
+        "color_recog": {
+            "title": "Color Detection",
+            "info": "This example demonstrates LAB color space based color detection using K230\n\nHere we use red detection as an example\nIf you want to detect more other colors, please refer to Yahboom K230 color recognition tutorial"
+        },
+        "item_count": {
+            "title": "Same Color Object Counting",
+            "info": "Based on color detection algorithms, we can implement some extended functions,\nsuch as counting objects of the same or similar colors\nWe use the [Coin Generator] tool in the supporting materials to generate random numbers of coin images\nFor more detailed information please check the tutorial section of this chapter"
+        },
+        "multi_color_recog": {
+            "title": "Multi-color Recognition",
+            "info": "This example demonstrates LAB color space based color detection using K230\n\nSupports simultaneous detection and recognition of multiple colors.\n In the example program, we detect red / green / blue three colors as an example"
+        }
+    },
+    "Gallery":{
+        "NoImage":"No images found (only PNG format supported)"
+    },
+    "FileSystem": {
+        "folder": "Folder",
+        "file": "File",
+        "error": "Error",
+        "code": "Source Code",
+        "text": "Text File",
+        "json": "Config File",
+        "img": "Image File",
+        "video": "Video File",
+        "audio": "Audio File",
+        "file_type": "File Type",
+        "file_position": "File Location",
+        "file_size": "File Size",
+        "file_attribute": "File Attributes"
+    },
+    "GraphicsDet": {
+        "alert": {
+            "on_launch": "Graphics detection related functions have complex operation steps in large programs\nFor complete experience please refer to corresponding individual examples\nCombined with official tutorials for learning and usage",
+            "size_too_large": "Due to algorithm factors, running this example requires setting resolution to below 160x120,\n Current resolution setting is too high, set resolution to 160x120 and restart device? \n(You can restore default resolution in [Settings] > [Display Settings])"
+        },
+        "line_det": {
+            "title": "Line Detection",
+            "info": "Call find_line_segments method to get all line segments in the screen\n\nThis method is implemented through Hough transform\nHough transform is a mathematical method for detecting geometric shapes like lines and circles from images.\n\nPractical applications\n\n- Lane detection: Recognizing road markings in autonomous driving\n\n- Document scanning: Finding document boundaries\n\n- Building recognition: Detecting building edge lines"
+        },
+        "rect_det": {
+            "title": "Rectangle Detection",
+            "info": "[Updated] CV_lite based rectangle recognition\n\n- Find rectangles in images. Suitable for rectangles that contrast sharply with the background, returns a list of image.rect objects.\n\n- Rectangles with boundary size (by sliding Sobel operator on all pixels on rectangle edges and summing the values) smaller than threshold are filtered from the return list. The correct threshold value depends on your application/scenario.\n\n- Does not support compressed images and bayer images."
+        },
+        "circle_det": {
+            "title": "Circle Detection",
+            "info": "[Updated] CV_lite based circle recognition\n\n- Use Hough transform to find circles in images. Returns a list of image.circle objects.\n\n- The x and y coordinates of circle centers and radius are all in pixels.\n\n- Does not support compressed images and bayer images."
+        },
+        "edges_det": {
+            "title": "Edge Detection",
+            "info": "[Updated] CV_lite based edge detection\n\n- Based on Canny edge detection algorithm, find edges in images."
+        }
+    },
+    "hardware_test":{
+        "adc":{
+            "title": "ADC Test",
+            "info": "ADC test is used to detect K230's analog input voltage\n\nPlease connect analog input voltage to K230's ADC pin\n\nClick start test button to view current analog input voltage value"
+        },
+        "beep":{
+            "title": "Buzzer Test",
+            "open":"Turn on buzzer",
+            "info": "Buzzer test is used to check if K230's buzzer works normally\n\nClick start test button to hear the buzzer sound"
+        },
+        "pwm":{
+            "title": "PWM Test",
+            "channel": "PWM Channel: ",
+            "open":"Enable PWM Output ",
+            "freq":"Frequency ",
+            "duty":"Duty Cycle ",
+            "info": "PWM test is used to detect K230's PWM output\n\nPlease connect PWM output to oscilloscope or LED\n\nClick start test button to view PWM output waveform"
+        },
+        "rgb":{
+            "title": "RGB LED Test",
+            "open":"Turn on RGB LED",
+            "color":"Color ",
+            "red":"Red",
+            "green":"Green",
+            "blue":"Blue",
+            "info": "RGB test is used to check if K230's RGB LED works normally\n\nClick start test button to see RGB LED color changes"
+        },
+        "uart":{
+            "title": "UART Test"
+        }
+    },
+    "Paints":{
+        
+    },
+    "Settings": {
+        "my_device": {
+            "title": "My Device",
+            "chip_id": "Chip ID",
+            "os_version": "OS Version",
+            "fw_version": "Firmware Version",
+            "hw_version": "Hardware Version",
+            "tmp": "Current Temperature"
+        },
+        "language": {
+            "title": "Language & Language",
+            "choose_language": "Choose Language",
+            "finish_changing": "Language switching completed, takes effect after restart"
+        },
+        "sound": {
+            "title": "Sound",
+            "Volume": "Volume"
+        },
+        "display": {
+            "title": "Display",
+            "Brightness": "Brightness",
+            "not_support_set_bri": "100% [Current version does not support brightness setting]",
+            "Resolution": "Resolution",
+            "Choose_resolution": "Choose Resolution",
+            "Choose_resolution_text": "Select camera CH1 channel resolution and restart \n Under normal circumstances, please use 640x480 normal resolution \n When running some memory-intensive programs, consider switching to 160x120"
+        },
+        "WLAN": {
+            "title": "Wireless Network",
+            "cant_connect_info": "If unable to connect to WIFI persistently, try powering off and restart K230 after 5 seconds",
+            "SSID": "SSID",
+            "Password": "Password",
+            "Connect": "Connect",
+            "Disconnect": "Disconnect",
+            "Status": "WIFI Switch",
+            "INFO": "WIFI Information",
+            "IP": "IP Address",
+            "rssi": "Signal Strength",
+            "connecting_info": "Connecting...",
+            "disconnecting_info": "Disconnecting...",
+            "alert": "Currently not connected to WIFI. If this is first use, please manually modify configuration file in SD card, configure WIFI name and password, please refer to Yahboom K230 official tutorial for details",
+            "not_find": "Cannot find your configured WIFI, \nplease manually modify configuration file in SD card, configure WIFI name and password, please refer to Yahboom K230 official tutorial for details",
+            "is_scanning": "Scanning WIFI...",
+            "is_searching": "Searching WIFI...",
+            "is_connecting": "Connecting to WIFI..."
+        },
+        "AP": {
+            "title": "AP Hotspot",
+            "switch_text": "AP Switch",
+            "set_text": "AP Settings"
+        },
+        "security": {
+            "title": "Security",
+            "Change_Password": "Change Password",
+            "Old_Password": "Old Password",
+            "New_Password": "New Password",
+            "Confirm_Password": "Confirm Password",
+            "Password_Error": "Password Error",
+            "Password_Not_Match": "Passwords Don't Match",
+            "Password_Changed": "Password Changed Successfully",
+            "Password_Change_Fail": "Password Change Failed",
+            "Password_Changing": "Changing Password...",
+            "Password_Change": "Change Password",
+            "Password": "Password"
+        },
+        "time_date": {
+            "title": "Date and Time",
+            "text_async_time": "Auto sync time when connected",
+            "text_setting_time": "Set Time",
+            "text_setting": "Set"
+        },
+        "personalization": {
+            "title": "Personalization",
+            "lock_screen": "Lock Screen Wallpaper",
+            "btn":"Choose Wallpaper"
+        },
+        "more": {
+            "title": "More Settings",
+            "button": "Open More Settings",
+            "content": "Due to K230's limited screen size, we put complete settings here\nNote that opening complete settings requires K230 to connect to a WIFI network\nClick the [Open More Settings] button below, then find in CanMV IDE serial terminal",
+            "alert_content": "Please place your phone or computer on the same local network as K230, access in browser: ",
+            "alert_no_wifi": "Currently not connected to WIFI",
+            "more_info_disable": "More settings feature not enabled in current version, please refer to tutorial documentation to manually modify configuration file\nConfiguration file path:[/sdcard/configs/sys_config.json]"
+        },
+        "dialog_helper":{
+            "cancel":"Cancel", 
+            "confirm":"Confirm",
+            "connect_to": "Connect to",
+            "password": "Password",
+            "show_password": "Show Password",
+            "connect": "Connect",
+            "save": "Save"
+        }
+    },
+    "System": {
+        "AI_face": "AI Face",
+        "AI_body": "AI Body",
+        "AI_objects": "AI Scene Applications",
+        "Back": "< Back",
+        "Boot": "Boot!",
+        "Camera": "Camera",
+        "Chat": "LLM Large Language Model",
+        "Cancel": "Cancel",
+        "CodeDet": "Code Recognition",
+        "ColorDet": "Color Recognition",
+        "Error": "Error",
+        "Error_text": {
+            "default": "Some error occurred",
+            "loading_page_error": "Error occurred while initializing page"
+        },
+        "FileSystem": "File Manager",
+        "Gallery": "Gallery",
+        "GraphicsDet": "Graphics Detection",
+        "Goodbye": "Goodbye",
+        "HardwareTest": "Hardware Interface Test",
+        "Loading": "Loading ...",
+        "Ok": "OK",
+        "Paints": "Paint",
+        "Settings": "Settings",
+        "Warning": "Warning"
+    }
+}
