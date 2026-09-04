@@ -83,6 +83,10 @@
     .video-tab{border:0;border-radius:999px;padding:9px 13px;background:transparent;color:#506981;font-weight:820;cursor:pointer}.video-tab[aria-selected="true"]{background:linear-gradient(135deg,var(--hust),#318cf0);color:white;box-shadow:0 7px 18px rgba(0,91,172,.22)}
     .video-wrap{padding:18px 21px 15px;background:#081522}.video-wrap video{display:block;width:100%;aspect-ratio:16/9;border-radius:18px;background:#020812;box-shadow:0 18px 40px rgba(0,0,0,.24)}
     .video-foot{display:flex;justify-content:space-between;gap:18px;align-items:center;padding:0 22px 21px;background:#081522;color:#c9dae8;font-size:13px}.video-foot b{display:block;color:white;font-size:15px}.video-foot p{margin:2px 0 0;color:#9eb4c6}.video-foot a{color:#8ed2ff;font-weight:800;white-space:nowrap}
+    .ppt-block{padding:24px 26px 26px;border-top:1px solid var(--line);background:linear-gradient(145deg,#f9fcff,#edf6ff)}
+    .ppt-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:16px}.ppt-head h3{margin:0;color:#153a5b;font-size:25px;line-height:1.15}.ppt-head p{margin:7px 0 0;color:var(--muted)}.ppt-hint{flex:0 0 auto;padding:7px 11px;border:1px solid #cfe3f4;border-radius:999px;background:white;color:#527089;font-size:12px;font-weight:800}
+    .ppt-stage{position:relative;overflow:hidden;width:100%;aspect-ratio:16/9;border-radius:18px;background:#06111e;box-shadow:0 18px 42px rgba(10,42,68,.18)}.ppt-stage img,.ppt-stage video{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:contain;background:#06111e}.ppt-stage [hidden]{display:none}.ppt-stage .ppt-arrow{position:absolute;top:50%;z-index:3;width:44px;height:44px;border:1px solid rgba(255,255,255,.28);border-radius:50%;display:grid;place-items:center;background:rgba(5,22,36,.58);backdrop-filter:blur(10px);color:white;font-size:27px;line-height:1;cursor:pointer;transform:translateY(-50%)}.ppt-stage .ppt-arrow:hover{background:rgba(0,91,172,.9)}.ppt-stage .ppt-arrow.prev{left:14px}.ppt-stage .ppt-arrow.next{right:14px}.ppt-dynamic{position:absolute;top:14px;right:14px;z-index:3;padding:7px 10px;border:1px solid rgba(255,255,255,.3);border-radius:999px;background:rgba(0,91,172,.82);color:white;font-size:11px;font-weight:900;letter-spacing:.04em;backdrop-filter:blur(9px)}
+    .ppt-controls{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:14px;margin-top:14px}.ppt-nav-button{min-width:98px;border:1px solid #c8deef;border-radius:999px;padding:10px 15px;background:white;color:#214f74;font-weight:850;cursor:pointer;box-shadow:0 7px 18px rgba(18,52,86,.07)}.ppt-nav-button:hover{border-color:#89bee7;color:var(--hust)}.ppt-slide-info{text-align:center;min-width:0}.ppt-slide-info b{display:block;overflow:hidden;color:#173b5e;font-size:16px;text-overflow:ellipsis;white-space:nowrap}.ppt-slide-info p{margin:3px 0 0;color:#6c8296;font-size:12px}.ppt-slide-count{color:var(--hust);font-weight:900}
     .abstract{padding:29px;font-size:17px;color:#334e66}.abstract p{margin:0}.abstract p+p{margin-top:13px}.abstract strong{color:#0d477d}.keywords{display:flex;gap:9px;flex-wrap:wrap;margin-top:19px}.pill{padding:7px 11px;border-radius:999px;background:#e8f4ff;border:1px solid #cee3f5;color:#24567f;font-size:12px;font-weight:850}
     .pipeline-layout{display:grid;grid-template-columns:minmax(0,1.22fr) minmax(350px,.78fr);gap:16px;align-items:start}.pipeline-visual{overflow:hidden}.pipeline-visual .visual-button img{max-height:430px}.visual-button{display:block;width:100%;border:0;padding:0;background:#f8fbff;cursor:zoom-in}.visual-button img{width:100%;display:block;object-fit:contain}.visual-body{padding:15px 18px}.visual-body h3{margin:0 0 4px;font-size:19px}.visual-body p{margin:0;color:var(--muted);font-size:14px}
     .stage-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0}.stage{position:relative;padding:13px;background:white;border:1px solid #d8e7f4;border-radius:16px;box-shadow:0 9px 22px rgba(18,52,86,.05)}.stage:last-child{grid-column:1/-1}.stage span{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--hust),#3d9bf2);color:white;font-size:11px;font-weight:900}.stage b{display:block;margin-top:6px;font-size:14px}.stage p{margin:2px 0 0;color:#6b8094;font-size:11px;line-height:1.4}
@@ -109,7 +113,7 @@
       .hero-visual{padding:10px;border-radius:25px}.browser-bar{height:31px;padding:0 6px 7px;font-size:11px}.dot{width:9px;height:9px}.hero-carousel{border-radius:18px}.carousel-arrow{width:34px;height:34px;font-size:22px}.carousel-arrow.prev{left:11px}.carousel-arrow.next{right:11px}.carousel-count{right:12px;bottom:11px;padding:5px 9px;font-size:10px}.hero-caption-panel{margin-top:9px;padding:10px 12px;border-radius:14px}.hero-caption-panel b{font-size:13px}.hero-caption-panel p{font-size:11px}
       section{padding:30px 0}.section-title{margin-bottom:20px}.section-title h2{font-size:clamp(26px,3vw,32px)}
       .system-component-grid{gap:10px}.system-component-media{height:107px}.system-component-media img{padding:8px}.system-component-body{padding:11px 12px 12px}.system-component-body h3{font-size:15px}.system-component-body p{font-size:11px}
-      .video-head{gap:16px;padding:19px 21px 14px}.video-head h3{font-size:20px}.title-en{font-size:11px}.video-head p{font-size:13px}.video-tabs{gap:6px;padding:4px}.video-tab{padding:7px 10px;font-size:12px}.video-wrap{padding:14px 17px 12px}.video-wrap video{border-radius:15px}.video-foot{padding:0 18px 17px;font-size:11px}.video-foot b{font-size:12px}
+      .video-head{gap:16px;padding:19px 21px 14px}.video-head h3{font-size:20px}.title-en{font-size:11px}.video-head p{font-size:13px}.video-tabs{gap:6px;padding:4px}.video-tab{padding:7px 10px;font-size:12px}.video-wrap{padding:14px 17px 12px}.video-wrap video{border-radius:15px}.video-foot{padding:0 18px 17px;font-size:11px}.video-foot b{font-size:12px}.ppt-block{padding:19px 21px 21px}.ppt-head{margin-bottom:12px}.ppt-head h3{font-size:20px}.ppt-head p{font-size:12px}.ppt-hint{font-size:10px}.ppt-stage{border-radius:15px}.ppt-stage .ppt-arrow{width:36px;height:36px;font-size:23px}.ppt-nav-button{min-width:80px;padding:8px 11px;font-size:11px}.ppt-slide-info b{font-size:13px}.ppt-slide-info p{font-size:10px}
       .abstract{padding:23px;font-size:14px}.keywords{gap:7px;margin-top:15px}.pill{padding:6px 9px;font-size:10px}
       .pipeline-layout{grid-template-columns:minmax(0,1.22fr) minmax(200px,.78fr);gap:9px}.pipeline-visual .visual-button img{max-height:193px}.visual-body{padding:12px 13px}.visual-body h3{font-size:15px}.visual-body p{font-size:11px}.stage-grid{gap:6px}.stage{padding:9px;border-radius:12px}.stage span{width:20px;height:20px;font-size:9px}.stage b{font-size:11px}.stage p{font-size:9px}
       .architecture-grid{gap:10px}.architecture-card img{height:148px;padding:5px}.architecture-card.primary img{max-height:278px}
@@ -120,7 +124,7 @@
       .citation-head{padding:12px 15px}.copy-btn{padding:6px 10px;font-size:11px}pre{padding:18px;font-size:10px}footer{padding:36px 0 51px;font-size:12px}.footer-title img{height:32px}
     }
     @media(max-width:1040px){.hero-grid{grid-template-columns:1fr}.pipeline-layout{grid-template-columns:1fr}.demo-grid{grid-template-columns:repeat(2,1fr)}.demo-card.full{grid-column:1/-1}.finals-grid{grid-template-columns:1fr}.poster-card .visual-button{height:620px}}
-    @media(max-width:760px){.container{width:min(100% - 30px,1240px)}.nav{height:auto;align-items:flex-start;flex-direction:column;padding:10px 0 8px;gap:8px}.brand img{height:36px}.navlinks{width:100%;overflow-x:auto;padding:2px 0 7px;gap:14px}.hero{padding-top:43px}.hero-grid{gap:25px}.hero-slides{aspect-ratio:4/3}.hero-slide img{object-fit:contain}.shift-grid,.result-metrics{grid-template-columns:repeat(2,1fr)}.system-component-grid{grid-template-columns:1fr}.system-component-media{height:250px}.stage-grid{grid-template-columns:1fr}.stage:last-child{grid-column:auto}.architecture-grid,.result-gallery{grid-template-columns:1fr}.architecture-card.primary{grid-column:auto}.architecture-card img,.result-gallery img{height:auto;max-height:430px}.demo-grid{grid-template-columns:1fr}.demo-card.wide,.demo-card.full{grid-column:auto}.demo-card.wide .demo-media,.demo-media{height:auto;min-height:220px}.demo-image-row{grid-template-columns:1fr}.demo-image-row .visual-button{height:auto;min-height:230px}.video-head{align-items:flex-start;flex-direction:column}.video-tabs{width:100%}.video-tab{flex:1}.video-foot{align-items:flex-start;flex-direction:column}.finals-grid{grid-template-columns:1fr}.team-gallery{grid-template-columns:1fr}.team-gallery .team-main{grid-column:auto}.poster-card .visual-button{height:560px}.foundation{align-items:flex-start;flex-direction:column}.carousel-arrow{width:38px;height:38px}}
+    @media(max-width:760px){.container{width:min(100% - 30px,1240px)}.nav{height:auto;align-items:flex-start;flex-direction:column;padding:10px 0 8px;gap:8px}.brand img{height:36px}.navlinks{width:100%;overflow-x:auto;padding:2px 0 7px;gap:14px}.hero{padding-top:43px}.hero-grid{gap:25px}.hero-slides{aspect-ratio:4/3}.hero-slide img{object-fit:contain}.shift-grid,.result-metrics{grid-template-columns:repeat(2,1fr)}.system-component-grid{grid-template-columns:1fr}.system-component-media{height:250px}.stage-grid{grid-template-columns:1fr}.stage:last-child{grid-column:auto}.architecture-grid,.result-gallery{grid-template-columns:1fr}.architecture-card.primary{grid-column:auto}.architecture-card img,.result-gallery img{height:auto;max-height:430px}.demo-grid{grid-template-columns:1fr}.demo-card.wide,.demo-card.full{grid-column:auto}.demo-card.wide .demo-media,.demo-media{height:auto;min-height:220px}.demo-image-row{grid-template-columns:1fr}.demo-image-row .visual-button{height:auto;min-height:230px}.video-head,.ppt-head{align-items:flex-start;flex-direction:column}.video-tabs{width:100%}.video-tab{flex:1}.video-foot{align-items:flex-start;flex-direction:column}.ppt-hint{align-self:flex-start}.ppt-controls{gap:8px}.ppt-nav-button{min-width:44px;padding:9px 12px}.ppt-nav-label{display:none}.ppt-slide-info b{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.finals-grid{grid-template-columns:1fr}.team-gallery{grid-template-columns:1fr}.team-gallery .team-main{grid-column:auto}.poster-card .visual-button{height:560px}.foundation{align-items:flex-start;flex-direction:column}.carousel-arrow{width:38px;height:38px}}
     @media(max-width:470px){.shift-grid,.result-metrics{grid-template-columns:1fr}h1{font-size:38px}.hero-caption-panel{padding:12px}.poster-card .visual-button{height:470px}.team-gallery button,.team-gallery .team-main{min-height:230px}.buttons .btn{width:100%;justify-content:center}}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.reveal{opacity:1;transform:none;transition:none}.hero-slide{transition:none}}
   </style>
@@ -130,7 +134,7 @@
     <div class="container nav">
       <a class="brand" href="#top"><img src="assets/hust_logo.png" alt="华中科技大学" /><span>智驭低空枢纽</span></a>
       <nav class="navlinks" aria-label="页面导航">
-        <a href="#demo-video">演示视频</a><a href="#figures">功能演示</a><a href="#pipeline">闭环流程</a><a href="#system">系统架构</a><a href="#results">测试结果</a><a href="#finals">国赛现场</a><a href="#citation">引用</a><a href="https://github.com/Qiushi0919/IntelCup-2026" target="_blank" rel="noopener">项目仓库 ↗</a>
+        <a href="#demo-video">演示视频与项目 PPT</a><a href="#figures">功能演示</a><a href="#pipeline">闭环流程</a><a href="#system">系统架构</a><a href="#results">测试结果</a><a href="#finals">国赛现场</a><a href="#citation">引用</a><a href="https://github.com/Qiushi0919/IntelCup-2026" target="_blank" rel="noopener">项目仓库 ↗</a>
       </nav>
     </div>
   </div>
@@ -292,7 +296,7 @@
     <section id="demo-video" class="container">
       <div class="paper video-card reveal">
         <div class="video-head">
-          <div><h3>项目演示视频<span class="title-en">Demo Video</span></h3><p>可切换查看国赛版与复赛版完整演示。</p></div>
+          <div><h3>演示视频<span class="title-en">Demo Videos</span></h3><p>可切换查看国赛版与复赛版完整演示。</p></div>
           <div class="video-tabs" role="tablist" aria-label="选择演示视频版本">
             <button class="video-tab" type="button" role="tab" aria-selected="true" data-version="national">国赛新版</button>
             <button class="video-tab" type="button" role="tab" aria-selected="false" data-version="regional">复赛旧版</button>
@@ -304,6 +308,27 @@
         <div class="video-foot">
           <div><b id="videoTitle">2026 国赛新版 · 03:48</b><p id="videoDescription">覆盖参数自检、六航点巡逻、自由选点、安全飞行管理、火源/人脸/文字识别与日志报告导出。</p></div>
           <a id="videoDirectLink" href="assets/nationals/national-finals-demo.mp4" target="_blank" rel="noopener">单独打开视频 ↗</a>
+        </div>
+        <div class="ppt-block">
+          <div class="ppt-head">
+            <div><h3>项目 PPT<span class="title-en">Project Slides</span></h3><p>直接在网页中前后翻阅国赛答辩内容；动态页会自动播放。</p></div>
+            <span class="ppt-hint">PPT 第 3–26 页 · 共 24 页</span>
+          </div>
+          <div class="ppt-stage" id="pptStage" tabindex="0" aria-label="项目 PPT 播放器，使用左右方向键翻页">
+            <img id="pptSlideImage" src="assets/nationals/ppt-slides/slide-03.jpg" alt="PPT 第 3 页：项目背景" />
+            <video id="pptSlideVideo" muted loop playsinline preload="auto" hidden aria-label="PPT 动态页面"></video>
+            <button class="ppt-arrow prev" id="pptPrevOverlay" type="button" aria-label="上一页">‹</button>
+            <button class="ppt-arrow next" id="pptNextOverlay" type="button" aria-label="下一页">›</button>
+            <span class="ppt-dynamic" id="pptDynamicBadge" hidden>动态页 · 自动播放</span>
+          </div>
+          <div class="ppt-controls">
+            <button class="ppt-nav-button" id="pptPrev" type="button" aria-label="上一页"><span aria-hidden="true">←</span> <span class="ppt-nav-label">上一页</span></button>
+            <div class="ppt-slide-info" aria-live="polite">
+              <b id="pptSlideTitle">项目背景</b>
+              <p><span class="ppt-slide-count" id="pptSlideCount">1 / 24 · PPT 第 3 页</span><span id="pptSlideCaption"> · 低空巡检场景的现实痛点与 Intel DK-2500 边缘智能底座。</span></p>
+            </div>
+            <button class="ppt-nav-button" id="pptNext" type="button" aria-label="下一页"><span class="ppt-nav-label">下一页</span> <span aria-hidden="true">→</span></button>
+          </div>
         </div>
       </div>
     </section>
@@ -538,6 +563,99 @@
     });
     showHeroSlide(0);
     if (!reduceMotion) startHero();
+
+    const pptSlides = heroSlides.map((slide, index) => ({
+      number: index + 3,
+      image: slide.dataset.full,
+      video: slide.querySelector('video')?.getAttribute('src') || '',
+      title: slide.dataset.title,
+      caption: slide.dataset.caption
+    }));
+    pptSlides.push({
+      number: 26,
+      image: 'assets/nationals/ppt-slides/slide-26.jpg',
+      video: '',
+      title: '答辩结束',
+      caption: '谢谢各位评委老师。'
+    });
+
+    const pptStage = document.getElementById('pptStage');
+    const pptSlideImage = document.getElementById('pptSlideImage');
+    const pptSlideVideo = document.getElementById('pptSlideVideo');
+    const pptDynamicBadge = document.getElementById('pptDynamicBadge');
+    const pptSlideTitle = document.getElementById('pptSlideTitle');
+    const pptSlideCount = document.getElementById('pptSlideCount');
+    const pptSlideCaption = document.getElementById('pptSlideCaption');
+    let pptIndex = 0;
+
+    const showPptFallback = () => {
+      pptSlideVideo.pause();
+      pptSlideVideo.hidden = true;
+      pptSlideImage.hidden = false;
+    };
+    const preloadPptNeighbours = () => {
+      [-1, 1].forEach(offset => {
+        const neighbour = pptSlides[(pptIndex + offset + pptSlides.length) % pptSlides.length];
+        const image = new Image();
+        image.src = neighbour.image;
+      });
+    };
+    const showPptSlide = index => {
+      pptIndex = (index + pptSlides.length) % pptSlides.length;
+      const slide = pptSlides[pptIndex];
+      pptSlideImage.src = slide.image;
+      pptSlideImage.alt = `PPT 第 ${slide.number} 页：${slide.title}`;
+      pptSlideTitle.textContent = slide.title;
+      pptSlideCount.textContent = `${pptIndex + 1} / ${pptSlides.length} · PPT 第 ${slide.number} 页`;
+      pptSlideCaption.textContent = ` · ${slide.caption}`;
+      pptSlideVideo.pause();
+
+      if (slide.video) {
+        pptSlideVideo.poster = slide.image;
+        pptSlideVideo.setAttribute('aria-label', `PPT 第 ${slide.number} 页动态演示：${slide.title}`);
+        if (pptSlideVideo.dataset.currentSrc !== slide.video) {
+          pptSlideVideo.dataset.currentSrc = slide.video;
+          pptSlideVideo.src = slide.video;
+          pptSlideVideo.load();
+        }
+        pptSlideImage.hidden = true;
+        pptSlideVideo.hidden = false;
+        pptDynamicBadge.hidden = false;
+        pptSlideVideo.play().catch(() => {});
+      } else {
+        pptDynamicBadge.hidden = true;
+        showPptFallback();
+      }
+      preloadPptNeighbours();
+    };
+    const changePptSlide = delta => showPptSlide(pptIndex + delta);
+    document.getElementById('pptPrev').addEventListener('click', () => changePptSlide(-1));
+    document.getElementById('pptNext').addEventListener('click', () => changePptSlide(1));
+    document.getElementById('pptPrevOverlay').addEventListener('click', () => changePptSlide(-1));
+    document.getElementById('pptNextOverlay').addEventListener('click', () => changePptSlide(1));
+    pptStage.addEventListener('keydown', event => {
+      if (event.key === 'ArrowLeft') { event.preventDefault(); changePptSlide(-1); }
+      if (event.key === 'ArrowRight') { event.preventDefault(); changePptSlide(1); }
+    });
+    pptSlideVideo.addEventListener('canplay', () => {
+      if (!pptSlideVideo.hidden) pptSlideVideo.play().catch(() => {});
+    });
+    pptSlideVideo.addEventListener('error', showPptFallback);
+    showPptSlide(0);
+
+    const pptAnimationCache = [];
+    const preloadPptAnimations = () => {
+      [...new Set(pptSlides.map(slide => slide.video).filter(Boolean))].forEach(src => {
+        const media = document.createElement('video');
+        media.preload = 'auto';
+        media.muted = true;
+        media.src = src;
+        media.load();
+        pptAnimationCache.push(media);
+      });
+    };
+    if ('requestIdleCallback' in window) window.requestIdleCallback(preloadPptAnimations, { timeout: 1600 });
+    else window.setTimeout(preloadPptAnimations, 400);
 
     document.querySelectorAll('.demo-loop').forEach(media => {
       if (reduceMotion) media.pause();
