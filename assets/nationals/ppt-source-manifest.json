@@ -1,0 +1,324 @@
+{
+  "source": {
+    "filename": "Intel国赛答辩ppt.pptx",
+    "sha256": "3e2a34afb51fd27ac5ad4bdc5cd484899703aa425a991932deb9ac07c9071af1",
+    "slideCount": 26,
+    "updated": "2026-09-16"
+  },
+  "staticSlides": [
+    {
+      "slide": 3,
+      "asset": "assets/nationals/ppt-slides/slide-03.jpg",
+      "sha256": "5c3a3b2824b273a13d238bdd2f1c54cc3f7c5155a5ce3ddda059af7920728f55"
+    },
+    {
+      "slide": 4,
+      "asset": "assets/nationals/ppt-slides/slide-04.jpg",
+      "sha256": "394c62af168f204005cb1c8c9206fed9bc50f22da798b1cbb9650bd2381b4235"
+    },
+    {
+      "slide": 5,
+      "asset": "assets/nationals/ppt-slides/slide-05.jpg",
+      "sha256": "22b9226837fccf80c89b2218633bbae38821f4ca6fd72e928ab5d8350b5251de"
+    },
+    {
+      "slide": 6,
+      "asset": "assets/nationals/ppt-slides/slide-06.jpg",
+      "sha256": "dbf2618c05e0d76b74734897dcc3c61bbe97c3d0f7f735e3b871889be182a09c"
+    },
+    {
+      "slide": 7,
+      "asset": "assets/nationals/ppt-slides/slide-07.jpg",
+      "sha256": "a02368fb34e35fc35fe811437a16f54d0e2068b1c2b5823f1f5c991cdd174ca3"
+    },
+    {
+      "slide": 8,
+      "asset": "assets/nationals/ppt-slides/slide-08.jpg",
+      "sha256": "5030ec789782ae44739e8a480beff15d9b51b2d9bd21c213f4f3ff0f6584a207"
+    },
+    {
+      "slide": 9,
+      "asset": "assets/nationals/ppt-slides/slide-09.jpg",
+      "sha256": "57b829d587526f08d275ae57f6e0ee81d80e9ad89c90327aa215d070ed38a3ed"
+    },
+    {
+      "slide": 10,
+      "asset": "assets/nationals/ppt-slides/slide-10.jpg",
+      "sha256": "c12560c7d9e02a72d2d157696a3b08b997fca1241e1197492d6118d09a1a98cf"
+    },
+    {
+      "slide": 11,
+      "asset": "assets/nationals/ppt-slides/slide-11.jpg",
+      "sha256": "1f2e2e569851fb1b44dee7ed1bca254d1aa6df827a016e4978ce445ae56b78cb"
+    },
+    {
+      "slide": 12,
+      "asset": "assets/nationals/ppt-slides/slide-12.jpg",
+      "sha256": "59f1706543b4c68f12414ff86fbbbdfb8d637afd5511b0a72ea8462930696ab5"
+    },
+    {
+      "slide": 13,
+      "asset": "assets/nationals/ppt-slides/slide-13.jpg",
+      "sha256": "e308f456c2cb019498ecf322dd927725befaee6adbd5baac3b178205e7054336"
+    },
+    {
+      "slide": 14,
+      "asset": "assets/nationals/ppt-slides/slide-14.jpg",
+      "sha256": "e7cb18591181483cb2befc865b4aa727409b832f57b2bcaf50a231922fe9b210"
+    },
+    {
+      "slide": 15,
+      "asset": "assets/nationals/ppt-slides/slide-15.jpg",
+      "sha256": "c36f772928253049a4bf89786049b41b8bc6aff953efd692c63acbc25060808b"
+    },
+    {
+      "slide": 16,
+      "asset": "assets/nationals/ppt-slides/slide-16.jpg",
+      "sha256": "2b0c7efb244a1e63dce39f3a3981268c6be64cd579bdd466a655a4c28fee47b1"
+    },
+    {
+      "slide": 17,
+      "asset": "assets/nationals/ppt-slides/slide-17.jpg",
+      "sha256": "34dd78a2f061483901a4cbf02e8e122d6bc3f71e7c94bf6e26968c0e89d86ceb"
+    },
+    {
+      "slide": 18,
+      "asset": "assets/nationals/ppt-slides/slide-18.jpg",
+      "sha256": "4e6f22af1ad33b7ec6fea5a2d406c414d82da1521f81d8dd486e34deae8fa0a5"
+    },
+    {
+      "slide": 19,
+      "asset": "assets/nationals/ppt-slides/slide-19.jpg",
+      "sha256": "b77f063ee4fe7d4b3dafa59b096e506b3c7e5adbc825a93ba2d4f242d2e78214"
+    },
+    {
+      "slide": 20,
+      "asset": "assets/nationals/ppt-slides/slide-20.jpg",
+      "sha256": "49492b7c84feb24b14872243b443cc32d79262e720b739b3a32280c0e71a9b5c"
+    },
+    {
+      "slide": 21,
+      "asset": "assets/nationals/ppt-slides/slide-21.jpg",
+      "sha256": "77017283b65c87427c24f21585142b5b2a316f540001c4d119dcfe356dcd5c12"
+    },
+    {
+      "slide": 22,
+      "asset": "assets/nationals/ppt-slides/slide-22.jpg",
+      "sha256": "4f236a7e5089c79f7de583563f00fc0a7453e6de238ac942428a63271ab7bec8"
+    },
+    {
+      "slide": 23,
+      "asset": "assets/nationals/ppt-slides/slide-23.jpg",
+      "sha256": "38e3acd625078af15920c7b041674bab3530a882e53d44b8040ed4a3c983623c"
+    },
+    {
+      "slide": 24,
+      "asset": "assets/nationals/ppt-slides/slide-24.jpg",
+      "sha256": "8db552683bbf63e9389f5d1abb408d55428b5d294c4f5b3bdb73e22371c41c80"
+    },
+    {
+      "slide": 25,
+      "asset": "assets/nationals/ppt-slides/slide-25.jpg",
+      "sha256": "511b1645240c18f39879f279756eb2fc9327e08c6837ab1882d8a35779e0c26a"
+    },
+    {
+      "slide": 26,
+      "asset": "assets/nationals/ppt-slides/slide-26.jpg",
+      "sha256": "2fd925f52813ba49a5081bfb49b69bb6bda4e027dd3b1f132de77e2c7f630eb7"
+    },
+    {
+      "slide": 19,
+      "asset": "assets/nationals/target-recognition-slide.png",
+      "sha256": "a05b107fedd9ec2759aa0227fecd3cdc729d22eeb40e935afdef5d4449d008ef"
+    },
+    {
+      "slide": 20,
+      "asset": "assets/nationals/report-export-slide.png",
+      "sha256": "9aec1247f69129a0e897af74b5376703848d27711fa82526017a31bd3c574d5a"
+    },
+    {
+      "slide": 21,
+      "asset": "assets/nationals/test-summary-slide.png",
+      "sha256": "0ba9e9301e6c750f6b6a5acf567f4f939cf82cc076428ccedc700418efa4116c"
+    },
+    {
+      "slide": 22,
+      "asset": "assets/nationals/test-cases-slide.png",
+      "sha256": "abc8c5e5949cdd7602f583facdd8dcff31c2fab14b4a6d42e6b22966508438d3"
+    },
+    {
+      "slide": 23,
+      "asset": "assets/nationals/recognition-results-a.png",
+      "sha256": "6391fe469f3fe54f83a60544021a6281f4258051e41e094eb79b658dc68e59e1"
+    },
+    {
+      "slide": 24,
+      "asset": "assets/nationals/recognition-results-b.png",
+      "sha256": "fa8fec9d6c762b679d5818bee9e8c6327915bcca6beac5111132bbed943e622d"
+    }
+  ],
+  "extractedImages": [
+    {
+      "asset": "assets/nationals/system-architecture.jpg",
+      "pptMedia": "image3.jpg",
+      "unchangedFromPrevious": true,
+      "sha256": "1a39c7a6d0c24f75327e795ac370349e204d35a098ea0b1a017d7f5b0d4eff41"
+    },
+    {
+      "asset": "assets/nationals/four-shifts-one-foundation.png",
+      "pptMedia": "image4.png",
+      "unchangedFromPrevious": true,
+      "sha256": "435b3ae9a1d4faddd14984f5cd36781b896dacef3c50f41e1e425e29dc8e57ae"
+    },
+    {
+      "asset": "assets/nationals/hardware-architecture.png",
+      "pptMedia": "image5.png",
+      "unchangedFromPrevious": true,
+      "sha256": "a8fcbdb81441a0c2f4344f13bac0196912d069fc5a3eb8bd379f4c7fb01f7782"
+    },
+    {
+      "asset": "assets/nationals/software-architecture.png",
+      "pptMedia": "image6.png",
+      "unchangedFromPrevious": true,
+      "sha256": "1d381b0f4b7ca7363d28e4ddd3528a36f87a15debd75b22d40f1299763314913"
+    },
+    {
+      "asset": "assets/nationals/multimodal-ui.png",
+      "pptMedia": "image7.png",
+      "unchangedFromPrevious": true,
+      "sha256": "e82018c1c0f833edaa1c3ac91111bb6d2b01a4b6583dd441a26b883f1c48d6c1"
+    },
+    {
+      "asset": "assets/nationals/safety-confirmation-ui.png",
+      "pptMedia": "image8.png",
+      "unchangedFromPrevious": true,
+      "sha256": "9b564df24778f81d4d0d84b01d6bdbd2caa6cd202abe877083780d3fb41b0576"
+    },
+    {
+      "asset": "assets/nationals/ground-station-overview.png",
+      "pptMedia": "image10.png",
+      "unchangedFromPrevious": true,
+      "sha256": "b41bf5d3d23c724b3844e9cb00a89229c8e2761308eae395265bfabb72ad18c1"
+    },
+    {
+      "asset": "assets/nationals/simulation-flight-ui.png",
+      "pptMedia": "image11.png",
+      "unchangedFromPrevious": true,
+      "sha256": "a26fd1bf33a506d994a170ce6640aedcc4955af7d3f64e1a4f87262557e62bd0"
+    },
+    {
+      "asset": "assets/nationals/route-planning-ui.png",
+      "pptMedia": "image15.png",
+      "unchangedFromPrevious": true,
+      "sha256": "1b6dc34d02501897cf54fc10ee15a60b1624805633f90bf1f94b7b0947e1378d"
+    },
+    {
+      "asset": "assets/nationals/six-waypoint-selection.png",
+      "pptMedia": "image15.png",
+      "unchangedFromPrevious": true,
+      "sha256": "1b6dc34d02501897cf54fc10ee15a60b1624805633f90bf1f94b7b0947e1378d"
+    }
+  ],
+  "demos": [
+    {
+      "slide": 10,
+      "pptMedia": "image9.gif",
+      "asset": "assets/nationals/demos/self-check.mp4",
+      "sha256": "65713d5bf2279f4d93ac343710bd74ad5cb7204e3fdc3dd9b4802ac4ba282b15"
+    },
+    {
+      "slide": 13,
+      "pptMedia": "image14.gif",
+      "asset": "assets/nationals/demos/simulation-takeoff.mp4",
+      "sha256": "a2389fe8b1ddfbdb7b5ec83cfdda83f2f9b7ee3b0dd952e3219d4306c709d3bd"
+    },
+    {
+      "slide": 13,
+      "pptMedia": "image13.gif",
+      "asset": "assets/nationals/demos/simulation-cruise.mp4",
+      "sha256": "d77aa79360c573c9e87034e1988faefdb64e60ab43e524db03d47d084f755777"
+    },
+    {
+      "slide": 14,
+      "pptMedia": "image16.gif",
+      "asset": "assets/nationals/demos/six-waypoint-patrol.mp4",
+      "sha256": "08217fa73e2181779d788e5323741cfbfc621e9dc0ea3d4439c0b0428c6633b2"
+    },
+    {
+      "slide": 15,
+      "pptMedia": "image18.gif",
+      "asset": "assets/nationals/demos/free-route-planning.mp4",
+      "sha256": "e3e149257619554d14af51006ecdfd9bab49272ad15afcf63b707e9c521501e1"
+    },
+    {
+      "slide": 15,
+      "pptMedia": "image17.gif",
+      "asset": "assets/nationals/demos/free-route-execution.mp4",
+      "sha256": "a619306e0c6dfded240d82fa402101a714df4d5288bc353277f5cf8b04fc1947"
+    },
+    {
+      "slide": 16,
+      "pptMedia": "image19.gif",
+      "asset": "assets/nationals/demos/flight-takeoff.mp4",
+      "sha256": "d3807c68f68dfd299e7b2073ee2862e2431b02d097adec527301dcf8abeb8da1"
+    },
+    {
+      "slide": 16,
+      "pptMedia": "image21.gif",
+      "asset": "assets/nationals/demos/flight-cruise.mp4",
+      "sha256": "91a995d22c5900494bb6c166a3d5bf6108e04de4a465839d3a33909ef8125adb"
+    },
+    {
+      "slide": 16,
+      "pptMedia": "image20.gif",
+      "asset": "assets/nationals/demos/flight-landing.mp4",
+      "sha256": "bdea1c2ec8e9cc90a3972cc4e57d3411c43eb9d64db6f42191cbdf5a751aecd7"
+    }
+  ],
+  "animatedSlides": [
+    {
+      "slide": 10,
+      "asset": "assets/nationals/ppt-slides/animated-slide-10.mp4",
+      "pptMedia": [
+        "image9.gif"
+      ],
+      "sha256": "c2f5293ea197aec363a03b5305a7530d8729710dfafd700e931d826d189b34d7"
+    },
+    {
+      "slide": 13,
+      "asset": "assets/nationals/ppt-slides/animated-slide-13.mp4",
+      "pptMedia": [
+        "image13.gif",
+        "image14.gif"
+      ],
+      "sha256": "3514e3f5f339cc84f5a35b03529bac85090991eb29f80079f6f5604a731617a2"
+    },
+    {
+      "slide": 14,
+      "asset": "assets/nationals/ppt-slides/animated-slide-14.mp4",
+      "pptMedia": [
+        "image16.gif"
+      ],
+      "sha256": "eee0b046737534c786f6d9468f9e7d9b8391b427d659a07b2f838ce289999312"
+    },
+    {
+      "slide": 15,
+      "asset": "assets/nationals/ppt-slides/animated-slide-15.mp4",
+      "pptMedia": [
+        "image17.gif",
+        "image18.gif"
+      ],
+      "sha256": "b181f4bb579b9cbbf5efbb3d69d2509e7097e3b01d8806e9b14060edb68e475e"
+    },
+    {
+      "slide": 16,
+      "asset": "assets/nationals/ppt-slides/animated-slide-16.mp4",
+      "pptMedia": [
+        "image19.gif",
+        "image20.gif",
+        "image21.gif"
+      ],
+      "sha256": "ed57fc580d66bbbf82d9d757ab63582705c3b01ec6bc8b0b1687942e5b9d7719"
+    }
+  ]
+}
