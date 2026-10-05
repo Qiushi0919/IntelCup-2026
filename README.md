@@ -42,7 +42,7 @@ GitHub Pages 使用 `Website` 分支根目录发布。
 
 作者姓名旁依次提供邮箱、GitHub、微信、个人网站、谷歌学术入口。
 `contact-icons.css` 提供悬停和键盘焦点说明，`contact-icons.js` 打开微信二维码弹窗。
-二维码沿用个人主页的公开图片。谷歌学术暂链接姓名检索，建立个人学术主页后再替换。
+二维码沿用个人主页的公开图片。谷歌学术链接已替换为谢秋实的正式作者主页：https://scholar.google.com/citations?user=TkPyZ-UAAAAJ。
 奖项展示统一为“全国二等奖 · 前 7.83%”。
 
 ## 2026-09-16 PPT 同步
