@@ -44,6 +44,7 @@ GitHub Pages 使用 `Website` 分支根目录发布。
 `contact-icons.css` 提供悬停和键盘焦点说明，`contact-icons.js` 打开微信二维码弹窗。
 二维码沿用个人主页的公开图片。谷歌学术链接已替换为谢秋实的正式作者主页：https://scholar.google.com/citations?user=TkPyZ-UAAAAJ。
 奖项展示统一为“全国二等奖 · 前 7.83%”。
+队长标记为谢秋实名字右侧的上标“†”，悬停可见“队长”说明；不再使用单独的队长标签。
 
 ## 2026-09-16 PPT 同步
 
