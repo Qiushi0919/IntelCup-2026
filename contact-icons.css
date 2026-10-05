@@ -1,0 +1,20 @@
+.author-contact-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 18px; }
+.author-contact-row .authors { margin: 0; }
+.author-contacts { display: flex; align-items: center; gap: 5px; }
+.contact-icon { position: relative; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 32px; width: 32px; height: 32px; padding: 4px; border: 0; border-radius: 5px; background: transparent; color: #111; cursor: pointer; text-decoration: none; }
+.contact-icon svg { display: block; width: 23px; height: 23px; fill: currentColor; }
+.contact-icon:hover { color: #005bac; background: rgba(255,255,255,.65); text-decoration: none; }
+.contact-icon:focus-visible { outline: 2px solid #005bac; outline-offset: 2px; }
+.contact-icon::after { content: attr(data-label); position: absolute; left: 50%; top: calc(100% + 6px); z-index: 45; width: max-content; max-width: min(280px, calc(100vw - 32px)); padding: 5px 8px; border: 1px solid #cfd5da; border-radius: 2px; background: #fff; color: #303b43; box-shadow: 0 3px 9px rgba(22,42,58,.16); font: 400 12px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif; white-space: nowrap; opacity: 0; visibility: hidden; pointer-events: none; transform: translateX(-50%); }
+.contact-icon:hover::after, .contact-icon:focus-visible::after { opacity: 1; visibility: visible; }
+.contact-icon:first-child::after { left: 0; transform: none; }
+.contact-dialog { position: fixed; inset: 0; width: min(360px, calc(100% - 32px)); max-height: 88dvh; margin: auto; padding: 22px; border: 1px solid #dbe7f2; border-radius: 18px; background: #fff; color: #12243a; box-shadow: 0 24px 80px rgba(10,48,92,.25); text-align: center; }
+.contact-dialog::backdrop { background: rgba(18,36,58,.48); }
+.contact-dialog h2 { margin: 4px 0 6px; font-size: 21px; }
+.contact-dialog p { margin: 0 0 12px; color: #62748a; font-size: 13px; }
+.contact-dialog img { display: block; width: 100%; max-height: 55dvh; object-fit: contain; margin: 0 auto; }
+.contact-dialog form { display: flex; justify-content: center; margin-top: 16px; }
+.contact-dialog-close { padding: 7px 20px; border: 1px solid #cfd5da; border-radius: 7px; background: #f4f8fc; color: #12243a; font: inherit; cursor: pointer; }
+.contact-dialog-close:focus-visible { outline: 2px solid #005bac; outline-offset: 2px; }
+@media (max-width: 760px) { .contact-icon { width: 44px; height: 44px; flex-basis: 44px; } }
+@media (min-width: 1100px) { .author-contact-row { margin-top: 14px; } }
