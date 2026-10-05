@@ -26,3 +26,7 @@ IntelCup-2026-ground-station/install_voice_asr_deps.bat
 ```
 
 首次运行 Whisper/OpenVINO 模型时会从 Hugging Face 下载模型，时间会比较长。
+
+## Personal portfolio / 个人主页
+
+[谢秋实 / Qiushi Xie · 中文主页](https://qiushi0919.cn/) · [English portfolio](https://qiushi0919.github.io/)
